@@ -1,0 +1,1 @@
+enum DataFit { fixedWidth, adaptiveWidth }
