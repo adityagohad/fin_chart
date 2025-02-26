@@ -29,7 +29,7 @@ class _HomeState extends State<Home> {
             child: SizedBox(
               width: double.infinity,
               child: Chart(
-                yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.left),
+                yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
                 xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
                 candles: candleData,
                 padding:
@@ -58,7 +58,7 @@ class _HomeState extends State<Home> {
                     candleData.addAll(candles.map((c) => ICandle(
                         id: "0",
                         date: DateTime.now(),
-                        open: c.high,
+                        open: c.open,
                         high: c.high,
                         low: c.low,
                         close: c.close,

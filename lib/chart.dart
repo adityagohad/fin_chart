@@ -1,6 +1,8 @@
 import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
+import 'package:fin_chart/models/layers/horizontal_line.dart';
+import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -25,7 +27,7 @@ class Chart extends StatefulWidget {
   State<Chart> createState() => _ChartState();
 }
 
-class _ChartState extends State<Chart> {
+class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   late double leftPos;
   late double topPos;
   late double rightPos;
@@ -44,7 +46,39 @@ class _ChartState extends State<Chart> {
   double yMaxValue = 100;
   double xStepWidth = candleWidth * 2;
 
-  setCanvasCorners(BoxConstraints constraints) {
+  late AnimationController _swipeAnimationController;
+  double _swipeVelocity = 0;
+  bool _isAnimating = false;
+
+  List<Layer> layers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    layers.add(HorizontalLine(value: 1));
+    _swipeAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..addListener(_handleSwipeAnimation);
+  }
+
+  @override
+  void dispose() {
+    _swipeAnimationController.dispose();
+    super.dispose();
+  }
+
+  recalculate(BoxConstraints constraints) {
+    (double, double) range = findMinMaxWithPercentage(widget.candles);
+    yMinValue = range.$1;
+    yMaxValue = range.$2;
+    Size yLabelSize = getLargetRnderBoxSizeForList(
+        generateNiceAxisValues(yMinValue, yMaxValue)
+            .map((v) => v.toString())
+            .toList(),
+        widget.yAxisSettings!.axisTextStyle);
+    yLabelWidth = yLabelSize.width;
+
     if (widget.yAxisSettings!.yAxisPos == YAxisPos.left) {
       leftPos = yLabelWidth + yLabelPadding;
       rightPos = constraints.maxWidth - yLabelPadding;
@@ -66,18 +100,6 @@ class _ChartState extends State<Chart> {
     }
   }
 
-  setXYValues() {
-    (double, double) range = findMinMaxWithPercentage(widget.candles);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
-    Size yLabelSize = getLargetRnderBoxSizeForList(
-        generateNiceAxisValues(yMinValue, yMaxValue)
-            .map((v) => v.toString())
-            .toList(),
-        widget.yAxisSettings!.axisTextStyle);
-    yLabelWidth = yLabelSize.width;
-  }
-
   double getMaxLeftOffset() {
     if (widget.candles.isEmpty) return 0;
 
@@ -96,12 +118,14 @@ class _ChartState extends State<Chart> {
     return Container(
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
-          setXYValues();
-          setCanvasCorners(constraints);
+          recalculate(constraints);
           return SizedBox(
             width: constraints.maxWidth,
             height: constraints.maxHeight,
             child: GestureDetector(
+              onTapDown: (details) {
+                print("tap down : ${details.localPosition}");
+              },
               onDoubleTap: _onDoubleTap,
               onScaleStart: _onScaleStart,
               onScaleEnd: _onScaleEnd,
@@ -129,17 +153,48 @@ class _ChartState extends State<Chart> {
         }));
   }
 
+  void _handleSwipeAnimation() {
+    if (!_isAnimating) return;
+
+    setState(() {
+      final double progress = _swipeAnimationController.value;
+      final double dampedVelocity =
+          _swipeVelocity * (1 - progress) * (1 - progress); // Add extra damping
+      xOffset = (xOffset + dampedVelocity).clamp(getMaxLeftOffset(), 0);
+
+      if (progress >= 1.0) {
+        _isAnimating = false;
+        _swipeVelocity = 0;
+      }
+    });
+  }
+
+  void _handleSwipeEnd(ScaleEndDetails details) {
+    // Calculate velocity and start animation
+    _swipeVelocity = details.velocity.pixelsPerSecond.dx *
+        0.1; // Reduce velocity sensitivity
+    if (_swipeVelocity.abs() > 100) {
+      // Increase threshold for animation
+      _isAnimating = true;
+      _swipeAnimationController.forward(from: 0);
+    }
+  }
+
   _onDoubleTap() {
     setState(() {
       horizontalScale = 1;
       previousHorizontalScale = 1;
       xStepWidth = candleWidth * 2;
       xOffset = 0;
+      _isAnimating = false;
+      _swipeVelocity = 0;
     });
   }
 
   _onScaleStart(ScaleStartDetails details) {
+    print(details.localFocalPoint);
     setState(() {
+      _isAnimating = false;
       if (details.pointerCount == 2) {
         previousHorizontalScale = horizontalScale;
         lastFocalPoint = details.focalPoint;
@@ -150,14 +205,19 @@ class _ChartState extends State<Chart> {
   _onScaleEnd(ScaleEndDetails details) {
     setState(() {
       lastFocalPoint = null;
+      _handleSwipeEnd(details);
     });
   }
 
   _onScaleUpdate(ScaleUpdateDetails details, BoxConstraints constraints) {
+    print("update down : ${details.localFocalPoint}");
     setState(() {
       if (details.pointerCount == 1) {
-        xOffset =
-            (xOffset + details.focalPointDelta.dx).clamp(getMaxLeftOffset(), 0);
+        setState(() {
+          _isAnimating = false; // Stop any ongoing animation
+          xOffset = (xOffset + details.focalPointDelta.dx)
+              .clamp(getMaxLeftOffset(), 0);
+        });
       }
       if (details.pointerCount == 2) {
         final newScale =

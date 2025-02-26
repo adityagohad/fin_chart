@@ -211,8 +211,6 @@ class ChartPainter extends CustomPainter {
       candleColor = Colors.red;
     }
 
-    print(candle.toJson());
-
     Paint paint = Paint()
       ..strokeWidth = 2
       ..style = PaintingStyle.fill
@@ -244,13 +242,5 @@ class ChartPainter extends CustomPainter {
                 candleWidth / 2,
             yMinPos - (candle.close - yValues.first) * posDiff / valuseDiff),
         paint);
-
-    // canvas.drawRect(
-    //     Rect.fromLTRB(
-    //         getOffsetFrom(pos, candle.open).dx - xStepWidth / 4,
-    //         getOffsetFrom(pos, candle.open).dy,
-    //         getOffsetFrom(pos, candle.open).dx + xStepWidth / 4,
-    //         getOffsetFrom(pos, candle.close).dy),
-    //     paint);
   }
 }
