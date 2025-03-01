@@ -1,20 +1,44 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/region/region_prop.dart';
+import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
 
-class PlotRegion {
-  final double topPos;
-  final double bottomPos;
-  final List<Layer> layers = [];
+enum PlotRegionType { main, indicator }
 
-  PlotRegion({required this.topPos, required this.bottomPos});
+class PlotRegion with RegionProp {
+  final PlotRegionType type;
+  // late double leftPos;
+  // late double xStepWidth;
+  // late double xOffset;
+  // late double topPos;
+  // late double bottomPos;
+  // late double yMinValue;
+  // late double yMaxValue;
+  final YAxisSettings yAxisSettings;
+  final List<Layer> layers;
 
-  onTapDown(TapDownDetails details) {
+  PlotRegion(
+      {required this.type, required this.yAxisSettings, List<Layer>? layers})
+      : layers = layers ?? [];
+
+  void drawLayers(Canvas canvas) {
     for (final layer in layers) {
-      final result = layer.onTapDown(details);
-      if (result != layer) {
-        return result;
-      }
+      layer.updateRegionProp(
+          leftPos: leftPos,
+          topPos: topPos,
+          rightPos: rightPos,
+          bottomPos: bottomPos,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: yMinValue,
+          yMaxValue: yMaxValue);
+      layer.drawLayer(canvas: canvas);
     }
-    return this;
+  }
+
+  void drawAxisValue(Canvas canvas) {
+    for (final layer in layers) {
+      layer.drawAxisValues(canvas: canvas);
+    }
   }
 }

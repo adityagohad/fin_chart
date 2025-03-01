@@ -1,13 +1,17 @@
 import 'package:fin_chart/chart_painter.dart';
-import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
+import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/candle_data.dart';
+import 'package:fin_chart/models/layers/chart_pointer.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
+import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
+
+import 'models/settings/y_axis_settings.dart';
 
 class Chart extends StatefulWidget {
   final EdgeInsets? padding;
@@ -43,19 +47,28 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   double xLabelHeight = 21;
 
   double yMinValue = 0;
-  double yMaxValue = 100;
+  double yMaxValue = 1;
   double xStepWidth = candleWidth * 2;
 
   late AnimationController _swipeAnimationController;
   double _swipeVelocity = 0;
   bool _isAnimating = false;
 
-  List<Layer> layers = [];
+  List<PlotRegion> regions = [];
+  Layer? selectedLayer;
 
   @override
   void initState() {
     super.initState();
-    layers.add(HorizontalLine(value: 1));
+
+    regions.add(PlotRegion(
+        type: PlotRegionType.main,
+        yAxisSettings: widget.yAxisSettings!,
+        layers: [
+          CandleData(candles: widget.candles),
+          ChartPointer(pointOffset: const Offset(4, 3800)),
+          TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400))
+        ]));
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -72,11 +85,16 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     (double, double) range = findMinMaxWithPercentage(widget.candles);
     yMinValue = range.$1;
     yMaxValue = range.$2;
+
+    List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+
+    yMinValue = yValues.first;
+    yMaxValue = yValues.last;
+
     Size yLabelSize = getLargetRnderBoxSizeForList(
-        generateNiceAxisValues(yMinValue, yMaxValue)
-            .map((v) => v.toString())
-            .toList(),
+        yValues.map((v) => v.toString()).toList(),
         widget.yAxisSettings!.axisTextStyle);
+
     yLabelWidth = yLabelSize.width;
 
     if (widget.yAxisSettings!.yAxisPos == YAxisPos.left) {
@@ -98,18 +116,17 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       topPos = xLabelPadding;
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
-  }
 
-  double getMaxLeftOffset() {
-    if (widget.candles.isEmpty) return 0;
-
-    double lastCandlePosition =
-        xStepWidth / 2 + (widget.candles.length - 1) * xStepWidth;
-
-    if (lastCandlePosition < (rightPos - leftPos) / 2) {
-      return 0;
-    } else {
-      return -lastCandlePosition + (rightPos - leftPos) / 2;
+    for (int i = 0; i < regions.length; i++) {
+      regions[i].updateRegionProp(
+          leftPos: leftPos,
+          topPos: topPos,
+          rightPos: rightPos,
+          bottomPos: bottomPos,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: yMinValue,
+          yMaxValue: yMaxValue);
     }
   }
 
@@ -123,16 +140,15 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
             width: constraints.maxWidth,
             height: constraints.maxHeight,
             child: GestureDetector(
-              onTapDown: (details) {
-                print("tap down : ${details.localPosition}");
-              },
+              onTapDown: _onTapDown,
               onDoubleTap: _onDoubleTap,
               onScaleStart: _onScaleStart,
               onScaleEnd: _onScaleEnd,
               onScaleUpdate: (details) => _onScaleUpdate(details, constraints),
               child: CustomPaint(
                 painter: ChartPainter(
-                    candles: widget.candles,
+                    regions: regions,
+                    //candles: widget.candles,
                     xAxisSettings: widget.xAxisSettings!,
                     yAxisSettings: widget.yAxisSettings!,
                     xOffset: xOffset,
@@ -169,6 +185,19 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
+  double getMaxLeftOffset() {
+    if (widget.candles.isEmpty) return 0;
+
+    double lastCandlePosition =
+        xStepWidth / 2 + (widget.candles.length - 1) * xStepWidth;
+
+    if (lastCandlePosition < (rightPos - leftPos) / 2) {
+      return 0;
+    } else {
+      return -lastCandlePosition + (rightPos - leftPos) / 2;
+    }
+  }
+
   void _handleSwipeEnd(ScaleEndDetails details) {
     // Calculate velocity and start animation
     _swipeVelocity = details.velocity.pixelsPerSecond.dx *
@@ -191,8 +220,23 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
+  _onTapDown(TapDownDetails details) {
+    selectedLayer = null;
+    for (PlotRegion region in regions) {
+      for (Layer layer in region.layers) {
+        setState(() {
+          if (selectedLayer == null) {
+            selectedLayer = layer.onTapDown(details: details);
+            // print(selectedLayer);
+          }
+        });
+      }
+    }
+    //print(selectedLayer);
+  }
+
   _onScaleStart(ScaleStartDetails details) {
-    print(details.localFocalPoint);
+    //print(details.localFocalPoint);
     setState(() {
       _isAnimating = false;
       if (details.pointerCount == 2) {
@@ -210,14 +254,18 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   _onScaleUpdate(ScaleUpdateDetails details, BoxConstraints constraints) {
-    print("update down : ${details.localFocalPoint}");
+    //print("update down : ${details.localFocalPoint}");
     setState(() {
       if (details.pointerCount == 1) {
-        setState(() {
-          _isAnimating = false; // Stop any ongoing animation
-          xOffset = (xOffset + details.focalPointDelta.dx)
-              .clamp(getMaxLeftOffset(), 0);
-        });
+        if (selectedLayer == null) {
+          setState(() {
+            _isAnimating = false; // Stop any ongoing animation
+            xOffset = (xOffset + details.focalPointDelta.dx)
+                .clamp(getMaxLeftOffset(), 0);
+          });
+        } else {
+          selectedLayer?.onScaleUpdate(details: details);
+        }
       }
       if (details.pointerCount == 2) {
         final newScale =
