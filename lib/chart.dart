@@ -3,8 +3,10 @@ import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/chart_pointer.dart';
+import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/layers/rect_area.dart';
+import 'package:fin_chart/models/layers/smooth_line_data.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -67,11 +69,39 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         yAxisSettings: widget.yAxisSettings!,
         layers: [
           CandleData(candles: widget.candles),
-          ChartPointer(pointOffset: const Offset(2, 4400)),
-          TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400)),
+          ChartPointer(pointOffset: const Offset(2, 4000)),
+          TrendLine(from: const Offset(2, 3600), to: const Offset(8, 4200)),
+          HorizontalLine(value: 3500),
           RectArea(
               topLeft: const Offset(15, 3600),
-              bottomRight: const Offset(29, 4200))
+              bottomRight: const Offset(29, 3500))
+        ]));
+
+    regions.add(PlotRegion(
+        type: PlotRegionType.main,
+        yAxisSettings: widget.yAxisSettings!,
+        layers: [
+          SmoothLineData(candles: widget.candles),
+          // CandleData(candles: widget.candles),
+          ChartPointer(pointOffset: const Offset(2, 4000)),
+          // TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400)),
+          // HorizontalLine(value: 3500),
+          // RectArea(
+          //     topLeft: const Offset(15, 3600),
+          //     bottomRight: const Offset(29, 3500))
+        ]));
+
+    regions.add(PlotRegion(
+        type: PlotRegionType.main,
+        yAxisSettings: widget.yAxisSettings!,
+        layers: [
+          SmoothLineData(candles: widget.candles),
+          // CandleData(candles: widget.candles),
+          // TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400)),
+          HorizontalLine(value: 3500),
+          // RectArea(
+          //     topLeft: const Offset(15, 3600),
+          //     bottomRight: const Offset(29, 3500))
         ]));
     _swipeAnimationController = AnimationController(
       vsync: this,
@@ -121,12 +151,14 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
 
+    double totalHeight = bottomPos - topPos;
+    int sections = regions.isEmpty ? 1 : regions.length;
     for (int i = 0; i < regions.length; i++) {
       regions[i].updateRegionProp(
           leftPos: leftPos,
-          topPos: topPos,
+          topPos: topPos + totalHeight / sections * i,
           rightPos: rightPos,
-          bottomPos: bottomPos,
+          bottomPos: topPos + totalHeight / sections * (i + 1),
           xStepWidth: xStepWidth,
           xOffset: xOffset,
           yMinValue: yMinValue,

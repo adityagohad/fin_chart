@@ -25,7 +25,7 @@ class _HomeState extends State<Home> {
           child: Column(
         children: [
           Flexible(
-            flex: 6,
+            flex: 7,
             child: SizedBox(
               width: double.infinity,
               child: Chart(
@@ -48,7 +48,7 @@ class _HomeState extends State<Home> {
 
           // Second section - 3:5 ratio (taking 60% of height)
           Flexible(
-            flex: 4, // 3 parts out of 5 total parts
+            flex: 3, // 3 parts out of 5 total parts
             child: Container(
                 color: Colors.red,
                 width: double.infinity,

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 abstract class Layer with RegionProp {
   void drawLayer({required Canvas canvas});
 
-  void drawAxisValues({required Canvas canvas}) {}
+  void drawRightAxisValues({required Canvas canvas}) {}
+
+  void drawLeftAxisValues({required Canvas canvas}) {}
 
   Layer? onTapDown({required TapDownDetails details}) {
     return null;

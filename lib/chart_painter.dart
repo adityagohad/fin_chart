@@ -1,7 +1,6 @@
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
-import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -47,8 +46,16 @@ class ChartPainter extends CustomPainter {
           ..color = Colors.transparent);
     canvas.clipRect(outerBoundries);
 
-    drawYAxis(canvas);
+    //drawYAxis(canvas);
     drawXAxis(canvas);
+
+    for (PlotRegion region in regions) {
+      region.drawYAxis(canvas);
+    }
+
+    for (PlotRegion region in regions) {
+      region.drawAxisValue(canvas);
+    }
 
     final innerBoundries = Rect.fromLTRB(leftPos, topPos, rightPos, bottomPos);
 
@@ -70,55 +77,6 @@ class ChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
-  }
-
-  drawYAxis(Canvas canvas) {
-    List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
-    double valuseDiff = yValues.last - yValues.first;
-    double posDiff = yMinPos - topPos;
-
-    for (double value in yValues) {
-      double pos = yMinPos - (value - yValues.first) * posDiff / valuseDiff;
-
-      if (!(value == yValues.first || value == yValues.last)) {
-        canvas.drawLine(Offset(leftPos, pos), (Offset(rightPos, pos)), Paint());
-        final TextPainter text = TextPainter(
-          text: TextSpan(
-            text: value.toStringAsFixed(2),
-            style: yAxisSettings.axisTextStyle,
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-
-        if (yAxisSettings.yAxisPos == YAxisPos.left) {
-          text.paint(
-              canvas,
-              Offset(leftPos - (text.width + yLabelPadding / 2),
-                  pos - text.height / 2));
-        }
-        if (yAxisSettings.yAxisPos == YAxisPos.right) {
-          text.paint(canvas,
-              Offset(rightPos + yLabelPadding / 2, pos - text.height / 2));
-        }
-      }
-    }
-
-    if (yAxisSettings.yAxisPos == YAxisPos.left) {
-      canvas.drawLine(
-          Offset(leftPos, topPos),
-          Offset(leftPos, yMinPos),
-          Paint()
-            ..color = yAxisSettings.axisColor
-            ..strokeWidth = yAxisSettings.strokeWidth);
-    }
-    if (yAxisSettings.yAxisPos == YAxisPos.right) {
-      canvas.drawLine(
-          Offset(rightPos, topPos),
-          Offset(rightPos, yMinPos),
-          Paint()
-            ..color = yAxisSettings.axisColor
-            ..strokeWidth = yAxisSettings.strokeWidth);
-    }
   }
 
   drawXAxis(Canvas canvas) {
@@ -196,55 +154,4 @@ class ChartPainter extends CustomPainter {
             ..strokeWidth = xAxisSettings.strokeWidth);
     }
   }
-
-  // plotCandles(Canvas canvas) {
-  //   for (int i = 0; i < candles.length; i++) {
-  //     plotCandle(canvas, i, candles[i]);
-  //   }
-  // }
-
-  // plotCandle(Canvas canvas, int pos, ICandle candle) {
-  //   Color candleColor;
-  //   if (candle.state == CandleState.selected) {
-  //     candleColor = Colors.orange;
-  //   } else if (candle.state == CandleState.highlighted) {
-  //     candleColor = Colors.purple;
-  //   } else if (candle.open < candle.close) {
-  //     candleColor = Colors.green;
-  //   } else {
-  //     candleColor = Colors.red;
-  //   }
-
-  //   Paint paint = Paint()
-  //     ..strokeWidth = 2
-  //     ..style = PaintingStyle.fill
-  //     ..color = candleColor;
-
-  //   List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
-  //   double valuseDiff = yValues.last - yValues.first;
-  //   double posDiff = yMinPos - topPos;
-
-  //   canvas.drawLine(
-  //       Offset(leftPos + xOffset + xStepWidth / 2 + pos * xStepWidth,
-  //           yMinPos - (candle.high - yValues.first) * posDiff / valuseDiff),
-  //       Offset(leftPos + xOffset + xStepWidth / 2 + pos * xStepWidth,
-  //           yMinPos - (candle.low - yValues.first) * posDiff / valuseDiff),
-  //       paint);
-
-  //   canvas.drawRect(
-  //       Rect.fromLTRB(
-  //           leftPos +
-  //               xOffset +
-  //               xStepWidth / 2 +
-  //               pos * xStepWidth -
-  //               candleWidth / 2,
-  //           yMinPos - (candle.open - yValues.first) * posDiff / valuseDiff,
-  //           leftPos +
-  //               xOffset +
-  //               xStepWidth / 2 +
-  //               pos * xStepWidth +
-  //               candleWidth / 2,
-  //           yMinPos - (candle.close - yValues.first) * posDiff / valuseDiff),
-  //       paint);
-  // }
 }

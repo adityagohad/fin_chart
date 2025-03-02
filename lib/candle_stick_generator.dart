@@ -77,7 +77,7 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
   final TextEditingController maxController =
       TextEditingController(text: '6150');
   final TextEditingController candlesController =
-      TextEditingController(text: '1000');
+      TextEditingController(text: '100');
 
   // Add visibility state
   TrendlineVisibility trendlineVisibility = TrendlineVisibility.visible;
