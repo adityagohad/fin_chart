@@ -133,4 +133,19 @@ mixin RegionProp {
     // The closest point is on the line segment, use the perpendicular distance
     return distance <= tolerance;
   }
+
+  bool isPointNearRectFromDiagonalVertices(
+      Offset point, Offset vertex1, Offset vertex2,
+      {double tolerance = 20.0}) {
+    final rect = Rect.fromPoints(vertex1, vertex2);
+
+    final expandedRect = Rect.fromLTRB(
+      rect.left - tolerance,
+      rect.top - tolerance,
+      rect.right + tolerance,
+      rect.bottom + tolerance,
+    );
+
+    return expandedRect.contains(point);
+  }
 }

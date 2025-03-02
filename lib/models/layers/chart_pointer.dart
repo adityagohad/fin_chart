@@ -27,7 +27,7 @@ class ChartPointer extends Layer {
   Layer? onTapDown({required TapDownDetails details}) {
     if (isPointInCircularRegion(
         details.localPosition, toCanvas(pointOffset), radius)) {
-      startPoint = pointOffset;
+      startPoint = details.localPosition;
       return this;
     }
     return super.onTapDown(details: details);

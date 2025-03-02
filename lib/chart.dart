@@ -4,6 +4,7 @@ import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/chart_pointer.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/rect_area.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -66,8 +67,11 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         yAxisSettings: widget.yAxisSettings!,
         layers: [
           CandleData(candles: widget.candles),
-          ChartPointer(pointOffset: const Offset(4, 3800)),
-          TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400))
+          ChartPointer(pointOffset: const Offset(2, 4400)),
+          TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400)),
+          RectArea(
+              topLeft: const Offset(15, 3600),
+              bottomRight: const Offset(29, 4200))
         ]));
     _swipeAnimationController = AnimationController(
       vsync: this,
@@ -227,7 +231,8 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         setState(() {
           if (selectedLayer == null) {
             selectedLayer = layer.onTapDown(details: details);
-            // print(selectedLayer);
+          } else {
+            layer.onTapDown(details: details);
           }
         });
       }
@@ -236,7 +241,6 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   _onScaleStart(ScaleStartDetails details) {
-    //print(details.localFocalPoint);
     setState(() {
       _isAnimating = false;
       if (details.pointerCount == 2) {
@@ -254,7 +258,6 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   _onScaleUpdate(ScaleUpdateDetails details, BoxConstraints constraints) {
-    //print("update down : ${details.localFocalPoint}");
     setState(() {
       if (details.pointerCount == 1) {
         if (selectedLayer == null) {
