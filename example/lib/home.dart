@@ -49,22 +49,48 @@ class _HomeState extends State<Home> {
           // Second section - 3:5 ratio (taking 60% of height)
           Flexible(
             flex: 3, // 3 parts out of 5 total parts
-            child: Container(
-                color: Colors.red,
-                width: double.infinity,
-                child: CandleStickGenerator(onCandleDataGenerated: (candles) {
-                  setState(() {
-                    candleData.clear();
-                    candleData.addAll(candles.map((c) => ICandle(
-                        id: "0",
-                        date: DateTime.now(),
-                        open: c.open,
-                        high: c.high,
-                        low: c.low,
-                        close: c.close,
-                        volume: 10)));
-                  });
-                })),
+            child: Row(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: SizedBox(
+                      width: double.infinity,
+                      child: CandleStickGenerator(
+                          onCandleDataGenerated: (candles) {
+                        setState(() {
+                          candleData.clear();
+                          candleData.addAll(candles.map((c) => ICandle(
+                              id: "0",
+                              date: DateTime.now(),
+                              open: c.open,
+                              high: c.high,
+                              low: c.low,
+                              close: c.close,
+                              volume: 10)));
+                        });
+                      })),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: SizedBox(
+                      width: double.infinity,
+                      child: CandleStickGenerator(
+                          onCandleDataGenerated: (candles) {
+                        setState(() {
+                          candleData.clear();
+                          candleData.addAll(candles.map((c) => ICandle(
+                              id: "0",
+                              date: DateTime.now(),
+                              open: c.open,
+                              high: c.high,
+                              low: c.low,
+                              close: c.close,
+                              volume: 10)));
+                        });
+                      })),
+                ),
+              ],
+            ),
           ),
         ],
       )),

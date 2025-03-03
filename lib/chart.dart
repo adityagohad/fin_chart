@@ -4,7 +4,9 @@ import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/chart_pointer.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
+import 'package:fin_chart/models/layers/label.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/line_data.dart';
 import 'package:fin_chart/models/layers/rect_area.dart';
 import 'package:fin_chart/models/layers/smooth_line_data.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
@@ -74,7 +76,11 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
           HorizontalLine(value: 3500),
           RectArea(
               topLeft: const Offset(15, 3600),
-              bottomRight: const Offset(29, 3500))
+              bottomRight: const Offset(29, 3500)),
+          Label(
+              pos: const Offset(2, 4200),
+              label: "Hey this is text",
+              textStyle: const TextStyle(color: Colors.red, fontSize: 16))
         ]));
 
     regions.add(PlotRegion(
@@ -82,26 +88,15 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         yAxisSettings: widget.yAxisSettings!,
         layers: [
           SmoothLineData(candles: widget.candles),
-          // CandleData(candles: widget.candles),
           ChartPointer(pointOffset: const Offset(2, 4000)),
-          // TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400)),
-          // HorizontalLine(value: 3500),
-          // RectArea(
-          //     topLeft: const Offset(15, 3600),
-          //     bottomRight: const Offset(29, 3500))
         ]));
 
     regions.add(PlotRegion(
         type: PlotRegionType.main,
         yAxisSettings: widget.yAxisSettings!,
         layers: [
-          SmoothLineData(candles: widget.candles),
-          // CandleData(candles: widget.candles),
-          // TrendLine(from: const Offset(2, 3400), to: const Offset(8, 4400)),
+          LineData(candles: widget.candles),
           HorizontalLine(value: 3500),
-          // RectArea(
-          //     topLeft: const Offset(15, 3600),
-          //     bottomRight: const Offset(29, 3500))
         ]));
     _swipeAnimationController = AnimationController(
       vsync: this,

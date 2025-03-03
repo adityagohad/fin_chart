@@ -25,15 +25,12 @@ class SmoothLineData extends Layer {
     path.moveTo(points[0].dx, points[0].dy);
 
     for (int i = 0; i < points.length - 1; i++) {
-      // Calculate control points
       final xc = (points[i].dx + points[i + 1].dx) / 2;
       final yc = (points[i].dy + points[i + 1].dy) / 2;
 
-      // Add quadratic bezier segment
       path.quadraticBezierTo(points[i].dx, points[i].dy, xc, yc);
     }
 
-    // Connect to the last point
     path.lineTo(points.last.dx, points.last.dy);
 
     canvas.drawPath(path, paint);
