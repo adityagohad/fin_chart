@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:fin_chart/models/i_candle.dart';
 import 'package:flutter/material.dart';
 
 mixin RegionProp {

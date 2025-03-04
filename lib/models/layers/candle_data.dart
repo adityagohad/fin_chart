@@ -10,6 +10,11 @@ class CandleData extends Layer {
   CandleData({required this.candles});
 
   @override
+  void onUpdateData({required List<ICandle> data}) {
+    candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
+  }
+
+  @override
   void drawLayer({required Canvas canvas}) {
     for (int i = 0; i < candles.length; i++) {
       ICandle candle = candles[i];

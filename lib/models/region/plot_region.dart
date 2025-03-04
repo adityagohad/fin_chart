@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
@@ -5,7 +6,7 @@ import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
-enum PlotRegionType { main, indicator }
+enum PlotRegionType { data, indicator }
 
 class PlotRegion with RegionProp {
   final PlotRegionType type;
@@ -94,6 +95,26 @@ class PlotRegion with RegionProp {
   void drawLayers(Canvas canvas) {
     for (final layer in layers) {
       layer.drawLayer(canvas: canvas);
+    }
+  }
+
+  void updateData(List<ICandle> data) {
+    for (final layer in layers) {
+      if (type == PlotRegionType.data) {
+        layer.onUpdateData(data: data);
+      } else {
+        layer.onUpdateData(
+            data: data
+                .map((c) => ICandle(
+                    id: c.id,
+                    date: c.date,
+                    open: c.open / 100,
+                    high: c.high / 100,
+                    low: c.low / 100,
+                    close: c.close / 100,
+                    volume: c.volume))
+                .toList());
+      }
     }
   }
 }

@@ -81,30 +81,38 @@ class _HomeState extends State<Home> {
                   flex: 1,
                   child: SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                          onPressed: () {
-                            (_chartKey.currentState)?.addRegion(PlotRegion(
-                                type: PlotRegionType.indicator,
-                                yAxisSettings: const YAxisSettings(
-                                    yAxisPos: YAxisPos.right),
-                                yMinValue: 0,
-                                yMaxValue: 100,
-                                layers: [
-                                  LineData(
-                                      candles: candleData
-                                          .map((e) => ICandle(
-                                              id: e.id,
-                                              date: e.date,
-                                              open: e.open / 100,
-                                              high: e.high / 100,
-                                              low: e.low / 100,
-                                              close: e.close / 100,
-                                              volume: e.volume))
-                                          .toList()),
-                                  HorizontalLine(value: 3500),
-                                ]));
-                          },
-                          child: Text("Add Region"))),
+                      child: Column(
+                        children: [
+                          ElevatedButton(
+                              onPressed: () {
+                                (_chartKey.currentState)?.addData(candleData
+                                    .map((c) => ICandle(
+                                        id: "0",
+                                        date: DateTime.now(),
+                                        open: c.open,
+                                        high: c.high,
+                                        low: c.low,
+                                        close: c.close,
+                                        volume: 10))
+                                    .toList());
+                              },
+                              child: Text("Add data")),
+                          ElevatedButton(
+                              onPressed: () {
+                                (_chartKey.currentState)?.addRegion(PlotRegion(
+                                    type: PlotRegionType.indicator,
+                                    yAxisSettings: const YAxisSettings(
+                                        yAxisPos: YAxisPos.right),
+                                    yMinValue: 0,
+                                    yMaxValue: 100,
+                                    layers: [
+                                      LineData(candles: []),
+                                      HorizontalLine(value: 3500),
+                                    ]));
+                              },
+                              child: Text("Add Region")),
+                        ],
+                      )),
                 ),
               ],
             ),

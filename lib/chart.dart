@@ -63,6 +63,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   List<PlotRegion> regions = [];
   Layer? selectedLayer;
+  List<ICandle> currentData = [];
 
   @override
   void initState() {
@@ -133,16 +134,26 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   void addRegion(PlotRegion region) {
     setState(() {
+      region.updateData(currentData);
       regions.add(region);
+    });
+  }
+
+  void addData(List<ICandle> newData) {
+    setState(() {
+      currentData.addAll(newData);
+      for (int i = 0; i < regions.length; i++) {
+        regions[i].updateData(currentData);
+      }
     });
   }
 
   recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
     if (regions.isEmpty) {
       regions.add(PlotRegion(
-          type: PlotRegionType.main,
+          type: PlotRegionType.data,
           yAxisSettings: widget.yAxisSettings!,
-          layers: [CandleData(candles: widget.candles)]));
+          layers: [CandleData(candles: [])]));
     }
     (double, double) range = findMinMaxWithPercentage(widget.candles);
     yMinValue = range.$1;
@@ -150,10 +161,10 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
     for (int i = 0; i < regions.length; i++) {
       List<double> yValues = generateNiceAxisValues(
-          regions[i].type == PlotRegionType.main
+          regions[i].type == PlotRegionType.data
               ? yMinValue
               : regions[i].yMinValue,
-          regions[i].type == PlotRegionType.main
+          regions[i].type == PlotRegionType.data
               ? yMaxValue
               : regions[i].yMaxValue);
 
@@ -257,7 +268,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     if (widget.candles.isEmpty) return 0;
 
     double lastCandlePosition =
-        xStepWidth / 2 + (widget.candles.length - 1) * xStepWidth;
+        xStepWidth / 2 + (currentData.length - 1) * xStepWidth;
 
     if (lastCandlePosition < (rightPos - leftPos) / 2) {
       return 0;

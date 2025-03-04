@@ -6,6 +6,12 @@ class LineData extends Layer {
   final List<ICandle> candles;
 
   LineData({required this.candles});
+
+  @override
+  void onUpdateData({required List<ICandle> data}) {
+    candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
+  }
+
   @override
   void drawLayer({required Canvas canvas}) {
     if (candles.length < 2) return;

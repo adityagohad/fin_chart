@@ -6,6 +6,12 @@ class SmoothLineData extends Layer {
   final List<ICandle> candles;
 
   SmoothLineData({required this.candles});
+
+  @override
+  void onUpdateData({required List<ICandle> data}) {
+    candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
+  }
+
   @override
   void drawLayer({required Canvas canvas}) {
     List<Offset> points = [];
