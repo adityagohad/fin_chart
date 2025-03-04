@@ -107,31 +107,6 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
-  void addLater() async {
-    await Future.delayed(const Duration(seconds: 3));
-    setState(() {
-      regions.add(PlotRegion(
-          type: PlotRegionType.indicator,
-          yAxisSettings: widget.yAxisSettings!,
-          yMinValue: 0,
-          yMaxValue: 100,
-          layers: [
-            LineData(
-                candles: widget.candles
-                    .map((e) => ICandle(
-                        id: e.id,
-                        date: e.date,
-                        open: e.open / 100,
-                        high: e.high / 100,
-                        low: e.low / 100,
-                        close: e.close / 100,
-                        volume: e.volume))
-                    .toList()),
-            HorizontalLine(value: 3500),
-          ]));
-    });
-  }
-
   void addRegion(PlotRegion region) {
     setState(() {
       region.updateData(currentData);
@@ -268,7 +243,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     if (widget.candles.isEmpty) return 0;
 
     double lastCandlePosition =
-        xStepWidth / 2 + (currentData.length - 1) * xStepWidth;
+        xStepWidth / 2 + (widget.candles.length - 1) * xStepWidth;
 
     if (lastCandlePosition < (rightPos - leftPos) / 2) {
       return 0;
