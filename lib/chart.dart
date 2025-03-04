@@ -68,7 +68,7 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     regions.addAll(widget.regions);
-    // addLater();
+    addLater();
     // regions.add(PlotRegion(
     //     type: PlotRegionType.main,
     //     yAxisSettings: widget.yAxisSettings!,
@@ -131,7 +131,17 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
+  void addRegion(PlotRegion region) {
+    regions.add(region);
+  }
+
   recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
+    if (regions.isEmpty) {
+      regions.add(PlotRegion(
+          type: PlotRegionType.main,
+          yAxisSettings: widget.yAxisSettings!,
+          layers: [CandleData(candles: widget.candles)]));
+    }
     (double, double) range = findMinMaxWithPercentage(widget.candles);
     yMinValue = range.$1;
     yMaxValue = range.$2;
