@@ -1,6 +1,8 @@
 import 'package:fin_chart/chart.dart';
+import 'package:fin_chart/models/layers/chart_pointer.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/line_data.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
@@ -85,6 +87,13 @@ class _HomeState extends State<Home> {
                         children: [
                           ElevatedButton(
                               onPressed: () {
+                                _chartKey.currentState?.addLayer(TrendLine(
+                                    from: Offset(0, 3700),
+                                    to: Offset(4, 3700)));
+                              },
+                              child: Text("Add layer")),
+                          ElevatedButton(
+                              onPressed: () {
                                 (_chartKey.currentState)?.addData(candleData
                                     .map((c) => ICandle(
                                         id: "0",
@@ -103,8 +112,8 @@ class _HomeState extends State<Home> {
                                     type: PlotRegionType.indicator,
                                     yAxisSettings: const YAxisSettings(
                                         yAxisPos: YAxisPos.right),
-                                    yMinValue: 0,
-                                    yMaxValue: 100,
+                                    yMinValue: -0.1,
+                                    yMaxValue: 0.1,
                                     layers: [
                                       LineData(candles: []),
                                       HorizontalLine(value: 3500),

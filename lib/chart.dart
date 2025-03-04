@@ -2,14 +2,8 @@ import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/candle_data.dart';
-import 'package:fin_chart/models/layers/chart_pointer.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
-import 'package:fin_chart/models/layers/label.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/layers/line_data.dart';
-import 'package:fin_chart/models/layers/rect_area.dart';
-import 'package:fin_chart/models/layers/smooth_line_data.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -114,6 +108,12 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
+  void addLayer(Layer layer) {
+    setState(() {
+      regions[0].layers.add(layer);
+    });
+  }
+
   void addData(List<ICandle> newData) {
     setState(() {
       currentData.addAll(newData);
@@ -128,9 +128,9 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       regions.add(PlotRegion(
           type: PlotRegionType.data,
           yAxisSettings: widget.yAxisSettings!,
-          layers: [CandleData(candles: [])]));
+          layers: [CandleData(candles: []), LineData(candles: [])]));
     }
-    (double, double) range = findMinMaxWithPercentage(widget.candles);
+    (double, double) range = findMinMaxWithPercentage(currentData);
     yMinValue = range.$1;
     yMaxValue = range.$2;
 
@@ -209,7 +209,6 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
                 painter: ChartPainter(
                     regions: regions,
                     xAxisSettings: widget.xAxisSettings!,
-                    yAxisSettings: widget.yAxisSettings!,
                     xOffset: xOffset,
                     xStepWidth: xStepWidth,
                     leftPos: leftPos,
@@ -240,10 +239,10 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   double getMaxLeftOffset() {
-    if (widget.candles.isEmpty) return 0;
+    if (currentData.isEmpty) return 0;
 
     double lastCandlePosition =
-        xStepWidth / 2 + (widget.candles.length - 1) * xStepWidth;
+        xStepWidth / 2 + (currentData.length - 1) * xStepWidth;
 
     if (lastCandlePosition < (rightPos - leftPos) / 2) {
       return 0;
@@ -328,7 +327,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
           final scaleDiff = newScale - horizontalScale;
           final offsetAdjustment = scaleDiff *
               (candleWidth * 2) *
-              widget.candles.length *
+              currentData.length *
               focalPointRatio;
           xOffset = (xOffset - offsetAdjustment).clamp(getMaxLeftOffset(), 0);
         }

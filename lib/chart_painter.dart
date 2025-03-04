@@ -11,7 +11,6 @@ class ChartPainter extends CustomPainter {
   final double bottomPos;
   final double xStepWidth;
   final double xOffset;
-  final YAxisSettings yAxisSettings;
   final XAxisSettings xAxisSettings;
   final List<PlotRegion> regions;
 
@@ -23,7 +22,6 @@ class ChartPainter extends CustomPainter {
       required this.bottomPos,
       required this.xStepWidth,
       required this.xOffset,
-      required this.yAxisSettings,
       required this.xAxisSettings,
       required this.regions});
 
