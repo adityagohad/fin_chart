@@ -22,6 +22,7 @@ class Chart extends StatefulWidget {
   final EdgeInsets? padding;
   final DataFit dataFit;
   final List<ICandle> candles;
+  final List<PlotRegion> regions;
   final YAxisSettings? yAxisSettings;
   final XAxisSettings? xAxisSettings;
   const Chart(
@@ -30,7 +31,8 @@ class Chart extends StatefulWidget {
       this.dataFit = DataFit.adaptiveWidth,
       required this.candles,
       this.yAxisSettings = const YAxisSettings(),
-      this.xAxisSettings = const XAxisSettings()});
+      this.xAxisSettings = const XAxisSettings(),
+      required this.regions});
 
   @override
   State<Chart> createState() => _ChartState();
@@ -65,39 +67,33 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    regions.addAll(widget.regions);
+    // addLater();
+    // regions.add(PlotRegion(
+    //     type: PlotRegionType.main,
+    //     yAxisSettings: widget.yAxisSettings!,
+    //     layers: [
+    //       CandleData(candles: widget.candles),
+    //       ChartPointer(pointOffset: const Offset(2, 4000)),
+    //       TrendLine(from: const Offset(2, 3600), to: const Offset(8, 4200)),
+    //       HorizontalLine(value: 3500),
+    //       RectArea(
+    //           topLeft: const Offset(15, 3600),
+    //           bottomRight: const Offset(29, 3500)),
+    //       Label(
+    //           pos: const Offset(0, 4200),
+    //           label: "Hey this is text",
+    //           textStyle: const TextStyle(color: Colors.red, fontSize: 16))
+    //     ]));
 
-    regions.add(PlotRegion(
-        type: PlotRegionType.main,
-        yAxisSettings: widget.yAxisSettings!,
-        layers: [
-          CandleData(candles: widget.candles),
-          ChartPointer(pointOffset: const Offset(2, 4000)),
-          TrendLine(from: const Offset(2, 3600), to: const Offset(8, 4200)),
-          HorizontalLine(value: 3500),
-          RectArea(
-              topLeft: const Offset(15, 3600),
-              bottomRight: const Offset(29, 3500)),
-          Label(
-              pos: const Offset(2, 4200),
-              label: "Hey this is text",
-              textStyle: const TextStyle(color: Colors.red, fontSize: 16))
-        ]));
+    // regions.add(PlotRegion(
+    //     type: PlotRegionType.main,
+    //     yAxisSettings: widget.yAxisSettings!,
+    //     layers: [
+    //       SmoothLineData(candles: widget.candles),
+    //       ChartPointer(pointOffset: const Offset(2, 4000)),
+    //     ]));
 
-    regions.add(PlotRegion(
-        type: PlotRegionType.main,
-        yAxisSettings: widget.yAxisSettings!,
-        layers: [
-          SmoothLineData(candles: widget.candles),
-          ChartPointer(pointOffset: const Offset(2, 4000)),
-        ]));
-
-    regions.add(PlotRegion(
-        type: PlotRegionType.main,
-        yAxisSettings: widget.yAxisSettings!,
-        layers: [
-          LineData(candles: widget.candles),
-          HorizontalLine(value: 3500),
-        ]));
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -110,21 +106,56 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
-  recalculate(BoxConstraints constraints) {
+  void addLater() async {
+    await Future.delayed(const Duration(seconds: 3));
+    setState(() {
+      regions.add(PlotRegion(
+          type: PlotRegionType.indicator,
+          yAxisSettings: widget.yAxisSettings!,
+          yMinValue: 0,
+          yMaxValue: 100,
+          layers: [
+            LineData(
+                candles: widget.candles
+                    .map((e) => ICandle(
+                        id: e.id,
+                        date: e.date,
+                        open: e.open / 100,
+                        high: e.high / 100,
+                        low: e.low / 100,
+                        close: e.close / 100,
+                        volume: e.volume))
+                    .toList()),
+            HorizontalLine(value: 3500),
+          ]));
+    });
+  }
+
+  recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
     (double, double) range = findMinMaxWithPercentage(widget.candles);
     yMinValue = range.$1;
     yMaxValue = range.$2;
 
-    List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+    for (int i = 0; i < regions.length; i++) {
+      List<double> yValues = generateNiceAxisValues(
+          regions[i].type == PlotRegionType.main
+              ? yMinValue
+              : regions[i].yMinValue,
+          regions[i].type == PlotRegionType.main
+              ? yMaxValue
+              : regions[i].yMaxValue);
 
-    yMinValue = yValues.first;
-    yMaxValue = yValues.last;
+      regions[i].yMinValue = yValues.first;
+      regions[i].yMaxValue = yValues.last;
 
-    Size yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(),
-        widget.yAxisSettings!.axisTextStyle);
+      Size yLabelSize = getLargetRnderBoxSizeForList(
+          yValues.map((v) => v.toString()).toList(),
+          widget.yAxisSettings!.axisTextStyle);
 
-    yLabelWidth = yLabelSize.width;
+      if (yLabelSize.width > yLabelWidth) {
+        yLabelWidth = yLabelSize.width;
+      }
+    }
 
     if (widget.yAxisSettings!.yAxisPos == YAxisPos.left) {
       leftPos = yLabelWidth + yLabelPadding;
@@ -156,8 +187,8 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
           bottomPos: topPos + totalHeight / sections * (i + 1),
           xStepWidth: xStepWidth,
           xOffset: xOffset,
-          yMinValue: yMinValue,
-          yMaxValue: yMaxValue);
+          yMinValue: regions[i].yMinValue,
+          yMaxValue: regions[i].yMaxValue);
     }
   }
 
@@ -166,7 +197,7 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     return Container(
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
-          recalculate(constraints);
+          recalculate(constraints, regions);
           return SizedBox(
             width: constraints.maxWidth,
             height: constraints.maxHeight,
@@ -179,16 +210,10 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
               child: CustomPaint(
                 painter: ChartPainter(
                     regions: regions,
-                    //candles: widget.candles,
                     xAxisSettings: widget.xAxisSettings!,
                     yAxisSettings: widget.yAxisSettings!,
                     xOffset: xOffset,
                     xStepWidth: xStepWidth,
-                    yMinPos: (constraints.maxHeight -
-                            (xLabelHeight + xLabelPadding)) *
-                        1,
-                    yMinValue: yMinValue,
-                    yMaxValue: yMaxValue,
                     leftPos: leftPos,
                     topPos: topPos,
                     rightPos: rightPos,

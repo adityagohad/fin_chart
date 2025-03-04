@@ -12,9 +12,16 @@ class PlotRegion with RegionProp {
   final YAxisSettings yAxisSettings;
   final List<Layer> layers;
 
-  PlotRegion(
-      {required this.type, required this.yAxisSettings, List<Layer>? layers})
-      : layers = layers ?? [];
+  PlotRegion({
+    required this.type,
+    required this.yAxisSettings,
+    List<Layer>? layers,
+    double yMinValue = 0,
+    double yMaxValue = 1,
+  }) : layers = layers ?? [] {
+    this.yMinValue = yMinValue;
+    this.yMaxValue = yMaxValue;
+  }
 
   void drawYAxis(Canvas canvas) {
     List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
@@ -86,15 +93,6 @@ class PlotRegion with RegionProp {
 
   void drawLayers(Canvas canvas) {
     for (final layer in layers) {
-      // layer.updateRegionProp(
-      //     leftPos: leftPos,
-      //     topPos: topPos,
-      //     rightPos: rightPos,
-      //     bottomPos: bottomPos,
-      //     xStepWidth: xStepWidth,
-      //     xOffset: xOffset,
-      //     yMinValue: yMinValue,
-      //     yMaxValue: yMaxValue);
       layer.drawLayer(canvas: canvas);
     }
   }

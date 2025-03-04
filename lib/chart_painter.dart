@@ -9,14 +9,10 @@ class ChartPainter extends CustomPainter {
   final double topPos;
   final double rightPos;
   final double bottomPos;
-  final double yMinValue;
-  final double yMaxValue;
-  final double yMinPos;
   final double xStepWidth;
   final double xOffset;
   final YAxisSettings yAxisSettings;
   final XAxisSettings xAxisSettings;
-  //final List<ICandle> candles;
   final List<PlotRegion> regions;
 
   ChartPainter(
@@ -25,14 +21,10 @@ class ChartPainter extends CustomPainter {
       required this.topPos,
       required this.rightPos,
       required this.bottomPos,
-      required this.yMinValue,
-      required this.yMaxValue,
-      required this.yMinPos,
       required this.xStepWidth,
       required this.xOffset,
       required this.yAxisSettings,
       required this.xAxisSettings,
-      //required this.candles,
       required this.regions});
 
   @override
@@ -46,7 +38,6 @@ class ChartPainter extends CustomPainter {
           ..color = Colors.transparent);
     canvas.clipRect(outerBoundries);
 
-    //drawYAxis(canvas);
     drawXAxis(canvas);
 
     for (PlotRegion region in regions) {
@@ -68,7 +59,6 @@ class ChartPainter extends CustomPainter {
 
     canvas.clipRect(innerBoundries);
 
-    //plotCandles(canvas);
     for (PlotRegion region in regions) {
       region.drawLayers(canvas);
     }
