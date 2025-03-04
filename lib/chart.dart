@@ -35,10 +35,10 @@ class Chart extends StatefulWidget {
       required this.regions});
 
   @override
-  State<Chart> createState() => _ChartState();
+  State<Chart> createState() => ChartState();
 }
 
-class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
+class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   late double leftPos;
   late double topPos;
   late double rightPos;
@@ -68,7 +68,7 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     regions.addAll(widget.regions);
-    addLater();
+    //addLater();
     // regions.add(PlotRegion(
     //     type: PlotRegionType.main,
     //     yAxisSettings: widget.yAxisSettings!,
@@ -132,7 +132,9 @@ class _ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   void addRegion(PlotRegion region) {
-    regions.add(region);
+    setState(() {
+      regions.add(region);
+    });
   }
 
   recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
