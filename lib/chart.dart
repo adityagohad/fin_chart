@@ -214,6 +214,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
                     xAxisSettings: widget.xAxisSettings!,
                     xOffset: xOffset,
                     xStepWidth: xStepWidth,
+                    dataLength: currentData.length,
                     leftPos: leftPos,
                     topPos: topPos,
                     rightPos: rightPos,

@@ -1,6 +1,5 @@
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +12,7 @@ class ChartPainter extends CustomPainter {
   final double xOffset;
   final XAxisSettings xAxisSettings;
   final List<PlotRegion> regions;
+  final int dataLength;
 
   ChartPainter(
       {super.repaint,
@@ -23,7 +23,8 @@ class ChartPainter extends CustomPainter {
       required this.xStepWidth,
       required this.xOffset,
       required this.xAxisSettings,
-      required this.regions});
+      required this.regions,
+      required this.dataLength});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -68,7 +69,7 @@ class ChartPainter extends CustomPainter {
   }
 
   drawXAxis(Canvas canvas) {
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < dataLength; i++) {
       if (leftPos + xOffset + xStepWidth / 2 + i * xStepWidth > leftPos &&
           leftPos + xOffset + xStepWidth / 2 + i * xStepWidth < rightPos) {
         final TextPainter text = TextPainter(
