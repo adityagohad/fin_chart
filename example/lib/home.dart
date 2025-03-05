@@ -1,5 +1,5 @@
+import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/chart.dart';
-import 'package:fin_chart/models/layers/chart_pointer.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/line_data.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
@@ -7,7 +7,6 @@ import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:fin_chart/candle_stick_generator.dart';
 import 'package:fin_chart/models/i_candle.dart';
 
 class Home extends StatefulWidget {
@@ -31,103 +30,63 @@ class _HomeState extends State<Home> {
       body: SafeArea(
           child: Column(
         children: [
+          Flexible(flex: 1, child: Container()),
           Flexible(
-            flex: 7,
-            child: SizedBox(
-              width: double.infinity,
-              child: Chart(
-                key: _chartKey,
-                yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
-                xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
-                candles: candleData,
-                regions: regions,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              ),
+            flex: 9,
+            child: Chart(
+              key: _chartKey,
+              yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
+              xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
+              candles: candleData,
+              regions: regions,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             ),
           ),
-
-          // Flexible(
-          //   flex: 3, // 2 parts out of 5 total parts
-          //   child: Container(
-          //     color: Colors.red,
-          //     width: double.infinity,
-          //   ),
-          // ),
-
-          // Second section - 3:5 ratio (taking 60% of height)
           Flexible(
-            flex: 3, // 3 parts out of 5 total parts
-            child: Row(
-              children: [
-                Flexible(
-                  flex: 1,
-                  child: SizedBox(
-                      width: double.infinity,
-                      child: CandleStickGenerator(
-                          onCandleDataGenerated: (candles) {
-                        setState(() {
-                          candleData.clear();
-                          candleData.addAll(candles.map((c) => ICandle(
-                              id: "0",
-                              date: DateTime.now(),
-                              open: c.open,
-                              high: c.high,
-                              low: c.low,
-                              close: c.close,
-                              volume: 10)));
-                        });
-                      })),
+              flex: 1,
+              child: SingleChildScrollView(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                        onPressed: _showAddDataDialog,
+                        child: const Text("Add Data")),
+                    ElevatedButton(
+                        onPressed: () {
+                          _chartKey.currentState?.addRegion(PlotRegion(
+                              type: PlotRegionType.indicator,
+                              yAxisSettings:
+                                  const YAxisSettings(yAxisPos: YAxisPos.right),
+                              yMinValue: -100,
+                              yMaxValue: 100,
+                              layers: [
+                                LineData(candles: []),
+                                HorizontalLine(value: 3500),
+                              ]));
+                        },
+                        child: const Text("Add Region")),
+                    ElevatedButton(
+                        onPressed: () {
+                          _chartKey.currentState?.addLayer(TrendLine(
+                              from: const Offset(0, 3700),
+                              to: const Offset(4, 3700)));
+                        },
+                        child: const Text("Add Layer")),
+                  ],
                 ),
-                Flexible(
-                  flex: 1,
-                  child: SizedBox(
-                      width: double.infinity,
-                      child: Column(
-                        children: [
-                          ElevatedButton(
-                              onPressed: () {
-                                _chartKey.currentState?.addLayer(TrendLine(
-                                    from: Offset(0, 3700),
-                                    to: Offset(4, 3700)));
-                              },
-                              child: Text("Add layer")),
-                          ElevatedButton(
-                              onPressed: () {
-                                (_chartKey.currentState)?.addData(candleData
-                                    .map((c) => ICandle(
-                                        id: "0",
-                                        date: DateTime.now(),
-                                        open: c.open,
-                                        high: c.high,
-                                        low: c.low,
-                                        close: c.close,
-                                        volume: 10))
-                                    .toList());
-                              },
-                              child: Text("Add data")),
-                          ElevatedButton(
-                              onPressed: () {
-                                (_chartKey.currentState)?.addRegion(PlotRegion(
-                                    type: PlotRegionType.indicator,
-                                    yAxisSettings: const YAxisSettings(
-                                        yAxisPos: YAxisPos.right),
-                                    yMinValue: -0.1,
-                                    yMaxValue: 0.1,
-                                    layers: [
-                                      LineData(candles: []),
-                                      HorizontalLine(value: 3500),
-                                    ]));
-                              },
-                              child: Text("Add Region")),
-                        ],
-                      )),
-                ),
-              ],
-            ),
-          ),
+              ))
         ],
       )),
     );
+  }
+
+  void _showAddDataDialog() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AddDataDialog(onDataUpdate: (data) {
+            _chartKey.currentState?.addData(data);
+          });
+        });
   }
 }

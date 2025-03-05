@@ -3,7 +3,6 @@ import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/layers/line_data.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -59,6 +58,8 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   Layer? selectedLayer;
   List<ICandle> currentData = [];
 
+  List<double> regionDivider = [];
+
   @override
   void initState() {
     super.initState();
@@ -103,6 +104,8 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   void addRegion(PlotRegion region) {
     setState(() {
+      //if regions.length == 1 and coming region is data then sregionDivider is 0.5
+      //if region.length > 1 then
       region.updateData(currentData);
       regions.add(region);
     });
@@ -128,7 +131,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       regions.add(PlotRegion(
           type: PlotRegionType.data,
           yAxisSettings: widget.yAxisSettings!,
-          layers: [CandleData(candles: []), LineData(candles: [])]));
+          layers: [CandleData(candles: [])]));
     }
     (double, double) range = findMinMaxWithPercentage(currentData);
     yMinValue = range.$1;

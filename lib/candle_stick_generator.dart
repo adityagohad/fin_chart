@@ -296,7 +296,7 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
               ),
               const SizedBox(height: 24),
               Container(
-                height: 100,
+                height: 300,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                 ),
