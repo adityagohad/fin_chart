@@ -1,6 +1,8 @@
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
+import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:flutter/material.dart';
 
 class ChartPainter extends CustomPainter {
@@ -14,17 +16,18 @@ class ChartPainter extends CustomPainter {
   final List<PlotRegion> regions;
   final int dataLength;
 
-  ChartPainter(
-      {super.repaint,
-      required this.leftPos,
-      required this.topPos,
-      required this.rightPos,
-      required this.bottomPos,
-      required this.xStepWidth,
-      required this.xOffset,
-      required this.xAxisSettings,
-      required this.regions,
-      required this.dataLength});
+  ChartPainter({
+    super.repaint,
+    required this.leftPos,
+    required this.topPos,
+    required this.rightPos,
+    required this.bottomPos,
+    required this.xStepWidth,
+    required this.xOffset,
+    required this.xAxisSettings,
+    required this.regions,
+    required this.dataLength,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -65,82 +68,168 @@ class ChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+    return true;
   }
 
-  drawXAxis(Canvas canvas) {
-    for (int i = 0; i < dataLength; i++) {
-      if (leftPos + xOffset + xStepWidth / 2 + i * xStepWidth > leftPos &&
-          leftPos + xOffset + xStepWidth / 2 + i * xStepWidth < rightPos) {
+  List<ICandle> _getCandles() {
+    if (regions.isEmpty) return [];
+
+    for (final region in regions) {
+      for (final layer in region.layers) {
+        if (layer is CandleData) {
+          return layer.candles;
+        }
+      }
+    }
+    return []; // Return empty list if no candles found
+  }
+
+  void drawXAxis(Canvas canvas) {
+    final candles = _getCandles();
+    if (candles.isEmpty) return;
+
+    // Calculate the time between candles
+    final timePerCandle = candles.length > 1
+        ? candles[1].date.difference(candles[0].date).inMinutes
+        : 1;
+
+    // Assign a fixed format for each candle based on its time interval
+    String Function(DateTime) formatTime;
+    
+    // Define format based on candle time interval
+    if (timePerCandle < 1) { // Seconds
+      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 5) { // 1-5 min
+      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 15) { // 5-15 min
+      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 60) { // 15-60 min
+      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 360) { // 1-6 hours
+      formatTime = (date) => '${date.hour}:00';
+    } else if (timePerCandle <= 1440) { // 6-24 hours
+      formatTime = (date) => '${date.hour}:00';
+    } else if (timePerCandle <= 10080) { // 1-7 days
+      formatTime = (date) => '${date.day}/${date.month}';
+    } else if (timePerCandle <= 43200) { // 7-30 days
+      formatTime = (date) => '${date.month}/${date.year.toString().substring(2)}'; 
+    } else if (timePerCandle <= 129600) { // 30-90 days
+      formatTime = (date) => 'Q${(date.month - 1) ~/ 3 + 1}\'${date.year.toString().substring(2)}';
+    } else { // > 90 days
+      formatTime = (date) => '${date.year}';
+    }
+
+    // Calculate average label width to determine spacing
+    final sampleText = TextPainter(
+      text: TextSpan(
+        text: formatTime(candles[0].date),
+        style: xAxisSettings.axisTextStyle,
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    
+    final labelWidth = sampleText.width + 20; // Larger buffer for earlier overlap prevention
+    final availableWidth = rightPos - leftPos;
+    
+    // Determine how many labels can fit without overlapping
+    final visibleCandlesCount = (availableWidth / xStepWidth).floor();
+    final labelsPerCandle = (visibleCandlesCount * labelWidth) > availableWidth 
+        ? (visibleCandlesCount * labelWidth / availableWidth).ceil() 
+        : 1;
+    
+    // Draw labels for all candles
+    for (int i = 0; i < candles.length; i++) {
+      final candle = candles[i];
+      final xPos = leftPos + xOffset + xStepWidth / 2 + i * xStepWidth;
+
+      // Skip if outside visible area
+      if (xPos < leftPos || xPos > rightPos) continue;
+
+      // Show label only for every nth candle when needed
+      if (i % labelsPerCandle == 0) {
         final TextPainter text = TextPainter(
           text: TextSpan(
-            text: i.toStringAsFixed(0),
+            text: formatTime(candle.date),
             style: xAxisSettings.axisTextStyle,
           ),
           textDirection: TextDirection.ltr,
         )..layout();
 
         if (xAxisSettings.xAxisPos == XAxisPos.bottom) {
-          canvas.drawCircle(
-              Offset(leftPos + xOffset + xStepWidth / 2 + i * xStepWidth,
-                  bottomPos),
-              1,
-              Paint()..color = xAxisSettings.axisColor);
-
-          // canvas.drawLine(
-          //     Offset(
-          //         leftPos + xOffset + xStepWidth / 2 + i * xStepWidth, topPos),
-          //     (Offset(leftPos + xOffset + xStepWidth / 2 + i * xStepWidth,
-          //         bottomPos)),
-          //     Paint());
-
           text.paint(
-              canvas,
-              Offset(
-                  leftPos +
-                      xOffset +
-                      xStepWidth / 2 +
-                      i * xStepWidth -
-                      text.width / 2,
-                  bottomPos + xLabelPadding / 2));
+            canvas,
+            Offset(xPos - text.width / 2, bottomPos + xLabelPadding / 2),
+          );
+          
+          // Draw larger tick for labeled candles
+          canvas.drawLine(
+            Offset(xPos, bottomPos - 3),
+            Offset(xPos, bottomPos + 3),
+            Paint()..color = xAxisSettings.axisColor,
+          );
         }
 
         if (xAxisSettings.xAxisPos == XAxisPos.top) {
-          canvas.drawCircle(
-              Offset(
-                  leftPos + xOffset + xStepWidth / 2 + i * xStepWidth, topPos),
-              1,
-              Paint()..color = xAxisSettings.axisColor);
-
           text.paint(
-              canvas,
-              Offset(
-                  leftPos +
-                      xOffset +
-                      xStepWidth / 2 +
-                      i * xStepWidth -
-                      text.width / 2,
-                  topPos - (text.height + xLabelPadding / 2)));
+            canvas,
+            Offset(xPos - text.width / 2, topPos - (text.height + xLabelPadding / 2)),
+          );
+          
+          // Draw larger tick for labeled candles
+          canvas.drawLine(
+            Offset(xPos, topPos - 3),
+            Offset(xPos, topPos + 3),
+            Paint()..color = xAxisSettings.axisColor,
+          );
+        }
+      } else {
+        // Draw smaller tick for unlabeled candles
+        if (xAxisSettings.xAxisPos == XAxisPos.bottom) {
+          canvas.drawLine(
+            Offset(xPos, bottomPos - 2),
+            Offset(xPos, bottomPos + 2),
+            Paint()..color = xAxisSettings.axisColor.withOpacity(0.7),
+          );
+        }
+        
+        if (xAxisSettings.xAxisPos == XAxisPos.top) {
+          canvas.drawLine(
+            Offset(xPos, topPos - 2),
+            Offset(xPos, topPos + 2),
+            Paint()..color = xAxisSettings.axisColor.withOpacity(0.7),
+          );
         }
       }
+
+      // Draw grid line for all candles
+      canvas.drawLine(
+        Offset(xPos, topPos),
+        Offset(xPos, bottomPos),
+        Paint()
+          ..color = Colors.grey.withOpacity(0.2)
+          ..strokeWidth = 0.5,
+      );
     }
 
+    // Draw axis line
     if (xAxisSettings.xAxisPos == XAxisPos.bottom) {
       canvas.drawLine(
-          Offset(leftPos, bottomPos),
-          Offset(rightPos, bottomPos),
-          Paint()
-            ..color = xAxisSettings.axisColor
-            ..strokeWidth = xAxisSettings.strokeWidth);
+        Offset(leftPos, bottomPos),
+        Offset(rightPos, bottomPos),
+        Paint()
+          ..color = xAxisSettings.axisColor
+          ..strokeWidth = xAxisSettings.strokeWidth,
+      );
     }
 
     if (xAxisSettings.xAxisPos == XAxisPos.top) {
       canvas.drawLine(
-          Offset(leftPos, topPos),
-          Offset(rightPos, topPos),
-          Paint()
-            ..color = xAxisSettings.axisColor
-            ..strokeWidth = xAxisSettings.strokeWidth);
+        Offset(leftPos, topPos),
+        Offset(rightPos, topPos),
+        Paint()
+          ..color = xAxisSettings.axisColor
+          ..strokeWidth = xAxisSettings.strokeWidth,
+      );
     }
   }
 }
