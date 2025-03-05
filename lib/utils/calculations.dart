@@ -56,7 +56,7 @@ List<double> generateNiceAxisValues(double min, double max) {
 }
 
 (double, double) findMinMaxWithPercentage(List<ICandle> candles) {
-  if (candles.isEmpty) return (0, 100);
+  if (candles.isEmpty) return (0, 1);
   double lowest = candles[0].low;
   double highest = candles[0].high;
 
