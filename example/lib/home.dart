@@ -19,7 +19,17 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<ChartState> _chartKey = GlobalKey();
   List<ICandle> candleData = [];
-  List<PlotRegion> regions = [];
+  List<PlotRegion> regions = [
+    // PlotRegion(
+    //     type: PlotRegionType.indicator,
+    //     yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
+    //     yMinValue: -100,
+    //     yMaxValue: 100,
+    //     layers: [
+    //       LineData(candles: []),
+    //       HorizontalLine(value: 3500),
+    //     ])
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +49,6 @@ class _HomeState extends State<Home> {
               xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
               candles: candleData,
               regions: regions,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             ),
           ),
           Flexible(

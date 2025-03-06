@@ -12,16 +12,23 @@ class PlotRegion with RegionProp {
   final PlotRegionType type;
   final YAxisSettings yAxisSettings;
   final List<Layer> layers;
+  late Size yLabelSize;
+  late List<double> yValues;
 
-  PlotRegion({
-    required this.type,
-    required this.yAxisSettings,
-    List<Layer>? layers,
-    double yMinValue = 0,
-    double yMaxValue = 1,
-  }) : layers = layers ?? [] {
+  PlotRegion(
+      {required this.type,
+      required this.yAxisSettings,
+      List<Layer>? layers,
+      double yMinValue = 0,
+      double yMaxValue = 1})
+      : layers = layers ?? [] {
     this.yMinValue = yMinValue;
     this.yMaxValue = yMaxValue;
+    yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+    this.yMinValue = yValues.first;
+    this.yMaxValue = yValues.last;
+    yLabelSize = getLargetRnderBoxSizeForList(
+        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
   }
 
   PlotRegion? isRegionReadyForResize(Offset selectedPoint) {
@@ -107,6 +114,7 @@ class PlotRegion with RegionProp {
   }
 
   void drawLayers(Canvas canvas) {
+    //baseLayer.drawLayer(canvas: canvas);
     for (final layer in layers) {
       layer.drawLayer(canvas: canvas);
     }
@@ -132,6 +140,10 @@ class PlotRegion with RegionProp {
 
       yMinValue = yValues.first;
       yMaxValue = yValues.last;
+
+      yLabelSize = getLargetRnderBoxSizeForList(
+          yValues.map((v) => v.toString()).toList(),
+          yAxisSettings.axisTextStyle);
 
       for (final layer in layers) {
         if (type == PlotRegionType.data) {

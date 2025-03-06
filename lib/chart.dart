@@ -5,7 +5,6 @@ import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -14,28 +13,29 @@ import 'models/settings/y_axis_settings.dart';
 class Chart extends StatefulWidget {
   final EdgeInsets? padding;
   final DataFit dataFit;
-  final List<ICandle> candles;
-  final List<PlotRegion> regions;
   final YAxisSettings? yAxisSettings;
   final XAxisSettings? xAxisSettings;
+  final List<ICandle> candles;
+  final List<PlotRegion> regions;
+
   const Chart(
       {super.key,
       this.padding = const EdgeInsets.all(8),
       this.dataFit = DataFit.adaptiveWidth,
       required this.candles,
+      required this.regions,
       this.yAxisSettings = const YAxisSettings(),
-      this.xAxisSettings = const XAxisSettings(),
-      required this.regions});
+      this.xAxisSettings = const XAxisSettings()});
 
   @override
   State<Chart> createState() => ChartState();
 }
 
 class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
-  late double leftPos;
-  late double topPos;
-  late double rightPos;
-  late double bottomPos;
+  double leftPos = 0;
+  double topPos = 0;
+  double rightPos = 0;
+  double bottomPos = 0;
 
   double xOffset = 0;
 
@@ -43,7 +43,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   double previousHorizontalScale = 1.0;
   Offset? lastFocalPoint;
 
-  double yLabelWidth = 62;
+  double yLabelWidth = 21;
   double xLabelHeight = 21;
 
   double yMinValue = 0;
@@ -59,10 +59,13 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
 
+  bool isInit = false;
+
   @override
   void initState() {
-    super.initState();
+    currentData.addAll(widget.candles);
     regions.addAll(widget.regions);
+    super.initState();
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -196,34 +199,9 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   _recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
-    if (regions.isEmpty) {
-      regions.add(PlotRegion(
-          type: PlotRegionType.data,
-          yAxisSettings: widget.yAxisSettings!,
-          layers: [CandleData(candles: [])]));
-    }
-    (double, double) range = findMinMaxWithPercentage(currentData);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
-
-    for (int i = 0; i < regions.length; i++) {
-      List<double> yValues = generateNiceAxisValues(
-          regions[i].type == PlotRegionType.data
-              ? yMinValue
-              : regions[i].yMinValue,
-          regions[i].type == PlotRegionType.data
-              ? yMaxValue
-              : regions[i].yMaxValue);
-
-      regions[i].yMinValue = yValues.first;
-      regions[i].yMaxValue = yValues.last;
-
-      Size yLabelSize = getLargetRnderBoxSizeForList(
-          yValues.map((v) => v.toString()).toList(),
-          widget.yAxisSettings!.axisTextStyle);
-
-      if (yLabelSize.width > yLabelWidth) {
-        yLabelWidth = yLabelSize.width;
+    for (PlotRegion region in regions) {
+      if (region.yLabelSize.width > yLabelWidth) {
+        yLabelWidth = region.yLabelSize.width;
       }
     }
 
@@ -247,12 +225,17 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
 
-    if (regions.length == 1) {
+    if (regions.isEmpty) {
+      regions.add(PlotRegion(
+          type: PlotRegionType.data,
+          yAxisSettings: widget.yAxisSettings!,
+          layers: [CandleData(candles: [])]));
+
       regions[0].updateRegionProp(
           leftPos: leftPos,
-          topPos: regions.length == 1 ? topPos : regions[0].topPos,
+          topPos: topPos,
           rightPos: rightPos,
-          bottomPos: regions.length == 1 ? bottomPos : regions[0].bottomPos,
+          bottomPos: bottomPos,
           xStepWidth: xStepWidth,
           xOffset: xOffset,
           yMinValue: regions[0].yMinValue,
