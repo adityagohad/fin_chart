@@ -22,7 +22,7 @@ class _RegionDialogState extends State<RegionDialog> {
     if (selectedRegionType == PlotRegionType.data) {
       return ['Candle', 'Line'];
     } else if (selectedRegionType == PlotRegionType.indicator) {
-      return ['RSI', 'MACD', 'Stochastic', 'SMA', 'EMA'];
+      return ['RSI', 'MACD', 'Stochastic'];
     }
     return [];
   }
