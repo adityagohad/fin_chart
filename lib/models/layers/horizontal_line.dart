@@ -9,8 +9,12 @@ class HorizontalLine extends Layer {
 
   @override
   void drawLayer({required Canvas canvas}) {
-    canvas.drawLine(Offset(leftPos, toY(value)), Offset(rightPos, toY(value)),
-        Paint()..color = Colors.blue);
+    canvas.drawLine(
+        Offset(leftPos, toY(value)),
+        Offset(rightPos, toY(value)),
+        Paint()
+          ..color = Colors.blue
+          ..strokeWidth = 2);
   }
 
   @override
