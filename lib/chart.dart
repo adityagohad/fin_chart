@@ -63,32 +63,6 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     regions.addAll(widget.regions);
-    //addLater();
-    // regions.add(PlotRegion(
-    //     type: PlotRegionType.main,
-    //     yAxisSettings: widget.yAxisSettings!,
-    //     layers: [
-    //       CandleData(candles: widget.candles),
-    //       ChartPointer(pointOffset: const Offset(2, 4000)),
-    //       TrendLine(from: const Offset(2, 3600), to: const Offset(8, 4200)),
-    //       HorizontalLine(value: 3500),
-    //       RectArea(
-    //           topLeft: const Offset(15, 3600),
-    //           bottomRight: const Offset(29, 3500)),
-    //       Label(
-    //           pos: const Offset(0, 4200),
-    //           label: "Hey this is text",
-    //           textStyle: const TextStyle(color: Colors.red, fontSize: 16))
-    //     ]));
-
-    // regions.add(PlotRegion(
-    //     type: PlotRegionType.main,
-    //     yAxisSettings: widget.yAxisSettings!,
-    //     layers: [
-    //       SmoothLineData(candles: widget.candles),
-    //       ChartPointer(pointOffset: const Offset(2, 4000)),
-    //     ]));
-
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -126,6 +100,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   void addLayer(Layer layer) {
     setState(() {
       regions[0].layers.add(layer);
+      regions[0].updateData(currentData);
     });
   }
 

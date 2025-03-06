@@ -122,10 +122,10 @@ class PlotRegion with RegionProp {
                 .map((c) => ICandle(
                     id: c.id,
                     date: c.date,
-                    open: c.open / 100,
-                    high: c.high / 100,
-                    low: c.low / 100,
-                    close: c.close / 100,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
                     volume: c.volume))
                 .toList());
       }
