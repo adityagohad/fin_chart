@@ -24,6 +24,20 @@ class PlotRegion with RegionProp {
     this.yMaxValue = yMaxValue;
   }
 
+  PlotRegion? isRegionReadyForResize(Offset selectedPoint) {
+    // print("left Point : ${Offset(leftPos, bottomPos)}");
+    // print("right Point : ${Offset(rightPos, bottomPos)}");
+    // print("seletedPoint : $selectedPoint");
+    if (isPointOnLine(selectedPoint, Offset(leftPos, bottomPos),
+            Offset(rightPos, bottomPos)) ||
+        isPointOnLine(
+            selectedPoint, Offset(leftPos, topPos), Offset(rightPos, topPos))) {
+      return this;
+    } else {
+      return null;
+    }
+  }
+
   void drawYAxis(Canvas canvas) {
     List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
     double valuseDiff = yValues.last - yValues.first;
@@ -108,10 +122,10 @@ class PlotRegion with RegionProp {
                 .map((c) => ICandle(
                     id: c.id,
                     date: c.date,
-                    open: c.open / 100,
-                    high: c.high / 100,
-                    low: c.low / 100,
-                    close: c.close / 100,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
                     volume: c.volume))
                 .toList());
       }

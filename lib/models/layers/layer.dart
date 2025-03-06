@@ -15,5 +15,7 @@ abstract class Layer with RegionProp {
 
   void onScaleUpdate({required ScaleUpdateDetails details}) {}
 
+  void onScaleStart({required ScaleStartDetails details}) {}
+
   void onUpdateData({required List<ICandle> data}) {}
 }

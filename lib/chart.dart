@@ -57,39 +57,12 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   List<PlotRegion> regions = [];
   Layer? selectedLayer;
   List<ICandle> currentData = [];
-
-  List<double> regionDivider = [];
+  List<PlotRegion> selectedRegionForResize = [];
 
   @override
   void initState() {
     super.initState();
     regions.addAll(widget.regions);
-    //addLater();
-    // regions.add(PlotRegion(
-    //     type: PlotRegionType.main,
-    //     yAxisSettings: widget.yAxisSettings!,
-    //     layers: [
-    //       CandleData(candles: widget.candles),
-    //       ChartPointer(pointOffset: const Offset(2, 4000)),
-    //       TrendLine(from: const Offset(2, 3600), to: const Offset(8, 4200)),
-    //       HorizontalLine(value: 3500),
-    //       RectArea(
-    //           topLeft: const Offset(15, 3600),
-    //           bottomRight: const Offset(29, 3500)),
-    //       Label(
-    //           pos: const Offset(0, 4200),
-    //           label: "Hey this is text",
-    //           textStyle: const TextStyle(color: Colors.red, fontSize: 16))
-    //     ]));
-
-    // regions.add(PlotRegion(
-    //     type: PlotRegionType.main,
-    //     yAxisSettings: widget.yAxisSettings!,
-    //     layers: [
-    //       SmoothLineData(candles: widget.candles),
-    //       ChartPointer(pointOffset: const Offset(2, 4000)),
-    //     ]));
-
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -104,9 +77,22 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   void addRegion(PlotRegion region) {
     setState(() {
-      //if regions.length == 1 and coming region is data then sregionDivider is 0.5
-      //if region.length > 1 then
+      double addRegionWeight = 1 / (regions.length + 1);
+      double multiplier = 1 - addRegionWeight;
+
+      _updateRegionBounds(multiplier);
+
       region.updateData(currentData);
+      region.updateRegionProp(
+          leftPos: leftPos,
+          topPos: topPos + (bottomPos - topPos) * multiplier,
+          rightPos: rightPos,
+          bottomPos: bottomPos,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: region.yMinValue,
+          yMaxValue: region.yMaxValue);
+
       regions.add(region);
     });
   }
@@ -114,6 +100,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   void addLayer(Layer layer) {
     setState(() {
       regions[0].layers.add(layer);
+      regions[0].updateData(currentData);
     });
   }
 
@@ -124,6 +111,44 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         regions[i].updateData(currentData);
       }
     });
+  }
+
+  _updateRegionBounds(double multiplier) {
+    double totalHeight = (bottomPos - topPos) * multiplier;
+    double tempTopPos = topPos;
+    for (int i = 0; i < regions.length; i++) {
+      double height = totalHeight *
+          (regions[i].bottomPos - regions[i].topPos) /
+          (bottomPos - topPos);
+      regions[i].updateRegionProp(
+          leftPos: leftPos,
+          topPos: tempTopPos,
+          rightPos: rightPos,
+          bottomPos: tempTopPos + height,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: regions[i].yMinValue,
+          yMaxValue: regions[i].yMaxValue);
+      tempTopPos = tempTopPos + height;
+    }
+
+    // double totalHeight = (bottomPos - topPos) * multiplier;
+    // double tempBottomPos = bottomPos;
+    // for (int i = regions.length - 1; i >= 0; i--) {
+    //   double height = totalHeight *
+    //       (regions[i].bottomPos - regions[i].topPos) /
+    //       (bottomPos - topPos);
+    //   regions[i].updateRegionProp(
+    //       leftPos: leftPos,
+    //       topPos: tempBottomPos - height,
+    //       rightPos: rightPos,
+    //       bottomPos: tempBottomPos,
+    //       xStepWidth: xStepWidth,
+    //       xOffset: xOffset,
+    //       yMinValue: regions[i].yMinValue,
+    //       yMaxValue: regions[i].yMaxValue);
+    //   tempBottomPos = tempBottomPos - height;
+    // }
   }
 
   recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
@@ -178,19 +203,30 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
 
-    double totalHeight = bottomPos - topPos;
-    int sections = regions.isEmpty ? 1 : regions.length;
-    for (int i = 0; i < regions.length; i++) {
-      regions[i].updateRegionProp(
+    if (regions.length == 1) {
+      regions[0].updateRegionProp(
           leftPos: leftPos,
-          topPos: topPos + totalHeight / sections * i,
+          topPos: regions.length == 1 ? topPos : regions[0].topPos,
           rightPos: rightPos,
-          bottomPos: topPos + totalHeight / sections * (i + 1),
+          bottomPos: regions.length == 1 ? bottomPos : regions[0].bottomPos,
           xStepWidth: xStepWidth,
           xOffset: xOffset,
-          yMinValue: regions[i].yMinValue,
-          yMaxValue: regions[i].yMaxValue);
+          yMinValue: regions[0].yMinValue,
+          yMaxValue: regions[0].yMaxValue);
     }
+
+    // for (int i = 0; i < regions.length; i++) {
+    //   regions[i].updateRegionProp(
+    //       leftPos: leftPos,
+    //       topPos: regions[i].topPos,
+    //       rightPos: rightPos,
+    //       bottomPos: regions[i].bottomPos,
+    //       xStepWidth: xStepWidth,
+    //       xOffset: xOffset,
+    //       yMinValue: regions[i].yMinValue,
+    //       yMaxValue: regions[i].yMaxValue);
+    // }
+    _updateRegionBounds(1);
   }
 
   @override
@@ -280,6 +316,11 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   _onTapDown(TapDownDetails details) {
     selectedLayer = null;
     for (PlotRegion region in regions) {
+      if (selectedRegionForResize.length < 2) {
+        if (region.isRegionReadyForResize(details.localPosition) != null) {
+          selectedRegionForResize.add(region);
+        }
+      }
       for (Layer layer in region.layers) {
         setState(() {
           if (selectedLayer == null) {
@@ -307,6 +348,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     setState(() {
       lastFocalPoint = null;
       _handleSwipeEnd(details);
+      selectedRegionForResize.clear();
     });
   }
 
@@ -314,11 +356,32 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     setState(() {
       if (details.pointerCount == 1) {
         if (selectedLayer == null) {
-          setState(() {
-            _isAnimating = false; // Stop any ongoing animation
-            xOffset = (xOffset + details.focalPointDelta.dx)
-                .clamp(getMaxLeftOffset(), 0);
-          });
+          if (selectedRegionForResize.length == 2) {
+            selectedRegionForResize[0].updateRegionProp(
+                leftPos: leftPos,
+                topPos: selectedRegionForResize[0].topPos,
+                rightPos: rightPos,
+                bottomPos: selectedRegionForResize[0].bottomPos +
+                    details.focalPointDelta.dy,
+                xStepWidth: xStepWidth,
+                xOffset: xOffset,
+                yMinValue: selectedRegionForResize[0].yMinValue,
+                yMaxValue: selectedRegionForResize[0].yMaxValue);
+
+            selectedRegionForResize[1].updateRegionProp(
+                leftPos: leftPos,
+                topPos: selectedRegionForResize[1].topPos +
+                    details.focalPointDelta.dy,
+                rightPos: rightPos,
+                bottomPos: selectedRegionForResize[1].bottomPos,
+                xStepWidth: xStepWidth,
+                xOffset: xOffset,
+                yMinValue: selectedRegionForResize[1].yMinValue,
+                yMaxValue: selectedRegionForResize[1].yMaxValue);
+          }
+          _isAnimating = false; // Stop any ongoing animation
+          xOffset = (xOffset + details.focalPointDelta.dx)
+              .clamp(getMaxLeftOffset(), 0);
         } else {
           selectedLayer?.onScaleUpdate(details: details);
         }
@@ -343,3 +406,16 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 }
+
+//go throught the all flows - 3
+//identify all the faulty nodes - 30 min (min)
+
+//We have to update node or create node - 2 days to 20 min 
+
+
+//Find all the levels and update node - 5 - 15 min 
+
+//submit - 3-5 min
+
+
+//making new nodes/widget and making easy for updating Param
