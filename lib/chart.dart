@@ -332,10 +332,11 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
                 xOffset: xOffset,
                 yMinValue: selectedRegionForResize[1].yMinValue,
                 yMaxValue: selectedRegionForResize[1].yMaxValue);
+          } else {
+            _isAnimating = false;
+            xOffset = (xOffset + details.focalPointDelta.dx)
+                .clamp(_getMaxLeftOffset(), 0);
           }
-          _isAnimating = false; // Stop any ongoing animation
-          xOffset = (xOffset + details.focalPointDelta.dx)
-              .clamp(_getMaxLeftOffset(), 0);
         } else {
           selectedLayer?.onScaleUpdate(details: details);
         }
