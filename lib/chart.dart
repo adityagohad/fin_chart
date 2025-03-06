@@ -113,6 +113,68 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: widget.padding,
+        child: LayoutBuilder(builder: (context, constraints) {
+          _recalculate(constraints, regions);
+          return SizedBox(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: GestureDetector(
+              onTapDown: _onTapDown,
+              onDoubleTap: _onDoubleTap,
+              onScaleStart: _onScaleStart,
+              onScaleEnd: _onScaleEnd,
+              onScaleUpdate: (details) => _onScaleUpdate(details, constraints),
+              child: CustomPaint(
+                painter: ChartPainter(
+                    regions: regions,
+                    xAxisSettings: widget.xAxisSettings!,
+                    xOffset: xOffset,
+                    xStepWidth: xStepWidth,
+                    dataLength: currentData.length,
+                    leftPos: leftPos,
+                    topPos: topPos,
+                    rightPos: rightPos,
+                    bottomPos: bottomPos),
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+              ),
+            ),
+          );
+        }));
+  }
+
+  void _handleSwipeAnimation() {
+    if (!_isAnimating) return;
+
+    setState(() {
+      final double progress = _swipeAnimationController.value;
+      final double dampedVelocity =
+          _swipeVelocity * (1 - progress) * (1 - progress); // Add extra damping
+      xOffset = (xOffset + dampedVelocity).clamp(_getMaxLeftOffset(), 0);
+
+      if (progress >= 1.0) {
+        _isAnimating = false;
+        _swipeVelocity = 0;
+      }
+    });
+  }
+
+  double _getMaxLeftOffset() {
+    if (currentData.isEmpty) return 0;
+
+    double lastCandlePosition =
+        xStepWidth / 2 + (currentData.length - 1) * xStepWidth;
+
+    if (lastCandlePosition < (rightPos - leftPos) / 2) {
+      return 0;
+    } else {
+      return -lastCandlePosition + (rightPos - leftPos) / 2;
+    }
+  }
+
   _updateRegionBounds(double multiplier) {
     double totalHeight = (bottomPos - topPos) * multiplier;
     double tempTopPos = topPos;
@@ -131,27 +193,9 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
           yMaxValue: regions[i].yMaxValue);
       tempTopPos = tempTopPos + height;
     }
-
-    // double totalHeight = (bottomPos - topPos) * multiplier;
-    // double tempBottomPos = bottomPos;
-    // for (int i = regions.length - 1; i >= 0; i--) {
-    //   double height = totalHeight *
-    //       (regions[i].bottomPos - regions[i].topPos) /
-    //       (bottomPos - topPos);
-    //   regions[i].updateRegionProp(
-    //       leftPos: leftPos,
-    //       topPos: tempBottomPos - height,
-    //       rightPos: rightPos,
-    //       bottomPos: tempBottomPos,
-    //       xStepWidth: xStepWidth,
-    //       xOffset: xOffset,
-    //       yMinValue: regions[i].yMinValue,
-    //       yMaxValue: regions[i].yMaxValue);
-    //   tempBottomPos = tempBottomPos - height;
-    // }
   }
 
-  recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
+  _recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
     if (regions.isEmpty) {
       regions.add(PlotRegion(
           type: PlotRegionType.data,
@@ -215,83 +259,10 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
           yMaxValue: regions[0].yMaxValue);
     }
 
-    // for (int i = 0; i < regions.length; i++) {
-    //   regions[i].updateRegionProp(
-    //       leftPos: leftPos,
-    //       topPos: regions[i].topPos,
-    //       rightPos: rightPos,
-    //       bottomPos: regions[i].bottomPos,
-    //       xStepWidth: xStepWidth,
-    //       xOffset: xOffset,
-    //       yMinValue: regions[i].yMinValue,
-    //       yMaxValue: regions[i].yMaxValue);
-    // }
     _updateRegionBounds(1);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-        padding: widget.padding,
-        child: LayoutBuilder(builder: (context, constraints) {
-          recalculate(constraints, regions);
-          return SizedBox(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            child: GestureDetector(
-              onTapDown: _onTapDown,
-              onDoubleTap: _onDoubleTap,
-              onScaleStart: _onScaleStart,
-              onScaleEnd: _onScaleEnd,
-              onScaleUpdate: (details) => _onScaleUpdate(details, constraints),
-              child: CustomPaint(
-                painter: ChartPainter(
-                    regions: regions,
-                    xAxisSettings: widget.xAxisSettings!,
-                    xOffset: xOffset,
-                    xStepWidth: xStepWidth,
-                    dataLength: currentData.length,
-                    leftPos: leftPos,
-                    topPos: topPos,
-                    rightPos: rightPos,
-                    bottomPos: bottomPos),
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-              ),
-            ),
-          );
-        }));
-  }
-
-  void _handleSwipeAnimation() {
-    if (!_isAnimating) return;
-
-    setState(() {
-      final double progress = _swipeAnimationController.value;
-      final double dampedVelocity =
-          _swipeVelocity * (1 - progress) * (1 - progress); // Add extra damping
-      xOffset = (xOffset + dampedVelocity).clamp(getMaxLeftOffset(), 0);
-
-      if (progress >= 1.0) {
-        _isAnimating = false;
-        _swipeVelocity = 0;
-      }
-    });
-  }
-
-  double getMaxLeftOffset() {
-    if (currentData.isEmpty) return 0;
-
-    double lastCandlePosition =
-        xStepWidth / 2 + (currentData.length - 1) * xStepWidth;
-
-    if (lastCandlePosition < (rightPos - leftPos) / 2) {
-      return 0;
-    } else {
-      return -lastCandlePosition + (rightPos - leftPos) / 2;
-    }
-  }
-
-  void _handleSwipeEnd(ScaleEndDetails details) {
+  _handleSwipeEnd(ScaleEndDetails details) {
     // Calculate velocity and start animation
     _swipeVelocity = details.velocity.pixelsPerSecond.dx *
         0.1; // Reduce velocity sensitivity
@@ -381,7 +352,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
           }
           _isAnimating = false; // Stop any ongoing animation
           xOffset = (xOffset + details.focalPointDelta.dx)
-              .clamp(getMaxLeftOffset(), 0);
+              .clamp(_getMaxLeftOffset(), 0);
         } else {
           selectedLayer?.onScaleUpdate(details: details);
         }
@@ -396,7 +367,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
               (candleWidth * 2) *
               currentData.length *
               focalPointRatio;
-          xOffset = (xOffset - offsetAdjustment).clamp(getMaxLeftOffset(), 0);
+          xOffset = (xOffset - offsetAdjustment).clamp(_getMaxLeftOffset(), 0);
         }
 
         horizontalScale = newScale;
@@ -406,16 +377,3 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 }
-
-//go throught the all flows - 3
-//identify all the faulty nodes - 30 min (min)
-
-//We have to update node or create node - 2 days to 20 min 
-
-
-//Find all the levels and update node - 5 - 15 min 
-
-//submit - 3-5 min
-
-
-//making new nodes/widget and making easy for updating Param

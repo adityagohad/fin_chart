@@ -113,21 +113,60 @@ class PlotRegion with RegionProp {
   }
 
   void updateData(List<ICandle> data) {
-    for (final layer in layers) {
-      if (type == PlotRegionType.data) {
-        layer.onUpdateData(data: data);
-      } else {
-        layer.onUpdateData(
-            data: data
-                .map((c) => ICandle(
-                    id: c.id,
-                    date: c.date,
-                    open: c.open,
-                    high: c.high,
-                    low: c.low,
-                    close: c.close,
-                    volume: c.volume))
-                .toList());
+    if (type == PlotRegionType.data) {
+      List<ICandle> calulateData = data
+          .map((c) => ICandle(
+              id: c.id,
+              date: c.date,
+              open: c.open,
+              high: c.high,
+              low: c.low,
+              close: c.close,
+              volume: c.volume))
+          .toList();
+      (double, double) range = findMinMaxWithPercentage(calulateData);
+      yMinValue = range.$1;
+      yMaxValue = range.$2;
+
+      List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
+
+      for (final layer in layers) {
+        if (type == PlotRegionType.data) {
+          layer.onUpdateData(data: data);
+        } else {
+          layer.onUpdateData(data: calulateData);
+        }
+      }
+    }
+    if (type == PlotRegionType.indicator) {
+      List<ICandle> calulateData = data
+          .map((c) => ICandle(
+              id: c.id,
+              date: c.date,
+              open: c.open / 100,
+              high: c.high / 100,
+              low: c.low / 100,
+              close: c.close / 100,
+              volume: c.volume))
+          .toList();
+      (double, double) range = findMinMaxWithPercentage(calulateData);
+      yMinValue = range.$1;
+      yMaxValue = range.$2;
+
+      List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
+
+      for (final layer in layers) {
+        if (type == PlotRegionType.data) {
+          layer.onUpdateData(data: data);
+        } else {
+          layer.onUpdateData(data: calulateData);
+        }
       }
     }
   }
