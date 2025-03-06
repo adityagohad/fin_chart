@@ -59,6 +59,7 @@ class ChartPainter extends CustomPainter {
     canvas.clipRect(innerBoundries);
 
     for (PlotRegion region in regions) {
+      region.drawBaseLayer(canvas);
       region.drawLayers(canvas);
       canvas.drawLine(
           Offset(leftPos, region.bottomPos),

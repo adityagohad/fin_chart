@@ -1,11 +1,10 @@
 import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -14,28 +13,29 @@ import 'models/settings/y_axis_settings.dart';
 class Chart extends StatefulWidget {
   final EdgeInsets? padding;
   final DataFit dataFit;
-  final List<ICandle> candles;
-  final List<PlotRegion> regions;
   final YAxisSettings? yAxisSettings;
   final XAxisSettings? xAxisSettings;
+  final List<ICandle> candles;
+  final List<PlotRegion> regions;
+
   const Chart(
       {super.key,
       this.padding = const EdgeInsets.all(8),
       this.dataFit = DataFit.adaptiveWidth,
       required this.candles,
+      required this.regions,
       this.yAxisSettings = const YAxisSettings(),
-      this.xAxisSettings = const XAxisSettings(),
-      required this.regions});
+      this.xAxisSettings = const XAxisSettings()});
 
   @override
   State<Chart> createState() => ChartState();
 }
 
 class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
-  late double leftPos;
-  late double topPos;
-  late double rightPos;
-  late double bottomPos;
+  double leftPos = 0;
+  double topPos = 0;
+  double rightPos = 0;
+  double bottomPos = 0;
 
   double xOffset = 0;
 
@@ -43,7 +43,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   double previousHorizontalScale = 1.0;
   Offset? lastFocalPoint;
 
-  double yLabelWidth = 62;
+  double yLabelWidth = 21;
   double xLabelHeight = 21;
 
   double yMinValue = 0;
@@ -59,10 +59,13 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
 
+  bool isInit = false;
+
   @override
   void initState() {
-    super.initState();
+    currentData.addAll(widget.candles);
     regions.addAll(widget.regions);
+    super.initState();
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -113,128 +116,12 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
-  _updateRegionBounds(double multiplier) {
-    double totalHeight = (bottomPos - topPos) * multiplier;
-    double tempTopPos = topPos;
-    for (int i = 0; i < regions.length; i++) {
-      double height = totalHeight *
-          (regions[i].bottomPos - regions[i].topPos) /
-          (bottomPos - topPos);
-      regions[i].updateRegionProp(
-          leftPos: leftPos,
-          topPos: tempTopPos,
-          rightPos: rightPos,
-          bottomPos: tempTopPos + height,
-          xStepWidth: xStepWidth,
-          xOffset: xOffset,
-          yMinValue: regions[i].yMinValue,
-          yMaxValue: regions[i].yMaxValue);
-      tempTopPos = tempTopPos + height;
-    }
-
-    // double totalHeight = (bottomPos - topPos) * multiplier;
-    // double tempBottomPos = bottomPos;
-    // for (int i = regions.length - 1; i >= 0; i--) {
-    //   double height = totalHeight *
-    //       (regions[i].bottomPos - regions[i].topPos) /
-    //       (bottomPos - topPos);
-    //   regions[i].updateRegionProp(
-    //       leftPos: leftPos,
-    //       topPos: tempBottomPos - height,
-    //       rightPos: rightPos,
-    //       bottomPos: tempBottomPos,
-    //       xStepWidth: xStepWidth,
-    //       xOffset: xOffset,
-    //       yMinValue: regions[i].yMinValue,
-    //       yMaxValue: regions[i].yMaxValue);
-    //   tempBottomPos = tempBottomPos - height;
-    // }
-  }
-
-  recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
-    if (regions.isEmpty) {
-      regions.add(PlotRegion(
-          type: PlotRegionType.data,
-          yAxisSettings: widget.yAxisSettings!,
-          layers: [CandleData(candles: [])]));
-    }
-    (double, double) range = findMinMaxWithPercentage(currentData);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
-
-    for (int i = 0; i < regions.length; i++) {
-      List<double> yValues = generateNiceAxisValues(
-          regions[i].type == PlotRegionType.data
-              ? yMinValue
-              : regions[i].yMinValue,
-          regions[i].type == PlotRegionType.data
-              ? yMaxValue
-              : regions[i].yMaxValue);
-
-      regions[i].yMinValue = yValues.first;
-      regions[i].yMaxValue = yValues.last;
-
-      Size yLabelSize = getLargetRnderBoxSizeForList(
-          yValues.map((v) => v.toString()).toList(),
-          widget.yAxisSettings!.axisTextStyle);
-
-      if (yLabelSize.width > yLabelWidth) {
-        yLabelWidth = yLabelSize.width;
-      }
-    }
-
-    if (widget.yAxisSettings!.yAxisPos == YAxisPos.left) {
-      leftPos = yLabelWidth + yLabelPadding;
-      rightPos = constraints.maxWidth - yLabelPadding;
-    }
-
-    if (widget.xAxisSettings!.xAxisPos == XAxisPos.top) {
-      topPos = xLabelHeight + xLabelPadding;
-      bottomPos = constraints.maxHeight - xLabelPadding;
-    }
-
-    if (widget.yAxisSettings!.yAxisPos == YAxisPos.right) {
-      leftPos = yLabelPadding;
-      rightPos = constraints.maxWidth - (yLabelWidth + yLabelPadding);
-    }
-
-    if (widget.xAxisSettings!.xAxisPos == XAxisPos.bottom) {
-      topPos = xLabelPadding;
-      bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
-    }
-
-    if (regions.length == 1) {
-      regions[0].updateRegionProp(
-          leftPos: leftPos,
-          topPos: regions.length == 1 ? topPos : regions[0].topPos,
-          rightPos: rightPos,
-          bottomPos: regions.length == 1 ? bottomPos : regions[0].bottomPos,
-          xStepWidth: xStepWidth,
-          xOffset: xOffset,
-          yMinValue: regions[0].yMinValue,
-          yMaxValue: regions[0].yMaxValue);
-    }
-
-    // for (int i = 0; i < regions.length; i++) {
-    //   regions[i].updateRegionProp(
-    //       leftPos: leftPos,
-    //       topPos: regions[i].topPos,
-    //       rightPos: rightPos,
-    //       bottomPos: regions[i].bottomPos,
-    //       xStepWidth: xStepWidth,
-    //       xOffset: xOffset,
-    //       yMinValue: regions[i].yMinValue,
-    //       yMaxValue: regions[i].yMaxValue);
-    // }
-    _updateRegionBounds(1);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
-          recalculate(constraints, regions);
+          _recalculate(constraints, regions);
           return SizedBox(
             width: constraints.maxWidth,
             height: constraints.maxHeight,
@@ -269,7 +156,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       final double progress = _swipeAnimationController.value;
       final double dampedVelocity =
           _swipeVelocity * (1 - progress) * (1 - progress); // Add extra damping
-      xOffset = (xOffset + dampedVelocity).clamp(getMaxLeftOffset(), 0);
+      xOffset = (xOffset + dampedVelocity).clamp(_getMaxLeftOffset(), 0);
 
       if (progress >= 1.0) {
         _isAnimating = false;
@@ -278,7 +165,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
-  double getMaxLeftOffset() {
+  double _getMaxLeftOffset() {
     if (currentData.isEmpty) return 0;
 
     double lastCandlePosition =
@@ -291,7 +178,74 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     }
   }
 
-  void _handleSwipeEnd(ScaleEndDetails details) {
+  _updateRegionBounds(double multiplier) {
+    double totalHeight = (bottomPos - topPos) * multiplier;
+    double tempTopPos = topPos;
+    for (int i = 0; i < regions.length; i++) {
+      double height = totalHeight *
+          (regions[i].bottomPos - regions[i].topPos) /
+          (bottomPos - topPos);
+      regions[i].updateRegionProp(
+          leftPos: leftPos,
+          topPos: tempTopPos,
+          rightPos: rightPos,
+          bottomPos: tempTopPos + height,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: regions[i].yMinValue,
+          yMaxValue: regions[i].yMaxValue);
+      tempTopPos = tempTopPos + height;
+    }
+  }
+
+  _recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
+    for (PlotRegion region in regions) {
+      if (region.yLabelSize.width > yLabelWidth) {
+        yLabelWidth = region.yLabelSize.width;
+      }
+    }
+
+    if (widget.yAxisSettings!.yAxisPos == YAxisPos.left) {
+      leftPos = yLabelWidth + yLabelPadding;
+      rightPos = constraints.maxWidth - yLabelPadding;
+    }
+
+    if (widget.xAxisSettings!.xAxisPos == XAxisPos.top) {
+      topPos = xLabelHeight + xLabelPadding;
+      bottomPos = constraints.maxHeight - xLabelPadding;
+    }
+
+    if (widget.yAxisSettings!.yAxisPos == YAxisPos.right) {
+      leftPos = yLabelPadding;
+      rightPos = constraints.maxWidth - (yLabelWidth + yLabelPadding);
+    }
+
+    if (widget.xAxisSettings!.xAxisPos == XAxisPos.bottom) {
+      topPos = xLabelPadding;
+      bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
+    }
+
+    if (regions.isEmpty) {
+      regions.add(MainPlotRegion(
+        candles: [],
+        yAxisSettings: widget.yAxisSettings!,
+      ));
+
+      regions[0].updateRegionProp(
+          leftPos: leftPos,
+          topPos: topPos,
+          rightPos: rightPos,
+          bottomPos: bottomPos,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: regions[0].yMinValue,
+          yMaxValue: regions[0].yMaxValue);
+    }
+
+    _updateRegionBounds(1);
+  }
+
+  _handleSwipeEnd(ScaleEndDetails details) {
     // Calculate velocity and start animation
     _swipeVelocity = details.velocity.pixelsPerSecond.dx *
         0.1; // Reduce velocity sensitivity
@@ -378,10 +332,11 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
                 xOffset: xOffset,
                 yMinValue: selectedRegionForResize[1].yMinValue,
                 yMaxValue: selectedRegionForResize[1].yMaxValue);
+          } else {
+            _isAnimating = false;
+            xOffset = (xOffset + details.focalPointDelta.dx)
+                .clamp(_getMaxLeftOffset(), 0);
           }
-          _isAnimating = false; // Stop any ongoing animation
-          xOffset = (xOffset + details.focalPointDelta.dx)
-              .clamp(getMaxLeftOffset(), 0);
         } else {
           selectedLayer?.onScaleUpdate(details: details);
         }
@@ -396,7 +351,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
               (candleWidth * 2) *
               currentData.length *
               focalPointRatio;
-          xOffset = (xOffset - offsetAdjustment).clamp(getMaxLeftOffset(), 0);
+          xOffset = (xOffset - offsetAdjustment).clamp(_getMaxLeftOffset(), 0);
         }
 
         horizontalScale = newScale;
@@ -406,16 +361,3 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 }
-
-//go throught the all flows - 3
-//identify all the faulty nodes - 30 min (min)
-
-//We have to update node or create node - 2 days to 20 min 
-
-
-//Find all the levels and update node - 5 - 15 min 
-
-//submit - 3-5 min
-
-
-//making new nodes/widget and making easy for updating Param
