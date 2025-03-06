@@ -13,6 +13,8 @@ import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/rsi_line_data.dart';
 import 'package:fin_chart/models/layers/macd_data.dart';
 import 'package:fin_chart/models/layers/stochastic_oscillator.dart';
+import 'package:fin_chart/models/layers/simple_moving_average.dart';
+import 'package:fin_chart/models/layers/ema_data.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -87,6 +89,10 @@ class _HomeState extends State<Home> {
                                       newRegion.layers.add(MACDData(candles: candleData));
                                     } else if (variety == 'Stochastic') {
                                       newRegion.layers.add(StochasticOscillator(candles: candleData));
+                                    } else if (variety == 'SMA') {
+                                      newRegion.layers.add(SimpleMovingAverage(candles: candleData));
+                                    } else if (variety == 'EMA') {
+                                      newRegion.layers.add(EMAData(candles: candleData));
                                     } else {
                                       // Default indicator layer
                                       newRegion.layers
