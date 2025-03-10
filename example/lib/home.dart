@@ -4,6 +4,7 @@ import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/dummy_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/region/rsi_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
@@ -65,10 +66,23 @@ class _HomeState extends State<Home> {
                         child: const Text("Add Data")),
                     ElevatedButton(
                         onPressed: () {
-                          _chartKey.currentState?.addRegion(DummyPlotRegion(
+                          // _chartKey.currentState?.addRegion(DummyPlotRegion(
+                          //   candles: [],
+                          //   yAxisSettings:
+                          //       const YAxisSettings(yAxisPos: YAxisPos.right),
+
+                          //   // yMinValue: -100,
+                          //   // yMaxValue: 100,
+                          //   // layers: [
+                          //   //   HorizontalLine(value: 37),
+                          //   // ],
+                          // ));
+
+                          _chartKey.currentState?.addRegion(RsiPlotRegion(
                             candles: [],
                             yAxisSettings:
                                 const YAxisSettings(yAxisPos: YAxisPos.right),
+
                             // yMinValue: -100,
                             // yMaxValue: 100,
                             // layers: [
