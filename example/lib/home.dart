@@ -1,5 +1,6 @@
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/chart.dart';
+import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/dummy_plot_region.dart';
@@ -92,12 +93,12 @@ class _HomeState extends State<Home> {
                           // _chartKey.currentState
                           //     ?.addLayer(SmoothLineData(candles: []));
 
-                          // _chartKey.currentState?.addLayer(RrBox(
-                          //     target: 4200,
-                          //     stoploss: 3600,
-                          //     startPrice: 3800,
-                          //     startPointTime: 2,
-                          //     endPointTime: 6));
+                          _chartKey.currentState?.addLayer(RrBox(
+                              target: 4200,
+                              stoploss: 3600,
+                              startPrice: 3800,
+                              startPointTime: 2,
+                              endPointTime: 6));
                         },
                         child: const Text("Add Layer")),
                   ],
