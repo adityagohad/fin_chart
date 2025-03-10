@@ -1,1 +1,1 @@
-enum PlotRegionType { data, indicator }
+enum PlotRegionType { data, indicator, rsi }
