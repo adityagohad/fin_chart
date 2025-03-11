@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/enums/plot_region_type.dart';
 
 class RegionDialog extends StatefulWidget {
   final Function(PlotRegionType type, String variety, double yMin, double yMax)
@@ -14,8 +14,6 @@ class RegionDialog extends StatefulWidget {
 class _RegionDialogState extends State<RegionDialog> {
   PlotRegionType? selectedRegionType;
   String? selectedVariety;
-  final TextEditingController yMinController = TextEditingController();
-  final TextEditingController yMaxController = TextEditingController();
   bool inputsValid = false;
 
   List<String> getVarietyOptions() {
@@ -29,30 +27,13 @@ class _RegionDialogState extends State<RegionDialog> {
 
   bool _hasFixedBounds() {
     return selectedRegionType == PlotRegionType.indicator &&
-        (selectedVariety == 'RSI' || 
-        selectedVariety == 'Stochastic'); // Add other fixed-bound indicators as needed
+        (selectedVariety == 'RSI' ||
+            selectedVariety ==
+                'Stochastic'); // Add other fixed-bound indicators as needed
   }
 
   void validateInputs() {
-    bool isValid = false;
-
-    if (selectedRegionType != null && selectedVariety != null) {
-      // Fixed bounds indicators don't need manual min/max values
-      if (_hasFixedBounds()) {
-        isValid = true;
-      }
-      // Other indicators/regions need valid min/max values
-      else if (yMinController.text.isNotEmpty &&
-          yMaxController.text.isNotEmpty) {
-        try {
-          double yMin = double.parse(yMinController.text);
-          double yMax = double.parse(yMaxController.text);
-          isValid = yMax > yMin;
-        } catch (e) {
-          isValid = false;
-        }
-      }
-    }
+    bool isValid = selectedRegionType != null && selectedVariety != null;
 
     if (isValid != inputsValid) {
       setState(() {
@@ -114,30 +95,6 @@ class _RegionDialogState extends State<RegionDialog> {
                 }).toList(),
               ),
             ],
-
-            // Y-Axis Min/Max inputs (shown only when variety is selected)
-            if (selectedVariety != null && !_hasFixedBounds()) ...[
-              const SizedBox(height: 16),
-              const Text('YAxisMin'),
-              TextField(
-                controller: yMinController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  hintText: 'Enter minimum Y value',
-                ),
-                onChanged: (_) => validateInputs(),
-              ),
-              const SizedBox(height: 16),
-              const Text('YAxisMax'),
-              TextField(
-                controller: yMaxController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  hintText: 'Enter maximum Y value',
-                ),
-                onChanged: (_) => validateInputs(),
-              ),
-            ],
           ],
         ),
       ),
@@ -149,26 +106,7 @@ class _RegionDialogState extends State<RegionDialog> {
         ElevatedButton(
           onPressed: inputsValid
               ? () {
-                  double yMin, yMax;
-
-                  // Use predefined values for indicators with fixed bounds
-                  if (_hasFixedBounds()) {
-                    if (selectedVariety == 'RSI') {
-                      yMin = 0;
-                      yMax = 100;
-                    } else if (selectedVariety == 'Stochastic') {
-                      yMin = 0;
-                      yMax = 100;
-                    } else {
-                      // Default fallback
-                      yMin = 0;
-                      yMax = 100;
-                    }
-                  } else {
-                    // Parse values from text fields
-                    yMin = double.parse(yMinController.text);
-                    yMax = double.parse(yMaxController.text);
-                  }
+                  double yMin = 0, yMax = 100; // Default values
 
                   widget.onSubmit(
                     selectedRegionType!,

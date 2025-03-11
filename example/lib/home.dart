@@ -10,10 +10,11 @@ import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/ui/region_dialog.dart';
-import 'package:fin_chart/models/layers/candle_data.dart';
-import 'package:fin_chart/models/layers/rsi_line_data.dart';
-import 'package:fin_chart/models/layers/macd_data.dart';
-import 'package:fin_chart/models/layers/stochastic_oscillator.dart';
+import 'package:fin_chart/models/region/macd_plot_region.dart';
+import 'package:fin_chart/models/region/stochastic_plot_region.dart';
+import 'package:fin_chart/models/layers/line_data.dart';
+import 'package:fin_chart/models/enums/plot_region_type.dart';
+import 'package:fin_chart/models/region/main_plot_region.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -70,78 +71,66 @@ class _HomeState extends State<Home> {
                         onPressed: _showAddDataDialog,
                         child: const Text("Add Data")),
                     ElevatedButton(
-                        onPressed: () {
-<<<<<<< HEAD
-                          showDialog(
+                      onPressed: () {
+                        showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               return RegionDialog(
                                 onSubmit: (type, variety, yMin, yMax) {
-                                  PlotRegion newRegion = PlotRegion(
-                                    type: type,
-                                    yAxisSettings: const YAxisSettings(
-                                        yAxisPos: YAxisPos.right),
-                                    yMinValue: yMin,
-                                    yMaxValue: yMax,
-                                  );
-
-                                  // Add layers based on variety
-                                  if (type == PlotRegionType.data) {
-                                    if (variety == 'Candle') {
-                                      newRegion.layers
-                                          .add(CandleData(candles: []));
-                                    } else if (variety == 'Line') {
-                                      newRegion.layers
-                                          .add(LineData(candles: []));
-                                    }
-                                  } else if (type == PlotRegionType.indicator) {
+                                  if (type == PlotRegionType.indicator) {
                                     if (variety == 'RSI') {
-                                      newRegion.layers.add(RSILineData(candles: candleData));
+                                      _chartKey.currentState
+                                          ?.addRegion(RsiPlotRegion(
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                        candles: [],
+                                      ));
                                     } else if (variety == 'MACD') {
-                                      newRegion.layers.add(MACDData(candles: candleData));
+                                      // Add MACD region with custom min/max values
+                                      _chartKey.currentState
+                                          ?.addRegion(MACDPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
                                     } else if (variety == 'Stochastic') {
-                                      newRegion.layers.add(StochasticOscillator(candles: candleData));
-                                    } else {
-                                      // Default indicator layer
-                                      newRegion.layers
-                                          .add(LineData(candles: []));
-                                      newRegion.layers
-                                          .add(HorizontalLine(value: 3500));
+                                      // Add Stochastic region with fixed 0-100 bounds
+                                      _chartKey.currentState
+                                          ?.addRegion(StochasticPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
+                                    }
+                                  } else if (type == PlotRegionType.data) {
+                                    if (variety == 'Candle') {
+                                      _chartKey.currentState
+                                          ?.addRegion(MainPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
+                                    } else if (variety == 'Line') {
+                                      // Add line chart region
+                                      _chartKey.currentState
+                                          ?.addRegion(DummyPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
                                     }
                                   }
-
-                                  _chartKey.currentState?.addRegion(newRegion);
                                 },
                               );
-                            },
-                          );
-=======
-                          // _chartKey.currentState?.addRegion(DummyPlotRegion(
-                          //   candles: [],
-                          //   yAxisSettings:
-                          //       const YAxisSettings(yAxisPos: YAxisPos.right),
-
-                          //   // yMinValue: -100,
-                          //   // yMaxValue: 100,
-                          //   // layers: [
-                          //   //   HorizontalLine(value: 37),
-                          //   // ],
-                          // ));
-
-                          _chartKey.currentState?.addRegion(RsiPlotRegion(
-                            candles: [],
-                            yAxisSettings:
-                                const YAxisSettings(yAxisPos: YAxisPos.right),
-
-                            // yMinValue: -100,
-                            // yMaxValue: 100,
-                            // layers: [
-                            //   HorizontalLine(value: 37),
-                            // ],
-                          ));
->>>>>>> a68eda5a8f7393811a0ff56d3173110f0d54cd3b
-                        },
-                        child: const Text("Add Region")),
+                            });
+                      },
+                      child: const Text("Add Region"),
+                    ),
                     ElevatedButton(
                         onPressed: () {
                           _chartKey.currentState?.addLayer(TrendLine(

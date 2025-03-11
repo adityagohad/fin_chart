@@ -11,7 +11,7 @@ class RsiPlotRegion extends PlotRegion {
   final List<double> rsiValues = [];
   RsiPlotRegion(
       {required this.candles,
-      super.type = PlotRegionType.rsi,
+      super.type = PlotRegionType.indicator,
       required super.yAxisSettings});
 
   @override
