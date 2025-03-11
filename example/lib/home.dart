@@ -15,6 +15,11 @@ import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/layers/line_data.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
+import 'package:fin_chart/models/ui/layer_dialog.dart';
+import 'package:fin_chart/models/layers/rr_box.dart';
+import 'package:fin_chart/models/layers/sma_data.dart';
+import 'package:fin_chart/models/layers/ema_data.dart';
+import 'package:fin_chart/models/layers/bollinger_bands_data.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -132,28 +137,66 @@ class _HomeState extends State<Home> {
                       child: const Text("Add Region"),
                     ),
                     ElevatedButton(
-                        onPressed: () {
-                          _chartKey.currentState?.addLayer(TrendLine(
-                              from: const Offset(0, 3700),
-                              to: const Offset(4, 3700)));
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return LayerDialog(
+                              onSubmit: (type, variety) {
+                                if (type == 'Indicator') {
+                                  if (variety == 'SMA') {
 
-                          _chartKey.currentState
-                              ?.addLayer(HorizontalLine(value: 3400));
+                                    // Use chartKey directly to add the layer
+                                    final sma = SmaData(
+                                      candles: List.from(candleData),
+                                      lineColor: Colors.purple,
+                                    );
 
-                          // _chartKey.currentState
-                          //     ?.addLayer(LineData(candles: []));
+                                    _chartKey.currentState?.addLayer(sma);
+                                  } else if (variety == 'EMA') {
+                                    // Use chartKey directly to add the layer
+                                    final ema = EmaData(
+                                      candles: List.from(candleData),
+                                      lineColor: Colors.orange,
+                                    );
 
-                          // _chartKey.currentState
-                          //     ?.addLayer(SmoothLineData(candles: []));
+                                    _chartKey.currentState?.addLayer(ema);
+                                  } else if (variety == 'BollingerBands') {
+                                    final bollingerBands = BollingerBandsData(
+                                      candles: List.from(candleData),
+                                      period: 20,
+                                      multiplier: 2.0,
+                                      middleBandColor: Colors.blue,
+                                      upperBandColor: Colors.red,
+                                      lowerBandColor: Colors.green,
+                                    );
 
-                          // _chartKey.currentState?.addLayer(RrBox(
-                          //     target: 4200,
-                          //     stoploss: 3600,
-                          //     startPrice: 3800,
-                          //     startPointTime: 2,
-                          //     endPointTime: 6));
-                        },
-                        child: const Text("Add Layer")),
+                                    _chartKey.currentState?.addLayer(bollingerBands);
+                                  }
+                                } else if (type == 'Drawing') {
+                                  if (variety == 'TrendLine') {
+                                    _chartKey.currentState?.addLayer(TrendLine(
+                                        from: const Offset(0, 3700),
+                                        to: const Offset(4, 3700)));
+                                  } else if (variety == 'HorizontalLine') {
+                                    _chartKey.currentState
+                                        ?.addLayer(HorizontalLine(value: 3400));
+                                  } else if (variety == 'RrBox') {
+                                    _chartKey.currentState?.addLayer(RrBox(
+                                        target: 4200,
+                                        stoploss: 3600,
+                                        startPrice: 3800,
+                                        startPointTime: 2,
+                                        endPointTime: 6));
+                                  }
+                                }
+                              },
+                            );
+                          },
+                        );
+                      },
+                      child: const Text("Add Layer"),
+                    ),
                   ],
                 ),
               ))
@@ -164,11 +207,17 @@ class _HomeState extends State<Home> {
 
   void _showAddDataDialog() {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AddDataDialog(onDataUpdate: (data) {
-            _chartKey.currentState?.addData(data);
+      context: context,
+      builder: (BuildContext context) {
+        return AddDataDialog(onDataUpdate: (data) {
+          setState(() {
+            // Update the local candleData list
+            candleData.addAll(data);
           });
+          // Then update the chart
+          _chartKey.currentState?.addData(data);
         });
+      }
+    );
   }
 }

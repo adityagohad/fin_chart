@@ -46,6 +46,123 @@ class RsiPlotRegion extends PlotRegion {
         ..style = PaintingStyle.stroke,
     );
 
+    // Draw overbought highlight (above 70)
+    final overboughtPath = Path();
+    bool inOverbought = false;
+    double lastX = 0;
+    double lastY = 0;
+
+    // Iterate through RSI values to create path for overbought regions
+    for (int i = 0; i < rsiValues.length; i++) {
+      final x = toX((startIndex + i).toDouble());
+      final y = toY(rsiValues[i]);
+      final overboughtY = toY(70);
+      
+      if (rsiValues[i] > 70) {
+        if (!inOverbought) {
+          // Find the exact crossing point with the overbought line
+          if (i > 0) {
+            final prevX = toX((startIndex + i - 1).toDouble());
+            final prevY = toY(rsiValues[i - 1]);
+            final t = (70 - rsiValues[i - 1]) / (rsiValues[i] - rsiValues[i - 1]);
+            final crossX = prevX + t * (x - prevX);
+            
+            overboughtPath.moveTo(crossX, overboughtY);
+          } else {
+            overboughtPath.moveTo(x, overboughtY);
+          }
+          inOverbought = true;
+        }
+        overboughtPath.lineTo(x, y);
+        lastX = x;
+        lastY = y;
+      } else if (inOverbought) {
+        // Find the exact crossing point with the overbought line
+        final prevX = toX((startIndex + i - 1).toDouble());
+        final prevY = toY(rsiValues[i - 1]);
+        final t = (70 - rsiValues[i]) / (rsiValues[i - 1] - rsiValues[i]);
+        final crossX = x - t * (x - prevX);
+        
+        overboughtPath.lineTo(crossX, overboughtY);
+        overboughtPath.lineTo(crossX, overboughtY);
+        overboughtPath.close();
+        inOverbought = false;
+      }
+    }
+
+    // Close the path if it ends while still in overbought territory
+    if (inOverbought) {
+      final lastX = toX((startIndex + rsiValues.length - 1).toDouble());
+      overboughtPath.lineTo(lastX, toY(70));
+      overboughtPath.close();
+    }
+
+    // Draw oversold highlight (below 30)
+    final oversoldPath = Path();
+    bool inOversold = false;
+    lastX = 0;
+    lastY = 0;
+
+    // Iterate through RSI values to create path for oversold regions
+    for (int i = 0; i < rsiValues.length; i++) {
+      final x = toX((startIndex + i).toDouble());
+      final y = toY(rsiValues[i]);
+      final oversoldY = toY(30);
+      
+      if (rsiValues[i] < 30) {
+        if (!inOversold) {
+          // Find the exact crossing point with the oversold line
+          if (i > 0) {
+            final prevX = toX((startIndex + i - 1).toDouble());
+            final prevY = toY(rsiValues[i - 1]);
+            final t = (30 - rsiValues[i - 1]) / (rsiValues[i] - rsiValues[i - 1]);
+            final crossX = prevX + t * (x - prevX);
+            
+            oversoldPath.moveTo(crossX, oversoldY);
+          } else {
+            oversoldPath.moveTo(x, oversoldY);
+          }
+          inOversold = true;
+        }
+        oversoldPath.lineTo(x, y);
+        lastX = x;
+        lastY = y;
+      } else if (inOversold) {
+        // Find the exact crossing point with the oversold line
+        final prevX = toX((startIndex + i - 1).toDouble());
+        final prevY = toY(rsiValues[i - 1]);
+        final t = (30 - rsiValues[i]) / (rsiValues[i - 1] - rsiValues[i]);
+        final crossX = x - t * (x - prevX);
+        
+        oversoldPath.lineTo(crossX, oversoldY);
+        oversoldPath.lineTo(crossX, oversoldY);
+        oversoldPath.close();
+        inOversold = false;
+      }
+    }
+
+    // Close the path if it ends while still in oversold territory
+    if (inOversold) {
+      final lastX = toX((startIndex + rsiValues.length - 1).toDouble());
+      oversoldPath.lineTo(lastX, toY(30));
+      oversoldPath.close();
+    }
+
+    // Fill the paths
+    canvas.drawPath(
+      overboughtPath,
+      Paint()
+        ..color = Colors.red.withAlpha(50)
+        ..style = PaintingStyle.fill,
+    );
+
+    canvas.drawPath(
+      oversoldPath,
+      Paint()
+        ..color = Colors.green.withAlpha(50)
+        ..style = PaintingStyle.fill,
+    );
+
     // Draw the overbought line (70)
     canvas.drawLine(
       Offset(leftPos, toY(70)),

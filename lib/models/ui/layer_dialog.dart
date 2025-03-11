@@ -1,32 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 
-class RegionDialog extends StatefulWidget {
-  final Function(PlotRegionType type, String variety, double yMin, double yMax)
-      onSubmit;
-
-  const RegionDialog({super.key, required this.onSubmit});
-
-  @override
-  State<RegionDialog> createState() => _RegionDialogState();
+class LayerType {
+  static const String indicator = 'Indicator';
+  static const String drawing = 'Drawing';
+  
+  static List<String> values = [indicator, drawing];
 }
 
-class _RegionDialogState extends State<RegionDialog> {
-  PlotRegionType? selectedRegionType;
+class LayerDialog extends StatefulWidget {
+  final Function(String type, String variety) onSubmit;
+
+  const LayerDialog({super.key, required this.onSubmit});
+
+  @override
+  State<LayerDialog> createState() => _LayerDialogState();
+}
+
+class _LayerDialogState extends State<LayerDialog> {
+  String? selectedLayerType;
   String? selectedVariety;
   bool inputsValid = false;
 
   List<String> getVarietyOptions() {
-    if (selectedRegionType == PlotRegionType.data) {
-      return ['Candle', 'Line'];
-    } else if (selectedRegionType == PlotRegionType.indicator) {
-      return ['RSI', 'MACD', 'Stochastic'];
+    if (selectedLayerType == LayerType.indicator) {
+      return ['SMA', 'EMA','BollingerBands'];
+    } else if (selectedLayerType == LayerType.drawing) {
+      return ['TrendLine', 'HorizontalLine', 'RrBox'];
     }
     return [];
   }
 
   void validateInputs() {
-    bool isValid = selectedRegionType != null && selectedVariety != null;
+    bool isValid = selectedLayerType != null && selectedVariety != null;
 
     if (isValid != inputsValid) {
       setState(() {
@@ -38,37 +43,36 @@ class _RegionDialogState extends State<RegionDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Region'),
+      title: const Text('Add Layer'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Region Type Dropdown
-            const Text('Region Type'),
-            DropdownButton<PlotRegionType>(
+            // Layer Type Dropdown
+            const Text('Layer Type'),
+            DropdownButton<String>(
               isExpanded: true,
-              value: selectedRegionType,
-              hint: const Text('Select Region Type'),
-              onChanged: (PlotRegionType? value) {
+              value: selectedLayerType,
+              hint: const Text('Select Layer Type'),
+              onChanged: (String? value) {
                 setState(() {
-                  selectedRegionType = value;
-                  selectedVariety =
-                      null; // Reset variety when region type changes
+                  selectedLayerType = value;
+                  selectedVariety = null; // Reset variety when layer type changes
                 });
                 validateInputs();
               },
-              items: PlotRegionType.values.map((PlotRegionType type) {
-                return DropdownMenuItem<PlotRegionType>(
+              items: LayerType.values.map((String type) {
+                return DropdownMenuItem<String>(
                   value: type,
-                  child: Text(type.name.capitalize()),
+                  child: Text(type),
                 );
               }).toList(),
             ),
             const SizedBox(height: 16),
 
-            // Variety Dropdown (shown only when region type is selected)
-            if (selectedRegionType != null) ...[
+            // Variety Dropdown (shown only when layer type is selected)
+            if (selectedLayerType != null) ...[
               const Text('Variety'),
               DropdownButton<String>(
                 isExpanded: true,
@@ -99,13 +103,9 @@ class _RegionDialogState extends State<RegionDialog> {
         ElevatedButton(
           onPressed: inputsValid
               ? () {
-                  double yMin = 0, yMax = 100; // Default values
-
                   widget.onSubmit(
-                    selectedRegionType!,
+                    selectedLayerType!,
                     selectedVariety!,
-                    yMin,
-                    yMax,
                   );
                   Navigator.of(context).pop();
                 }
@@ -114,12 +114,5 @@ class _RegionDialogState extends State<RegionDialog> {
         ),
       ],
     );
-  }
-}
-
-// Simple extension to capitalize the first letter
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
