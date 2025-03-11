@@ -1,9 +1,10 @@
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/chart.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
-import 'package:fin_chart/models/layers/line_data.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
+import 'package:fin_chart/models/region/dummy_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/region/rsi_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,17 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<ChartState> _chartKey = GlobalKey();
   List<ICandle> candleData = [];
-  List<PlotRegion> regions = [];
+  List<PlotRegion> regions = [
+    // PlotRegion(
+    //     type: PlotRegionType.indicator,
+    //     yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
+    //     yMinValue: -100,
+    //     yMaxValue: 100,
+    //     layers: [
+    //       LineData(candles: []),
+    //       HorizontalLine(value: 3500),
+    //     ])
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,7 +55,6 @@ class _HomeState extends State<Home> {
               xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
               candles: candleData,
               regions: regions,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             ),
           ),
           Flexible(
@@ -53,11 +63,15 @@ class _HomeState extends State<Home> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
+                    // ElevatedButton(
+                    //     onPressed: _showAddDataDialog,
+                    //     child: const Text("Action")),
                     ElevatedButton(
                         onPressed: _showAddDataDialog,
                         child: const Text("Add Data")),
                     ElevatedButton(
                         onPressed: () {
+<<<<<<< HEAD
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
@@ -101,6 +115,31 @@ class _HomeState extends State<Home> {
                               );
                             },
                           );
+=======
+                          // _chartKey.currentState?.addRegion(DummyPlotRegion(
+                          //   candles: [],
+                          //   yAxisSettings:
+                          //       const YAxisSettings(yAxisPos: YAxisPos.right),
+
+                          //   // yMinValue: -100,
+                          //   // yMaxValue: 100,
+                          //   // layers: [
+                          //   //   HorizontalLine(value: 37),
+                          //   // ],
+                          // ));
+
+                          _chartKey.currentState?.addRegion(RsiPlotRegion(
+                            candles: [],
+                            yAxisSettings:
+                                const YAxisSettings(yAxisPos: YAxisPos.right),
+
+                            // yMinValue: -100,
+                            // yMaxValue: 100,
+                            // layers: [
+                            //   HorizontalLine(value: 37),
+                            // ],
+                          ));
+>>>>>>> a68eda5a8f7393811a0ff56d3173110f0d54cd3b
                         },
                         child: const Text("Add Region")),
                     ElevatedButton(
@@ -108,6 +147,22 @@ class _HomeState extends State<Home> {
                           _chartKey.currentState?.addLayer(TrendLine(
                               from: const Offset(0, 3700),
                               to: const Offset(4, 3700)));
+
+                          _chartKey.currentState
+                              ?.addLayer(HorizontalLine(value: 3400));
+
+                          // _chartKey.currentState
+                          //     ?.addLayer(LineData(candles: []));
+
+                          // _chartKey.currentState
+                          //     ?.addLayer(SmoothLineData(candles: []));
+
+                          // _chartKey.currentState?.addLayer(RrBox(
+                          //     target: 4200,
+                          //     stoploss: 3600,
+                          //     startPrice: 3800,
+                          //     startPointTime: 2,
+                          //     endPointTime: 6));
                         },
                         child: const Text("Add Layer")),
                   ],
