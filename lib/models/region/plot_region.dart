@@ -1,6 +1,8 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -39,6 +41,24 @@ abstract class PlotRegion with RegionProp {
     } else {
       return null;
     }
+  }
+
+  void addLayer(LayerType layerToAdd, List<Offset> drawPoints) {
+    Layer layer = TrendLine.fromTool(
+        from: toReal(drawPoints.first),
+        to: toReal(drawPoints.last),
+        startPoint: drawPoints.first,
+        tempTo: toReal(drawPoints.last));
+    layer.updateRegionProp(
+        leftPos: leftPos,
+        topPos: topPos,
+        rightPos: rightPos,
+        bottomPos: bottomPos,
+        xStepWidth: xStepWidth,
+        xOffset: xOffset,
+        yMinValue: yMinValue,
+        yMaxValue: yMaxValue);
+    layers.add(layer);
   }
 
   void drawAxisValue(Canvas canvas) {

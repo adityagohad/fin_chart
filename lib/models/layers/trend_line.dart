@@ -12,6 +12,13 @@ class TrendLine extends Layer {
 
   TrendLine({required this.from, required this.to});
 
+  TrendLine.fromTool(
+      {required this.from,
+      required this.to,
+      required this.startPoint,
+      required this.tempTo,
+      this.isSelected = true});
+
   @override
   void drawLayer({required Canvas canvas}) {
     Paint paint = Paint()

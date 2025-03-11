@@ -3,6 +3,14 @@ import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
 abstract class Layer with RegionProp {
+  // factory Layer.fromJson(Map<String, dynamic> json) {
+  //   throw UnimplementedError('Layer.fromJson() has not been implemented.');
+  // }
+
+  // factory Layer.fromTool() {
+  //   throw UnimplementedError('Layer.fromTool() has not been implemented.');
+  // }
+
   void drawLayer({required Canvas canvas});
 
   void drawRightAxisValues({required Canvas canvas}) {}

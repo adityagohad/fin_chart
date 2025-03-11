@@ -1,5 +1,6 @@
 import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
@@ -55,7 +56,11 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   bool _isAnimating = false;
 
   List<PlotRegion> regions = [];
+
   Layer? selectedLayer;
+  LayerType? layerToAdd;
+  List<Offset> drawPoints = [];
+
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
 
@@ -100,7 +105,14 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
-  void addLayer(Layer layer) {
+  void addLayer(LayerType layerType) {
+    setState(() {
+      print(layerType);
+      layerToAdd = layerType;
+    });
+  }
+
+  void addLayerDeprecated(Layer layer) {
     setState(() {
       regions[0].layers.add(layer);
       regions[0].updateData(currentData);
@@ -268,21 +280,26 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   _onTapDown(TapDownDetails details) {
-    selectedLayer = null;
-    for (PlotRegion region in regions) {
-      if (selectedRegionForResize.length < 2) {
-        if (region.isRegionReadyForResize(details.localPosition) != null) {
-          selectedRegionForResize.add(region);
-        }
-      }
-      for (Layer layer in region.layers) {
-        setState(() {
-          if (selectedLayer == null) {
-            selectedLayer = layer.onTapDown(details: details);
-          } else {
-            layer.onTapDown(details: details);
+    if (layerToAdd != null) {
+      drawPoints.clear();
+      drawPoints.add(details.localPosition);
+    } else {
+      selectedLayer = null;
+      for (PlotRegion region in regions) {
+        if (selectedRegionForResize.length < 2) {
+          if (region.isRegionReadyForResize(details.localPosition) != null) {
+            selectedRegionForResize.add(region);
           }
-        });
+        }
+        for (Layer layer in region.layers) {
+          setState(() {
+            if (selectedLayer == null) {
+              selectedLayer = layer.onTapDown(details: details);
+            } else {
+              layer.onTapDown(details: details);
+            }
+          });
+        }
       }
     }
     //print(selectedLayer);
@@ -309,7 +326,14 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   _onScaleUpdate(ScaleUpdateDetails details, BoxConstraints constraints) {
     setState(() {
       if (details.pointerCount == 1) {
-        if (selectedLayer == null) {
+        if (layerToAdd != null) {
+          drawPoints.add(details.localFocalPoint);
+          if (drawPoints.length > 2) {
+            regions[0].addLayer(layerToAdd!, drawPoints);
+            selectedLayer = regions[0].layers.last;
+            layerToAdd = null;
+          }
+        } else if (selectedLayer == null) {
           if (selectedRegionForResize.length == 2) {
             selectedRegionForResize[0].updateRegionProp(
                 leftPos: leftPos,
