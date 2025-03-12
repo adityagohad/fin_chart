@@ -14,7 +14,7 @@ class MACDPlotRegion extends PlotRegion {
   final int fastPeriod; // typically 12
   final int slowPeriod; // typically 26
   final int signalPeriod; // typically 9
-  
+
   MACDPlotRegion({
     required this.candles,
     this.fastPeriod = 12,
@@ -57,8 +57,9 @@ class MACDPlotRegion extends PlotRegion {
     _drawLine(canvas, signalValues, signalPaint);
 
     // Draw histogram
-    _drawHistogram(canvas, histogramValues, posHistogramPaint, negHistogramPaint);
-    
+    _drawHistogram(
+        canvas, histogramValues, posHistogramPaint, negHistogramPaint);
+
     // Draw the zero line
     canvas.drawLine(
       Offset(leftPos, toY(0)),
@@ -91,10 +92,11 @@ class MACDPlotRegion extends PlotRegion {
     canvas.drawPath(path, paint);
   }
 
-  void _drawHistogram(Canvas canvas, List<double> values, Paint posPaint, Paint negPaint) {
+  void _drawHistogram(
+      Canvas canvas, List<double> values, Paint posPaint, Paint negPaint) {
     if (values.isEmpty) return;
 
-    final histWidth = 2.0;
+    const histWidth = 2.0;
 
     // Start from the first valid value (after sufficient periods)
     int startIndex = slowPeriod + signalPeriod - 1;
@@ -109,7 +111,8 @@ class MACDPlotRegion extends PlotRegion {
       final y = toY(values[i]);
 
       canvas.drawRect(
-          Rect.fromPoints(Offset(x - histWidth, zero), Offset(x + histWidth, y)),
+          Rect.fromPoints(
+              Offset(x - histWidth, zero), Offset(x + histWidth, y)),
           values[i] > 0 ? posPaint : negPaint);
     }
   }
@@ -124,7 +127,7 @@ class MACDPlotRegion extends PlotRegion {
     } else {
       // Find where to start adding new data
       int existingCount = candles.length;
-      
+
       // Only add candles that come after our existing ones
       if (existingCount < data.length) {
         candles.addAll(data.sublist(existingCount));
@@ -136,28 +139,28 @@ class MACDPlotRegion extends PlotRegion {
     // Determine min and max values for y-axis
     double minValue = double.infinity;
     double maxValue = double.negativeInfinity;
-    
+
     for (int i = 0; i < macdValues.length; i++) {
       if (i >= slowPeriod + signalPeriod - 1) {
         minValue = math.min(minValue, macdValues[i]);
         minValue = math.min(minValue, signalValues[i]);
         minValue = math.min(minValue, histogramValues[i]);
-        
+
         maxValue = math.max(maxValue, macdValues[i]);
         maxValue = math.max(maxValue, signalValues[i]);
         maxValue = math.max(maxValue, histogramValues[i]);
       }
     }
-    
+
     // Add a bit of padding
     double range = maxValue - minValue;
     minValue -= range * 0.1;
     maxValue += range * 0.1;
-    
+
     // Ensure zero is included in the range
     if (minValue > 0) minValue = 0;
     if (maxValue < 0) maxValue = 0;
-    
+
     yMinValue = minValue;
     yMaxValue = maxValue;
 

@@ -108,7 +108,6 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   void addLayer(LayerType layerType) {
     setState(() {
-      print(layerType);
       layerToAdd = layerType;
     });
   }
@@ -385,17 +384,17 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     drawPoints.add(details.localPosition);
     for (PlotRegion region in regions) {
       selectedRegion = region.regionSelect(details.localPosition);
+      if (selectedRegion != null) break;
     }
     switch (layerType) {
       case LayerType.chartPointer:
       case LayerType.text:
       case LayerType.horizontalLine:
       case LayerType.horizontalBand:
-        setState(() {
-          selectedRegion?.addLayer(layerToAdd!, drawPoints);
-          selectedLayer = selectedRegion?.layers.last;
-          layerToAdd = null;
-        });
+      case LayerType.circularArea:
+        selectedRegion?.addLayer(layerToAdd!, drawPoints);
+        selectedLayer = selectedRegion?.layers.last;
+        layerToAdd = null;
         break;
       case LayerType.trendLine:
       case LayerType.rectArea:
@@ -410,6 +409,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
       case LayerType.text:
       case LayerType.horizontalLine:
       case LayerType.horizontalBand:
+      case LayerType.circularArea:
         break;
       case LayerType.rectArea:
       case LayerType.trendLine:

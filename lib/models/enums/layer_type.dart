@@ -1,9 +1,10 @@
 enum LayerType {
   chartPointer,
+  circularArea,
   text,
-  trendLine,
   horizontalLine,
   horizontalBand,
+  trendLine,
   rectArea,
 }
 
@@ -12,6 +13,8 @@ extension LayerTypeExtension on LayerType {
     switch (this) {
       case LayerType.chartPointer:
         return 'chartPointer';
+      case LayerType.circularArea:
+        return 'circularArea';
       case LayerType.text:
         return 'text';
       case LayerType.trendLine:
