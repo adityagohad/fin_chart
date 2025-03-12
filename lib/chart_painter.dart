@@ -1,8 +1,8 @@
+import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:flutter/material.dart';
 
 class ChartPainter extends CustomPainter {
@@ -110,27 +110,43 @@ class ChartPainter extends CustomPainter {
 
     // Assign a fixed format for each candle based on its time interval
     String Function(DateTime) formatTime;
-    
+
     // Define format based on candle time interval
-    if (timePerCandle < 1) { // Seconds
-      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
-    } else if (timePerCandle <= 5) { // 1-5 min
-      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (timePerCandle <= 15) { // 5-15 min
-      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (timePerCandle <= 60) { // 15-60 min
-      formatTime = (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } else if (timePerCandle <= 360) { // 1-6 hours
+    if (timePerCandle < 1) {
+      // Seconds
+      formatTime = (date) =>
+          '${date.hour}:${date.minute.toString().padLeft(2, '0')}:${date.second.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 5) {
+      // 1-5 min
+      formatTime =
+          (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 15) {
+      // 5-15 min
+      formatTime =
+          (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 60) {
+      // 15-60 min
+      formatTime =
+          (date) => '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } else if (timePerCandle <= 360) {
+      // 1-6 hours
       formatTime = (date) => '${date.hour}:00';
-    } else if (timePerCandle <= 1440) { // 6-24 hours
+    } else if (timePerCandle <= 1440) {
+      // 6-24 hours
       formatTime = (date) => '${date.hour}:00';
-    } else if (timePerCandle <= 10080) { // 1-7 days
+    } else if (timePerCandle <= 10080) {
+      // 1-7 days
       formatTime = (date) => '${date.day}/${date.month}';
-    } else if (timePerCandle <= 43200) { // 7-30 days
-      formatTime = (date) => '${date.month}/${date.year.toString().substring(2)}'; 
-    } else if (timePerCandle <= 129600) { // 30-90 days
-      formatTime = (date) => 'Q${(date.month - 1) ~/ 3 + 1}\'${date.year.toString().substring(2)}';
-    } else { // > 90 days
+    } else if (timePerCandle <= 43200) {
+      // 7-30 days
+      formatTime =
+          (date) => '${date.month}/${date.year.toString().substring(2)}';
+    } else if (timePerCandle <= 129600) {
+      // 30-90 days
+      formatTime = (date) =>
+          'Q${(date.month - 1) ~/ 3 + 1}\'${date.year.toString().substring(2)}';
+    } else {
+      // > 90 days
       formatTime = (date) => '${date.year}';
     }
 
@@ -142,16 +158,17 @@ class ChartPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    
-    final labelWidth = sampleText.width + 20; // Larger buffer for earlier overlap prevention
+
+    final labelWidth =
+        sampleText.width + 20; // Larger buffer for earlier overlap prevention
     final availableWidth = rightPos - leftPos;
-    
+
     // Determine how many labels can fit without overlapping
     final visibleCandlesCount = (availableWidth / xStepWidth).floor();
-    final labelsPerCandle = (visibleCandlesCount * labelWidth) > availableWidth 
-        ? (visibleCandlesCount * labelWidth / availableWidth).ceil() 
+    final labelsPerCandle = (visibleCandlesCount * labelWidth) > availableWidth
+        ? (visibleCandlesCount * labelWidth / availableWidth).ceil()
         : 1;
-    
+
     // Draw labels for all candles
     for (int i = 0; i < candles.length; i++) {
       final candle = candles[i];
@@ -175,7 +192,7 @@ class ChartPainter extends CustomPainter {
             canvas,
             Offset(xPos - text.width / 2, bottomPos + xLabelPadding / 2),
           );
-          
+
           // Draw larger tick for labeled candles
           canvas.drawLine(
             Offset(xPos, bottomPos - 3),
@@ -187,9 +204,10 @@ class ChartPainter extends CustomPainter {
         if (xAxisSettings.xAxisPos == XAxisPos.top) {
           text.paint(
             canvas,
-            Offset(xPos - text.width / 2, topPos - (text.height + xLabelPadding / 2)),
+            Offset(xPos - text.width / 2,
+                topPos - (text.height + xLabelPadding / 2)),
           );
-          
+
           // Draw larger tick for labeled candles
           canvas.drawLine(
             Offset(xPos, topPos - 3),
@@ -206,7 +224,7 @@ class ChartPainter extends CustomPainter {
             Paint()..color = xAxisSettings.axisColor.withOpacity(0.7),
           );
         }
-        
+
         if (xAxisSettings.xAxisPos == XAxisPos.top) {
           canvas.drawLine(
             Offset(xPos, topPos - 2),
