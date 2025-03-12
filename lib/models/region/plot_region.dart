@@ -1,6 +1,7 @@
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
@@ -15,6 +16,7 @@ abstract class PlotRegion with RegionProp {
   final List<Layer> layers;
   late Size yLabelSize;
   late List<double> yValues;
+  bool isSelected = false;
 
   PlotRegion(
       {required this.type,
@@ -43,21 +45,42 @@ abstract class PlotRegion with RegionProp {
     }
   }
 
+  PlotRegion? regionSelect(Offset selectedPoint) {
+    if (isPointNearRectFromDiagonalVertices(
+        selectedPoint, Offset(leftPos, topPos), Offset(rightPos, bottomPos))) {
+      isSelected = true;
+      return this;
+    } else {
+      isSelected = false;
+      return null;
+    }
+  }
+
   void addLayer(LayerType layerToAdd, List<Offset> drawPoints) {
-    Layer layer = TrendLine.fromTool(
-        from: toReal(drawPoints.first),
-        to: toReal(drawPoints.last),
-        startPoint: drawPoints.first,
-        tempTo: toReal(drawPoints.last));
-    layer.updateRegionProp(
-        leftPos: leftPos,
-        topPos: topPos,
-        rightPos: rightPos,
-        bottomPos: bottomPos,
-        xStepWidth: xStepWidth,
-        xOffset: xOffset,
-        yMinValue: yMinValue,
-        yMaxValue: yMaxValue);
+    Layer layer;
+    switch (layerToAdd) {
+      case LayerType.chartPointer:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case LayerType.text:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case LayerType.trendLine:
+        layer = TrendLine.fromTool(
+            from: toReal(drawPoints.first),
+            to: toReal(drawPoints.last),
+            startPoint: drawPoints.first);
+        break;
+      case LayerType.horizontalLine:
+        layer = HorizontalLine.fromTool(value: toYInverse(drawPoints.first.dy));
+        break;
+      case LayerType.horizontalBand:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+      case LayerType.rectArea:
+        // TODO: Handle this case.
+        throw UnimplementedError();
+    }
     layers.add(layer);
   }
 

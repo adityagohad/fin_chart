@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class HorizontalLine extends Layer {
   double value;
 
-  HorizontalLine({required this.value});
+  HorizontalLine.fromTool({required this.value}) : super.fromTool();
 
   @override
   void drawLayer({required Canvas canvas}) {

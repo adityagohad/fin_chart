@@ -63,6 +63,7 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
+  PlotRegion? selectedRegion;
 
   bool isInit = false;
 
@@ -280,28 +281,27 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   }
 
   _onTapDown(TapDownDetails details) {
-    if (layerToAdd != null) {
-      drawPoints.clear();
-      drawPoints.add(details.localPosition);
-    } else {
-      selectedLayer = null;
-      for (PlotRegion region in regions) {
-        if (selectedRegionForResize.length < 2) {
-          if (region.isRegionReadyForResize(details.localPosition) != null) {
-            selectedRegionForResize.add(region);
+    setState(() {
+      if (layerToAdd != null) {
+        _handleTapDownWhenLayerToAdd(layerToAdd!, details);
+      } else {
+        selectedLayer = null;
+        for (PlotRegion region in regions) {
+          if (selectedRegionForResize.length < 2) {
+            if (region.isRegionReadyForResize(details.localPosition) != null) {
+              selectedRegionForResize.add(region);
+            }
           }
-        }
-        for (Layer layer in region.layers) {
-          setState(() {
+          for (Layer layer in region.layers) {
             if (selectedLayer == null) {
               selectedLayer = layer.onTapDown(details: details);
             } else {
               layer.onTapDown(details: details);
             }
-          });
+          }
         }
       }
-    }
+    });
     //print(selectedLayer);
   }
 
@@ -326,13 +326,8 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   _onScaleUpdate(ScaleUpdateDetails details, BoxConstraints constraints) {
     setState(() {
       if (details.pointerCount == 1) {
-        if (layerToAdd != null) {
-          drawPoints.add(details.localFocalPoint);
-          if (drawPoints.length > 2) {
-            regions[0].addLayer(layerToAdd!, drawPoints);
-            selectedLayer = regions[0].layers.last;
-            layerToAdd = null;
-          }
+        if (layerToAdd != null && selectedRegion != null) {
+          _handleDragWhenLayerToAdd(layerToAdd!, details);
         } else if (selectedLayer == null) {
           if (selectedRegionForResize.length == 2) {
             selectedRegionForResize[0].updateRegionProp(
@@ -383,5 +378,47 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         xStepWidth = (candleWidth * 2) * horizontalScale;
       }
     });
+  }
+
+  _handleTapDownWhenLayerToAdd(LayerType layerType, TapDownDetails details) {
+    drawPoints.clear();
+    drawPoints.add(details.localPosition);
+    for (PlotRegion region in regions) {
+      selectedRegion = region.regionSelect(details.localPosition);
+    }
+    switch (layerType) {
+      case LayerType.chartPointer:
+      case LayerType.text:
+      case LayerType.horizontalLine:
+      case LayerType.horizontalBand:
+        setState(() {
+          selectedRegion?.addLayer(layerToAdd!, drawPoints);
+          selectedLayer = selectedRegion?.layers.last;
+          layerToAdd = null;
+        });
+        break;
+      case LayerType.trendLine:
+      case LayerType.rectArea:
+        break;
+    }
+  }
+
+  _handleDragWhenLayerToAdd(LayerType layerType, ScaleUpdateDetails details) {
+    drawPoints.add(details.localFocalPoint);
+    switch (layerType) {
+      case LayerType.chartPointer:
+      case LayerType.text:
+      case LayerType.horizontalLine:
+      case LayerType.horizontalBand:
+        break;
+      case LayerType.rectArea:
+      case LayerType.trendLine:
+        if (drawPoints.length >= 2) {
+          selectedRegion?.addLayer(layerToAdd!, drawPoints);
+          selectedLayer = selectedRegion?.layers.last;
+          layerToAdd = null;
+        }
+        break;
+    }
   }
 }
