@@ -2,7 +2,7 @@ import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:flutter/material.dart';
 
 class LayerTypeDropdown extends StatelessWidget {
-  final LayerType selectedType;
+  final LayerType? selectedType;
   final Function(LayerType) onChanged;
 
   const LayerTypeDropdown({
