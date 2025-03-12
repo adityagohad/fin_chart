@@ -22,4 +22,7 @@ abstract class Layer with RegionProp {
   void onScaleStart({required ScaleStartDetails details}) {}
 
   void onUpdateData({required List<ICandle> data}) {}
+
+  void onAimationUpdate(
+      {required Canvas canvas, required double animationValue}) {}
 }

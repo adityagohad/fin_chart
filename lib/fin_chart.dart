@@ -10,3 +10,4 @@ export 'package:fin_chart/models/region/rsi_plot_region.dart';
 export 'package:fin_chart/models/layers/sma_data.dart';
 export 'package:fin_chart/models/layers/ema_data.dart';
 export 'package:fin_chart/models/layers/bollinger_bands_data.dart';
+export 'package:fin_chart/models/layers/horizontal_band.dart';

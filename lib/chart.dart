@@ -18,6 +18,7 @@ class Chart extends StatefulWidget {
   final XAxisSettings? xAxisSettings;
   final List<ICandle> candles;
   final List<PlotRegion> regions;
+  final Function(Offset, Offset) onInteraction;
 
   const Chart(
       {super.key,
@@ -25,6 +26,7 @@ class Chart extends StatefulWidget {
       this.dataFit = DataFit.adaptiveWidth,
       required this.candles,
       required this.regions,
+      required this.onInteraction,
       this.yAxisSettings = const YAxisSettings(),
       this.xAxisSettings = const XAxisSettings()});
 
@@ -32,7 +34,7 @@ class Chart extends StatefulWidget {
   State<Chart> createState() => ChartState();
 }
 
-class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
+class ChartState extends State<Chart> with TickerProviderStateMixin {
   double leftPos = 0;
   double topPos = 0;
   double rightPos = 0;
@@ -55,11 +57,13 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   double _swipeVelocity = 0;
   bool _isAnimating = false;
 
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
   List<PlotRegion> regions = [];
 
   Layer? selectedLayer;
-  LayerType? layerToAdd;
-  List<Offset> drawPoints = [];
+  bool isLayerGettingAdded = false;
 
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
@@ -71,16 +75,31 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   void initState() {
     currentData.addAll(widget.candles);
     regions.addAll(widget.regions);
-    super.initState();
+
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     )..addListener(_handleSwipeAnimation);
+
+    _controller = AnimationController(
+      duration: const Duration(seconds: 1),
+      vsync: this,
+    )..addListener(() {
+        setState(() {});
+      });
+
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.bounceOut,
+    );
+
+    super.initState();
   }
 
   @override
   void dispose() {
     _swipeAnimationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -106,16 +125,17 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
-  void addLayer(LayerType layerType) {
+  void updateLayerGettingAddedState(LayerType layerType) {
     setState(() {
-      layerToAdd = layerType;
+      isLayerGettingAdded = true;
     });
   }
 
-  void addLayerDeprecated(Layer layer) {
+  void addLayer(Layer layer) {
     setState(() {
-      regions[0].layers.add(layer);
-      regions[0].updateData(currentData);
+      selectedLayer = layer;
+      selectedRegion?.addLayer(layer);
+      isLayerGettingAdded = false;
     });
   }
 
@@ -153,7 +173,9 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
                     leftPos: leftPos,
                     topPos: topPos,
                     rightPos: rightPos,
-                    bottomPos: bottomPos),
+                    bottomPos: bottomPos,
+                    selectedLayer: selectedLayer,
+                    animationValue: _animation.value),
                 size: Size(constraints.maxWidth, constraints.maxHeight),
               ),
             ),
@@ -281,8 +303,8 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   _onTapDown(TapDownDetails details) {
     setState(() {
-      if (layerToAdd != null) {
-        _handleTapDownWhenLayerToAdd(layerToAdd!, details);
+      if (isLayerGettingAdded) {
+        _handleTapDownWhenLayerToAdd(details);
       } else {
         selectedLayer = null;
         for (PlotRegion region in regions) {
@@ -301,7 +323,6 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
         }
       }
     });
-    //print(selectedLayer);
   }
 
   _onScaleStart(ScaleStartDetails details) {
@@ -325,8 +346,8 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
   _onScaleUpdate(ScaleUpdateDetails details, BoxConstraints constraints) {
     setState(() {
       if (details.pointerCount == 1) {
-        if (layerToAdd != null && selectedRegion != null) {
-          _handleDragWhenLayerToAdd(layerToAdd!, details);
+        if (isLayerGettingAdded && selectedRegion != null) {
+          _handleDragWhenLayerToAdd(details);
         } else if (selectedLayer == null) {
           if (selectedRegionForResize.length == 2) {
             selectedRegionForResize[0].updateRegionProp(
@@ -379,46 +400,21 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
     });
   }
 
-  _handleTapDownWhenLayerToAdd(LayerType layerType, TapDownDetails details) {
-    drawPoints.clear();
-    drawPoints.add(details.localPosition);
+  _handleTapDownWhenLayerToAdd(TapDownDetails details) {
     for (PlotRegion region in regions) {
       selectedRegion = region.regionSelect(details.localPosition);
-      if (selectedRegion != null) break;
-    }
-    switch (layerType) {
-      case LayerType.chartPointer:
-      case LayerType.text:
-      case LayerType.horizontalLine:
-      case LayerType.horizontalBand:
-      case LayerType.circularArea:
-        selectedRegion?.addLayer(layerToAdd!, drawPoints);
-        selectedLayer = selectedRegion?.layers.last;
-        layerToAdd = null;
+      if (selectedRegion != null) {
+        widget.onInteraction(
+            selectedRegion!.getRealCoordinates(details.localPosition),
+            details.localPosition);
         break;
-      case LayerType.trendLine:
-      case LayerType.rectArea:
-        break;
+      }
     }
   }
 
-  _handleDragWhenLayerToAdd(LayerType layerType, ScaleUpdateDetails details) {
-    drawPoints.add(details.localFocalPoint);
-    switch (layerType) {
-      case LayerType.chartPointer:
-      case LayerType.text:
-      case LayerType.horizontalLine:
-      case LayerType.horizontalBand:
-      case LayerType.circularArea:
-        break;
-      case LayerType.rectArea:
-      case LayerType.trendLine:
-        if (drawPoints.length >= 2) {
-          selectedRegion?.addLayer(layerToAdd!, drawPoints);
-          selectedLayer = selectedRegion?.layers.last;
-          layerToAdd = null;
-        }
-        break;
-    }
+  _handleDragWhenLayerToAdd(ScaleUpdateDetails details) {
+    widget.onInteraction(
+        selectedRegion!.getRealCoordinates(details.localFocalPoint),
+        details.localFocalPoint);
   }
 }

@@ -1,11 +1,6 @@
-import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/layers/circular_area.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/layers/rect_area.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -58,37 +53,11 @@ abstract class PlotRegion with RegionProp {
     }
   }
 
-  void addLayer(LayerType layerToAdd, List<Offset> drawPoints) {
-    Layer layer;
-    switch (layerToAdd) {
-      case LayerType.chartPointer:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case LayerType.text:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case LayerType.trendLine:
-        layer = TrendLine.fromTool(
-            from: toReal(drawPoints.first),
-            to: toReal(drawPoints.last),
-            startPoint: drawPoints.first);
-        break;
-      case LayerType.horizontalLine:
-        layer = HorizontalLine.fromTool(value: toYInverse(drawPoints.first.dy));
-        break;
-      case LayerType.horizontalBand:
-        // TODO: Handle this case.
-        throw UnimplementedError();
-      case LayerType.rectArea:
-        layer = RectArea.fromTool(
-            topLeft: toReal(drawPoints.first),
-            bottomRight: toReal(drawPoints.last),
-            startPoint: drawPoints.first);
-        break;
-      case LayerType.circularArea:
-        layer = CircularArea.fromTool(point: toReal(drawPoints.first));
-        break;
-    }
+  Offset getRealCoordinates(Offset selectedPoint) {
+    return toReal(selectedPoint);
+  }
+
+  void addLayer(Layer layer) {
     layers.add(layer);
   }
 
