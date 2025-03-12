@@ -1,8 +1,6 @@
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/chart.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
-import 'package:fin_chart/models/region/dummy_plot_region.dart';
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/region/rsi_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';

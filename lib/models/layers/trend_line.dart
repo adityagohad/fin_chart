@@ -2,15 +2,20 @@ import 'package:fin_chart/models/layers/layer.dart';
 import 'package:flutter/material.dart';
 
 class TrendLine extends Layer {
-  Offset from;
-  Offset to;
+  late Offset from;
+  late Offset to;
   bool isSelected = false;
   Color color = Colors.black;
   late Offset startPoint;
   Offset? tempFrom;
   Offset? tempTo;
 
-  TrendLine({required this.from, required this.to});
+  TrendLine.fromTool(
+      {required this.from, required this.to, required this.startPoint})
+      : super.fromTool() {
+    isSelected = true;
+    tempTo = from;
+  }
 
   @override
   void drawLayer({required Canvas canvas}) {
