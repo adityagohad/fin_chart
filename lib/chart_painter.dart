@@ -1,4 +1,3 @@
-import 'package:fin_chart/models/layers/candle_data.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -16,6 +15,7 @@ class ChartPainter extends CustomPainter {
   final XAxisSettings xAxisSettings;
   final List<PlotRegion> regions;
   final int dataLength;
+  final List<ICandle> data;
   final Layer? selectedLayer;
   final double? animationValue;
 
@@ -30,6 +30,7 @@ class ChartPainter extends CustomPainter {
       required this.xAxisSettings,
       required this.regions,
       required this.dataLength,
+      required this.data,
       this.selectedLayer,
       this.animationValue});
 
@@ -92,21 +93,21 @@ class ChartPainter extends CustomPainter {
     return true;
   }
 
-  List<ICandle> _getCandles() {
-    if (regions.isEmpty) return [];
+  // List<ICandle> _getCandles() {
+  //   if (regions.isEmpty) return [];
 
-    for (final region in regions) {
-      for (final layer in region.layers) {
-        if (layer is CandleData) {
-          return layer.candles;
-        }
-      }
-    }
-    return []; // Return empty list if no candles found
-  }
+  //   for (final region in regions) {
+  //     for (final layer in region.layers) {
+  //       if (layer is CandleData) {
+  //         return layer.candles;
+  //       }
+  //     }
+  //   }
+  //   return []; // Return empty list if no candles found
+  // }
 
   void drawXAxis(Canvas canvas) {
-    final candles = _getCandles();
+    final candles = data;
     if (candles.isEmpty) return;
 
     // Calculate the time between candles
@@ -205,6 +206,14 @@ class ChartPainter extends CustomPainter {
             Offset(xPos, bottomPos + 3),
             Paint()..color = xAxisSettings.axisColor,
           );
+
+          canvas.drawLine(
+            Offset(xPos, topPos),
+            Offset(xPos, bottomPos),
+            Paint()
+              ..color = Colors.grey
+              ..strokeWidth = 0.5,
+          );
         }
 
         if (xAxisSettings.xAxisPos == XAxisPos.top) {
@@ -227,7 +236,7 @@ class ChartPainter extends CustomPainter {
           canvas.drawLine(
             Offset(xPos, bottomPos - 2),
             Offset(xPos, bottomPos + 2),
-            Paint()..color = xAxisSettings.axisColor.withOpacity(0.7),
+            Paint()..color = xAxisSettings.axisColor,
           );
         }
 
@@ -235,19 +244,19 @@ class ChartPainter extends CustomPainter {
           canvas.drawLine(
             Offset(xPos, topPos - 2),
             Offset(xPos, topPos + 2),
-            Paint()..color = xAxisSettings.axisColor.withOpacity(0.7),
+            Paint()..color = xAxisSettings.axisColor,
           );
         }
       }
 
       // Draw grid line for all candles
-      canvas.drawLine(
-        Offset(xPos, topPos),
-        Offset(xPos, bottomPos),
-        Paint()
-          ..color = Colors.grey.withOpacity(0.2)
-          ..strokeWidth = 0.5,
-      );
+      // canvas.drawLine(
+      //   Offset(xPos, topPos),
+      //   Offset(xPos, bottomPos),
+      //   Paint()
+      //     ..color = Colors.grey
+      //     ..strokeWidth = 0.5,
+      // );
     }
 
     // Draw axis line

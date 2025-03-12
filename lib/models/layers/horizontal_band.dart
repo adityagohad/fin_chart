@@ -1,5 +1,4 @@
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 class HorizontalBand extends Layer {

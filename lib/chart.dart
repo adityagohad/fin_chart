@@ -174,6 +174,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                     topPos: topPos,
                     rightPos: rightPos,
                     bottomPos: bottomPos,
+                    data: currentData,
                     selectedLayer: selectedLayer,
                     animationValue: _animation.value),
                 size: Size(constraints.maxWidth, constraints.maxHeight),

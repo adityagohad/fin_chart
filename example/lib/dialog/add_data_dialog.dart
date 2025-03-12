@@ -23,16 +23,7 @@ class AddDataDialog extends StatelessWidget {
             const Text("Add Data"),
             CandleStickGenerator(onCandleDataGenerated: (data) {
               iCandleData.clear();
-              iCandleData.addAll(data
-                  .map((c) => ICandle(
-                      id: "0",
-                      date: DateTime.now(),
-                      open: c.open,
-                      high: c.high,
-                      low: c.low,
-                      close: c.close,
-                      volume: 100))
-                  .toList());
+              iCandleData.addAll(data);
             }),
             Align(
               alignment: Alignment.bottomRight,
