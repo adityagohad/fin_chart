@@ -7,6 +7,17 @@ import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/ui/region_dialog.dart';
+import 'package:fin_chart/models/region/macd_plot_region.dart';
+import 'package:fin_chart/models/region/stochastic_plot_region.dart';
+import 'package:fin_chart/models/layers/line_data.dart';
+import 'package:fin_chart/models/enums/plot_region_type.dart';
+import 'package:fin_chart/models/region/main_plot_region.dart';
+import 'package:fin_chart/models/ui/layer_dialog.dart';
+import 'package:fin_chart/models/layers/rr_box.dart';
+import 'package:fin_chart/models/layers/sma_data.dart';
+import 'package:fin_chart/models/layers/ema_data.dart';
+import 'package:fin_chart/models/layers/bollinger_bands_data.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -63,56 +74,127 @@ class _HomeState extends State<Home> {
                         onPressed: _showAddDataDialog,
                         child: const Text("Add Data")),
                     ElevatedButton(
-                        onPressed: () {
-                          // _chartKey.currentState?.addRegion(DummyPlotRegion(
-                          //   candles: [],
-                          //   yAxisSettings:
-                          //       const YAxisSettings(yAxisPos: YAxisPos.right),
-
-                          //   // yMinValue: -100,
-                          //   // yMaxValue: 100,
-                          //   // layers: [
-                          //   //   HorizontalLine(value: 37),
-                          //   // ],
-                          // ));
-
-                          _chartKey.currentState?.addRegion(RsiPlotRegion(
-                            candles: [],
-                            yAxisSettings:
-                                const YAxisSettings(yAxisPos: YAxisPos.right),
-
-                            // yMinValue: -100,
-                            // yMaxValue: 100,
-                            // layers: [
-                            //   HorizontalLine(value: 37),
-                            // ],
-                          ));
-                        },
-                        child: const Text("Add Region")),
+                      onPressed: () {
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return RegionDialog(
+                                onSubmit: (type, variety, yMin, yMax) {
+                                  if (type == PlotRegionType.indicator) {
+                                    if (variety == 'RSI') {
+                                      _chartKey.currentState
+                                          ?.addRegion(RsiPlotRegion(
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                        candles: [],
+                                      ));
+                                    } else if (variety == 'MACD') {
+                                      // Add MACD region with custom min/max values
+                                      _chartKey.currentState
+                                          ?.addRegion(MACDPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
+                                    } else if (variety == 'Stochastic') {
+                                      // Add Stochastic region with fixed 0-100 bounds
+                                      _chartKey.currentState
+                                          ?.addRegion(StochasticPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
+                                    }
+                                  } else if (type == PlotRegionType.data) {
+                                    if (variety == 'Candle') {
+                                      _chartKey.currentState
+                                          ?.addRegion(MainPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
+                                    } else if (variety == 'Line') {
+                                      // Add line chart region
+                                      _chartKey.currentState
+                                          ?.addRegion(DummyPlotRegion(
+                                        candles: [],
+                                        type: type,
+                                        yAxisSettings: const YAxisSettings(
+                                            yAxisPos: YAxisPos.right),
+                                      ));
+                                    }
+                                  }
+                                },
+                              );
+                            });
+                      },
+                      child: const Text("Add Region"),
+                    ),
                     ElevatedButton(
-                        onPressed: () {
-                          _chartKey.currentState?.addLayer(LayerType.trendLine);
-                          // _chartKey.currentState?.addLayerDeprecated(TrendLine(
-                          //     from: const Offset(0, 3700),
-                          //     to: const Offset(4, 3700)));
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return LayerDialog(
+                              onSubmit: (type, variety) {
+                                if (type == 'Indicator') {
+                                  if (variety == 'SMA') {
 
-                          // _chartKey.currentState
-                          //     ?.addLayerDeprecated(HorizontalLine(value: 3400));
+                                    // Use chartKey directly to add the layer
+                                    final sma = SmaData(
+                                      candles: List.from(candleData),
+                                      lineColor: Colors.purple,
+                                    );
 
-                          // // _chartKey.currentState
-                          // //     ?.addLayer(LineData(candles: []));
+                                    _chartKey.currentState?.addLayer(sma);
+                                  } else if (variety == 'EMA') {
+                                    // Use chartKey directly to add the layer
+                                    final ema = EmaData(
+                                      candles: List.from(candleData),
+                                      lineColor: Colors.orange,
+                                    );
 
-                          // // _chartKey.currentState
-                          // //     ?.addLayer(SmoothLineData(candles: []));
+                                    _chartKey.currentState?.addLayer(ema);
+                                  } else if (variety == 'BollingerBands') {
+                                    final bollingerBands = BollingerBandsData(
+                                      candles: List.from(candleData),
+                                      period: 20,
+                                      multiplier: 2.0,
+                                      middleBandColor: Colors.blue,
+                                      upperBandColor: Colors.red,
+                                      lowerBandColor: Colors.green,
+                                    );
 
-                          // // _chartKey.currentState?.addLayer(RrBox(
-                          // //     target: 4200,
-                          // //     stoploss: 3600,
-                          // //     startPrice: 3800,
-                          // //     startPointTime: 2,
-                          // //     endPointTime: 6));
-                        },
-                        child: const Text("Add Layer")),
+                                    _chartKey.currentState?.addLayer(bollingerBands);
+                                  }
+                                } else if (type == 'Drawing') {
+                                  if (variety == 'TrendLine') {
+                                    _chartKey.currentState?.addLayer(TrendLine(
+                                        from: const Offset(0, 3700),
+                                        to: const Offset(4, 3700)));
+                                  } else if (variety == 'HorizontalLine') {
+                                    _chartKey.currentState
+                                        ?.addLayer(HorizontalLine(value: 3400));
+                                  } else if (variety == 'RrBox') {
+                                    _chartKey.currentState?.addLayer(RrBox(
+                                        target: 4200,
+                                        stoploss: 3600,
+                                        startPrice: 3800,
+                                        startPointTime: 2,
+                                        endPointTime: 6));
+                                  }
+                                }
+                              },
+                            );
+                          },
+                        );
+                      },
+                      child: const Text("Add Layer"),
+                    ),
                   ],
                 ),
               ))
@@ -123,11 +205,17 @@ class _HomeState extends State<Home> {
 
   void _showAddDataDialog() {
     showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AddDataDialog(onDataUpdate: (data) {
-            _chartKey.currentState?.addData(data);
+      context: context,
+      builder: (BuildContext context) {
+        return AddDataDialog(onDataUpdate: (data) {
+          setState(() {
+            // Update the local candleData list
+            candleData.addAll(data);
           });
+          // Then update the chart
+          _chartKey.currentState?.addData(data);
         });
+      }
+    );
   }
 }

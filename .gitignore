@@ -27,3 +27,7 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+flutter_lib_code.txt
+collect_flutter_code.ps1
+example/example.txt
+main.txt
