@@ -1,8 +1,9 @@
 enum LayerType {
   chartPointer,
+  circularArea,
   text,
-  trendLine,
   horizontalLine,
   horizontalBand,
+  trendLine,
   rectArea,
 }

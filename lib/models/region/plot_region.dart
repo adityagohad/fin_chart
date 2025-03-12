@@ -1,6 +1,7 @@
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/circular_area.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
@@ -80,6 +81,9 @@ abstract class PlotRegion with RegionProp {
       case LayerType.rectArea:
         // TODO: Handle this case.
         throw UnimplementedError();
+      case LayerType.circularArea:
+        layer = CircularArea.fromTool(point: toReal(drawPoints.first));
+        break;
     }
     layers.add(layer);
   }

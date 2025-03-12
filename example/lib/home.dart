@@ -91,7 +91,8 @@ class _HomeState extends State<Home> {
                         child: const Text("Add Region")),
                     ElevatedButton(
                         onPressed: () {
-                          _chartKey.currentState?.addLayer(LayerType.trendLine);
+                          _chartKey.currentState
+                              ?.addLayer(LayerType.horizontalLine);
                           // _chartKey.currentState?.addLayerDeprecated(TrendLine(
                           //     from: const Offset(0, 3700),
                           //     to: const Offset(4, 3700)));
