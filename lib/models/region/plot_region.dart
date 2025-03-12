@@ -4,6 +4,7 @@ import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/circular_area.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/rect_area.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
@@ -79,8 +80,11 @@ abstract class PlotRegion with RegionProp {
         // TODO: Handle this case.
         throw UnimplementedError();
       case LayerType.rectArea:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        layer = RectArea.fromTool(
+            topLeft: toReal(drawPoints.first),
+            bottomRight: toReal(drawPoints.last),
+            startPoint: drawPoints.first);
+        break;
       case LayerType.circularArea:
         layer = CircularArea.fromTool(point: toReal(drawPoints.first));
         break;
