@@ -108,7 +108,6 @@ class ChartState extends State<Chart> with SingleTickerProviderStateMixin {
 
   void addLayer(LayerType layerType) {
     setState(() {
-      print(layerType);
       layerToAdd = layerType;
     });
   }
