@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/candle_data.dart';
+import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
@@ -15,19 +16,22 @@ class ChartPainter extends CustomPainter {
   final XAxisSettings xAxisSettings;
   final List<PlotRegion> regions;
   final int dataLength;
+  final Layer? selectedLayer;
+  final double? animationValue;
 
-  ChartPainter({
-    super.repaint,
-    required this.leftPos,
-    required this.topPos,
-    required this.rightPos,
-    required this.bottomPos,
-    required this.xStepWidth,
-    required this.xOffset,
-    required this.xAxisSettings,
-    required this.regions,
-    required this.dataLength,
-  });
+  ChartPainter(
+      {super.repaint,
+      required this.leftPos,
+      required this.topPos,
+      required this.rightPos,
+      required this.bottomPos,
+      required this.xStepWidth,
+      required this.xOffset,
+      required this.xAxisSettings,
+      required this.regions,
+      required this.dataLength,
+      this.selectedLayer,
+      this.animationValue});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -79,6 +83,8 @@ class ChartPainter extends CustomPainter {
             ..color = Colors.grey
             ..strokeWidth = 3);
     }
+    // selectedLayer?.onAimationUpdate(
+    //     canvas: canvas, animationValue: animationValue ?? 1);
   }
 
   @override

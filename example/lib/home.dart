@@ -2,6 +2,13 @@ import 'package:example/dialog/add_data_dialog.dart';
 import 'package:example/widget/layer_type_dropdown.dart';
 import 'package:fin_chart/chart.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
+import 'package:fin_chart/models/layers/circular_area.dart';
+import 'package:fin_chart/models/layers/horizontal_band.dart';
+import 'package:fin_chart/models/layers/horizontal_line.dart';
+import 'package:fin_chart/models/layers/label.dart';
+import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/rect_area.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/dummy_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/region/rsi_plot_region.dart';
@@ -36,7 +43,10 @@ class _HomeState extends State<Home> {
     //       HorizontalLine(value: 3500),
     //     ])
   ];
-  LayerType _selectedType = LayerType.text;
+  LayerType? _selectedType;
+  // LayerType? layerToAdd;
+  List<Offset> drawPoints = [];
+  Offset startingPoint = Offset.zero;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +57,20 @@ class _HomeState extends State<Home> {
       body: SafeArea(
           child: Column(
         children: [
-          Flexible(flex: 1, child: Container()),
+          Flexible(
+              flex: 1,
+              child: Container(
+                  // padding: EdgeInsets.all(10),
+                  // child: Container(
+                  //   padding: EdgeInsets.all(10),
+                  //   width: double.infinity,
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.grey,
+                  //     borderRadius: BorderRadius.all(Radius.circular(10)),
+                  //   ),
+                  //   child: Text("hey my instruction goes here"),
+                  // ),
+                  )),
           Flexible(
             flex: 9,
             child: Chart(
@@ -56,6 +79,61 @@ class _HomeState extends State<Home> {
               xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
               candles: candleData,
               regions: regions,
+              onInteraction: (p0, p1) {
+                if (_selectedType != null) {
+                  drawPoints.add(p0);
+                  startingPoint = p1;
+                  Layer? layer;
+                  switch (_selectedType) {
+                    case LayerType.label:
+                      layer = Label.fromTool(
+                          pos: drawPoints.first,
+                          label: "Text is long\nand has line breaks",
+                          textStyle: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold));
+                      break;
+                    case LayerType.trendLine:
+                      if (drawPoints.length >= 2) {
+                        layer = TrendLine.fromTool(
+                            from: drawPoints.first,
+                            to: drawPoints.last,
+                            startPoint: startingPoint);
+                      } else {
+                        layer = null;
+                      }
+                      break;
+                    case LayerType.horizontalLine:
+                      layer =
+                          HorizontalLine.fromTool(value: drawPoints.first.dy);
+                      break;
+                    case LayerType.horizontalBand:
+                      layer = HorizontalBand.fromTool(
+                          value: drawPoints.first.dy, allowedError: 70);
+                      break;
+                    case LayerType.rectArea:
+                      layer = RectArea.fromTool(
+                          topLeft: drawPoints.first,
+                          bottomRight: drawPoints.last,
+                          startPoint: startingPoint);
+                      break;
+                    case LayerType.circularArea:
+                      layer = CircularArea.fromTool(point: drawPoints.first);
+                      break;
+                    case null:
+                      layer = null;
+                      break;
+                  }
+                  setState(() {
+                    if (layer != null) {
+                      _selectedType = null;
+                      drawPoints.clear();
+                      _chartKey.currentState?.addLayer(layer);
+                    }
+                  });
+                }
+              },
             ),
           ),
           Flexible(
@@ -136,70 +214,10 @@ class _HomeState extends State<Home> {
                         onChanged: (layerType) {
                           setState(() {
                             _selectedType = layerType;
-                            _chartKey.currentState?.addLayer(layerType);
+                            _chartKey.currentState
+                                ?.updateLayerGettingAddedState(layerType);
                           });
                         })
-                    // ElevatedButton(
-                    //   onPressed: () {
-                    //     showDialog(
-                    //       context: context,
-                    //       builder: (BuildContext context) {
-                    //         return LayerDialog(
-                    //           onSubmit: (type, variety) {
-                    //             if (type == 'Indicator') {
-                    //               if (variety == 'SMA') {
-                    //                 // Use chartKey directly to add the layer
-                    //                 final sma = SmaData(
-                    //                   candles: List.from(candleData),
-                    //                   lineColor: Colors.purple,
-                    //                 );
-
-                    //                 _chartKey.currentState?.addLayer(sma);
-                    //               } else if (variety == 'EMA') {
-                    //                 // Use chartKey directly to add the layer
-                    //                 final ema = EmaData(
-                    //                   candles: List.from(candleData),
-                    //                   lineColor: Colors.orange,
-                    //                 );
-
-                    //                 _chartKey.currentState?.addLayer(ema);
-                    //               } else if (variety == 'BollingerBands') {
-                    //                 final bollingerBands = BollingerBandsData(
-                    //                   candles: List.from(candleData),
-                    //                   period: 20,
-                    //                   multiplier: 2.0,
-                    //                   middleBandColor: Colors.blue,
-                    //                   upperBandColor: Colors.red,
-                    //                   lowerBandColor: Colors.green,
-                    //                 );
-
-                    //                 _chartKey.currentState
-                    //                     ?.addLayer(bollingerBands);
-                    //               }
-                    //             } else if (type == 'Drawing') {
-                    //               if (variety == 'TrendLine') {
-                    //                 _chartKey.currentState?.addLayer(TrendLine(
-                    //                     from: const Offset(0, 3700),
-                    //                     to: const Offset(4, 3700)));
-                    //               } else if (variety == 'HorizontalLine') {
-                    //                 _chartKey.currentState
-                    //                     ?.addLayer(HorizontalLine(value: 3400));
-                    //               } else if (variety == 'RrBox') {
-                    //                 _chartKey.currentState?.addLayer(RrBox(
-                    //                     target: 4200,
-                    //                     stoploss: 3600,
-                    //                     startPrice: 3800,
-                    //                     startPointTime: 2,
-                    //                     endPointTime: 6));
-                    //               }
-                    //             }
-                    //           },
-                    //         );
-                    //       },
-                    //     );
-                    //   },
-                    //   child: const Text("Add Layer"),
-                    // ),
                   ],
                 ),
               ))

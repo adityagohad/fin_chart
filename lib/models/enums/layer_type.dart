@@ -1,7 +1,7 @@
 enum LayerType {
-  chartPointer,
+  //chartPointer,
   circularArea,
-  text,
+  label,
   horizontalLine,
   horizontalBand,
   trendLine,
@@ -11,12 +11,12 @@ enum LayerType {
 extension LayerTypeExtension on LayerType {
   String get name {
     switch (this) {
-      case LayerType.chartPointer:
-        return 'chartPointer';
+      // case LayerType.chartPointer:
+      //   return 'chartPointer';
       case LayerType.circularArea:
         return 'circularArea';
-      case LayerType.text:
-        return 'text';
+      case LayerType.label:
+        return 'label';
       case LayerType.trendLine:
         return 'trendLine';
       case LayerType.horizontalLine:

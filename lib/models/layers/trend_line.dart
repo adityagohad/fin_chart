@@ -14,7 +14,7 @@ class TrendLine extends Layer {
       {required this.from, required this.to, required this.startPoint})
       : super.fromTool() {
     isSelected = true;
-    tempTo = from;
+    tempTo = to;
   }
 
   @override
