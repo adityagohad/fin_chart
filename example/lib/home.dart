@@ -231,10 +231,10 @@ class _HomeState extends State<Home> {
         context: context,
         builder: (BuildContext context) {
           return AddDataDialog(onDataUpdate: (data) {
-            setState(() {
-              // Update the local candleData list
-              candleData.addAll(data);
-            });
+            // setState(() {
+            //   // Update the local candleData list
+            //   candleData.addAll(data);
+            // });
             // Then update the chart
             _chartKey.currentState?.addData(data);
           });

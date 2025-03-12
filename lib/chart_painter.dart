@@ -93,19 +93,6 @@ class ChartPainter extends CustomPainter {
     return true;
   }
 
-  // List<ICandle> _getCandles() {
-  //   if (regions.isEmpty) return [];
-
-  //   for (final region in regions) {
-  //     for (final layer in region.layers) {
-  //       if (layer is CandleData) {
-  //         return layer.candles;
-  //       }
-  //     }
-  //   }
-  //   return []; // Return empty list if no candles found
-  // }
-
   void drawXAxis(Canvas canvas) {
     final candles = data;
     if (candles.isEmpty) return;
