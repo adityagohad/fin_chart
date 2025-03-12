@@ -59,6 +59,14 @@ class ChartPainter extends CustomPainter {
     canvas.clipRect(innerBoundries);
 
     for (PlotRegion region in regions) {
+      if (region.isSelected) {
+        canvas.drawRect(
+            Rect.fromLTRB(region.leftPos, region.topPos, region.rightPos,
+                region.bottomPos),
+            Paint()
+              ..color = Colors.amber.withAlpha(100)
+              ..style = PaintingStyle.fill);
+      }
       region.drawBaseLayer(canvas);
       region.drawLayers(canvas);
       canvas.drawLine(

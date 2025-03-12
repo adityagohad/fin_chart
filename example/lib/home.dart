@@ -1,8 +1,6 @@
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/chart.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
-import 'package:fin_chart/models/region/dummy_plot_region.dart';
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/region/rsi_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -93,25 +91,26 @@ class _HomeState extends State<Home> {
                         child: const Text("Add Region")),
                     ElevatedButton(
                         onPressed: () {
-                          _chartKey.currentState?.addLayer(TrendLine(
-                              from: const Offset(0, 3700),
-                              to: const Offset(4, 3700)));
-
-                          _chartKey.currentState
-                              ?.addLayer(HorizontalLine(value: 3400));
+                          _chartKey.currentState?.addLayer(LayerType.trendLine);
+                          // _chartKey.currentState?.addLayerDeprecated(TrendLine(
+                          //     from: const Offset(0, 3700),
+                          //     to: const Offset(4, 3700)));
 
                           // _chartKey.currentState
-                          //     ?.addLayer(LineData(candles: []));
+                          //     ?.addLayerDeprecated(HorizontalLine(value: 3400));
 
-                          // _chartKey.currentState
-                          //     ?.addLayer(SmoothLineData(candles: []));
+                          // // _chartKey.currentState
+                          // //     ?.addLayer(LineData(candles: []));
 
-                          // _chartKey.currentState?.addLayer(RrBox(
-                          //     target: 4200,
-                          //     stoploss: 3600,
-                          //     startPrice: 3800,
-                          //     startPointTime: 2,
-                          //     endPointTime: 6));
+                          // // _chartKey.currentState
+                          // //     ?.addLayer(SmoothLineData(candles: []));
+
+                          // // _chartKey.currentState?.addLayer(RrBox(
+                          // //     target: 4200,
+                          // //     stoploss: 3600,
+                          // //     startPrice: 3800,
+                          // //     startPointTime: 2,
+                          // //     endPointTime: 6));
                         },
                         child: const Text("Add Layer")),
                   ],
