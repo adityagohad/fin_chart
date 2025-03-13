@@ -147,6 +147,9 @@ class _HomeState extends State<Home> {
                     //     child: const Text("Action")),
                     ElevatedButton(
                         onPressed: _showAddDataDialog,
+                        // onPressed: () {
+                        //   _chartKey.currentState?.addLayerFromJson();
+                        // },
                         child: const Text("Add Data")),
                     ElevatedButton(
                       onPressed: () {

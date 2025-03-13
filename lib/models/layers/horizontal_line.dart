@@ -3,9 +3,16 @@ import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 class HorizontalLine extends Layer {
-  double value;
+  late double value;
+  Color color = Colors.blue;
+  double strokeWidth = 2;
 
   HorizontalLine.fromTool({required this.value}) : super.fromTool();
+
+  HorizontalLine.fromJson({required Map<String, dynamic> data})
+      : super.fromJson() {
+    value = data['value'];
+  }
 
   @override
   void drawLayer({required Canvas canvas}) {
@@ -13,8 +20,8 @@ class HorizontalLine extends Layer {
         Offset(leftPos, toY(value)),
         Offset(rightPos, toY(value)),
         Paint()
-          ..color = Colors.blue
-          ..strokeWidth = 2);
+          ..color = color
+          ..strokeWidth = strokeWidth);
   }
 
   @override

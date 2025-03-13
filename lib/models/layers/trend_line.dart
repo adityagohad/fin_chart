@@ -1,11 +1,15 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class TrendLine extends Layer {
   late Offset from;
   late Offset to;
-  bool isSelected = false;
   Color color = Colors.black;
+  double strokeWidth = 2;
+  double endPointRadius = 5;
+
+  bool isSelected = false;
   late Offset startPoint;
   Offset? tempFrom;
   Offset? tempTo;
@@ -17,12 +21,31 @@ class TrendLine extends Layer {
     tempTo = to;
   }
 
+  TrendLine.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+    from = offsetFromJson(data['from']);
+    to = offsetFromJson(data['to']);
+    strokeWidth = data['strokeWidth'] ?? 2;
+    endPointRadius = data['endPointRadius'] ?? 5;
+    color = colorFromJson(data['color']);
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'from': {'dx': from.dx, 'dy': from.dy},
+      'to': {'dx': to.dx, 'dy': to.dy},
+      'strokeWidth': strokeWidth,
+      'endPointRadius': endPointRadius,
+      'color': colorToJson(color)
+    };
+  }
+
   @override
   void drawLayer({required Canvas canvas}) {
     Paint paint = Paint()
-      ..strokeWidth = 1
+      ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
-      ..color = isSelected ? Colors.blue : color;
+      ..color = color;
 
     canvas.drawLine(Offset(toX(from.dx), toY(from.dy)),
         Offset(toX(to.dx), toY(to.dy)), paint);
@@ -30,53 +53,55 @@ class TrendLine extends Layer {
     if (isSelected) {
       canvas.drawCircle(
           toCanvas(from),
-          5,
+          endPointRadius,
           Paint()
             ..color = Colors.white
             ..style = PaintingStyle.fill
-            ..strokeWidth = 5);
+            ..strokeWidth = endPointRadius);
       canvas.drawCircle(
           toCanvas(from),
-          5,
+          endPointRadius,
           Paint()
-            ..color = Colors.blue
+            ..color = color
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 3);
+            ..strokeWidth = strokeWidth);
 
       canvas.drawCircle(
           toCanvas(to),
-          5,
+          endPointRadius,
           Paint()
             ..color = Colors.white
             ..style = PaintingStyle.fill
-            ..strokeWidth = 5);
+            ..strokeWidth = endPointRadius);
       canvas.drawCircle(
           toCanvas(to),
-          5,
+          endPointRadius,
           Paint()
-            ..color = Colors.blue
+            ..color = color
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 3);
+            ..strokeWidth = strokeWidth);
     }
   }
 
   @override
   Layer? onTapDown({required TapDownDetails details}) {
-    if (isPointInCircularRegion(details.localPosition, toCanvas(from), 10)) {
+    if (isPointInCircularRegion(
+        details.localPosition, toCanvas(from), endPointRadius * 2)) {
       isSelected = true;
       startPoint = details.localPosition;
       tempFrom = from;
       tempTo = null;
       return this;
     } else if (isPointInCircularRegion(
-        details.localPosition, toCanvas(to), 10)) {
+        details.localPosition, toCanvas(to), endPointRadius * 2)) {
       isSelected = true;
       startPoint = details.localPosition;
       tempTo = to;
       tempFrom = null;
       return this;
     } else if (isPointOnLine(details.localPosition,
-        Offset(toX(from.dx), toY(from.dy)), Offset(toX(to.dx), toY(to.dy)))) {
+        Offset(toX(from.dx), toY(from.dy)), Offset(toX(to.dx), toY(to.dy)),
+        tolerance: endPointRadius * 2)) {
       isSelected = true;
       startPoint = details.localPosition;
       tempFrom = from;
