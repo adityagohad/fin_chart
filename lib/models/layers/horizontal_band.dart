@@ -1,12 +1,29 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class HorizontalBand extends Layer {
-  double value;
-  double allowedError;
+  late double value;
+  late double allowedError;
+  Color color = Colors.amber;
 
   HorizontalBand.fromTool({required this.value, this.allowedError = 40})
       : super.fromTool();
+
+  HorizontalBand.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+    value = data['value'];
+    allowedError = data['allowedError'] ?? 40.0;
+    color = colorFromJson(data['color']);
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'allowedError': allowedError,
+      'color': colorToJson(color)
+    };
+  }
 
   @override
   void drawLayer({required Canvas canvas}) {

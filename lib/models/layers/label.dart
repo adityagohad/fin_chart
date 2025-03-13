@@ -1,10 +1,11 @@
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:flutter/material.dart';
+import 'package:fin_chart/utils/calculations.dart';
 
 class Label extends Layer {
-  Offset pos;
-  String label;
-  TextStyle textStyle;
+  late Offset pos;
+  late String label;
+  late TextStyle textStyle;
   late double width;
   late double height;
   Label.fromTool(
@@ -27,6 +28,28 @@ class Label extends Layer {
     // print(toReal(Offset(toX(pos.dx) - width / 2, toY(pos.dy) - height / 2)));
 
     text.paint(canvas, toCanvas(pos));
+  }
+
+  Label.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+    pos = offsetFromJson(data['pos']);
+    label = data['label'] ?? '';
+    textStyle = TextStyle(
+      color: colorFromJson(data['textColor']),
+      fontSize: data['fontSize'] ?? 16.0,
+      fontWeight:
+          data['fontWeight'] == 'bold' ? FontWeight.bold : FontWeight.normal,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'pos': {'dx': pos.dx, 'dy': pos.dy},
+      'label': label,
+      'textColor': colorToJson(textStyle.color ?? Colors.black),
+      'fontSize': textStyle.fontSize,
+      'fontWeight': textStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
+    };
   }
 
   @override

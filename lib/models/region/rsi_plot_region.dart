@@ -8,6 +8,9 @@ class RsiPlotRegion extends PlotRegion {
   List<ICandle> candles;
   Color lineColor = Colors.blue;
   int period = 14;
+  final int rsiMaPeriod = 9; // Default period for the RSI moving average
+  final Color rsiMaColor = Colors.orange;
+  final List<double> rsiMaValues = [];
 
 
   final List<double> rsiValues = [];
@@ -161,6 +164,36 @@ class RsiPlotRegion extends PlotRegion {
         ..style = PaintingStyle.fill,
     );
 
+    if (rsiMaValues.isNotEmpty) {
+    final maPath = Path();
+    
+    // Start drawing from the first calculated MA value
+    int maStartIndex = candles.length - rsiValues.length + (rsiMaPeriod - 1);
+    
+    // Set starting point
+    maPath.moveTo(
+      toX(maStartIndex.toDouble()),
+      toY(rsiMaValues[rsiMaPeriod - 1]),
+    );
+    
+    // Draw the line
+    for (int i = rsiMaPeriod; i < rsiMaValues.length; i++) {
+      maPath.lineTo(
+        toX((maStartIndex + i - (rsiMaPeriod - 1)).toDouble()),
+        toY(rsiMaValues[i]),
+      );
+    }
+    
+    // Draw the path
+    canvas.drawPath(
+      maPath,
+      Paint()
+        ..color = rsiMaColor
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
     // Draw the overbought line (70)
     canvas.drawLine(
       Offset(leftPos, toY(70)),
@@ -229,6 +262,24 @@ class RsiPlotRegion extends PlotRegion {
       } else {
         double rs = avgGain / avgLoss;
         rsiValues.add(100 - (100 / (1 + rs)));
+      }
+    }
+
+    rsiMaValues.clear();
+
+    if (rsiValues.length >= rsiMaPeriod) {
+      // Fill with zeros for the first (rsiMaPeriod-1) positions
+      for (int i = 0; i < rsiMaPeriod - 1; i++) {
+        rsiMaValues.add(0);
+      }
+
+      // Calculate MA values for the rest
+      for (int i = rsiMaPeriod - 1; i < rsiValues.length; i++) {
+        double sum = 0;
+        for (int j = i - (rsiMaPeriod - 1); j <= i; j++) {
+          sum += rsiValues[j];
+        }
+        rsiMaValues.add(sum / rsiMaPeriod);
       }
     }
 

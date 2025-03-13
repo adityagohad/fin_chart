@@ -1,11 +1,12 @@
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:flutter/material.dart';
+import 'package:fin_chart/utils/calculations.dart';
 
 enum Edges { left, top, right, bottom }
 
 class RectArea extends Layer {
-  Offset topLeft;
-  Offset bottomRight;
+  late Offset topLeft;
+  late Offset bottomRight;
   late Offset topRight;
   late Offset bottomLeft;
   bool isSelected = false;
@@ -20,6 +21,25 @@ class RectArea extends Layer {
       : super.fromTool() {
     topRight = Offset(bottomRight.dx, topLeft.dy);
     bottomLeft = Offset(topLeft.dx, bottomRight.dy);
+  }
+
+  RectArea.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+    topLeft = offsetFromJson(data['topLeft']);
+    bottomRight = offsetFromJson(data['bottomRight']);
+    color = colorFromJson(data['color']);
+    // Initialize derived values
+    topRight = Offset(bottomRight.dx, topLeft.dy);
+    bottomLeft = Offset(topLeft.dx, bottomRight.dy);
+    startPoint = Offset.zero; // Default value, will be set on interaction
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'topLeft': {'dx': topLeft.dx, 'dy': topLeft.dy},
+      'bottomRight': {'dx': bottomRight.dx, 'dy': bottomRight.dy},
+      'color': colorToJson(color)
+    };
   }
 
   @override

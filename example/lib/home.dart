@@ -21,6 +21,7 @@ import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
+import 'package:fin_chart/models/layers/arrow.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -120,6 +121,12 @@ class _HomeState extends State<Home> {
                       break;
                     case LayerType.circularArea:
                       layer = CircularArea.fromTool(point: drawPoints.first);
+                      break;
+                    case LayerType.arrow:
+                      layer = Arrow.fromTool(
+                          from: drawPoints.first,
+                          to: drawPoints.last,
+                          startPoint: startingPoint);
                       break;
                     case null:
                       layer = null;
