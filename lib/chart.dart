@@ -75,6 +75,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   void initState() {
     currentData.addAll(widget.candles);
     regions.addAll(widget.regions);
+    xStepWidth = candleWidth;
 
     _swipeAnimationController = AnimationController(
       vsync: this,
@@ -295,7 +296,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       horizontalScale = 1;
       previousHorizontalScale = 1;
-      xStepWidth = candleWidth * 2;
+      xStepWidth = candleWidth;
       xOffset = 0;
       _isAnimating = false;
       _swipeVelocity = 0;
@@ -396,7 +397,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
         horizontalScale = newScale;
         lastFocalPoint = details.localFocalPoint;
-        xStepWidth = (candleWidth * 2) * horizontalScale;
+        xStepWidth = candleWidth * horizontalScale;
       }
     });
   }
