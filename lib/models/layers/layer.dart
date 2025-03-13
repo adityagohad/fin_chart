@@ -5,7 +5,11 @@ import 'package:flutter/material.dart';
 abstract class Layer with RegionProp {
   Layer.fromTool();
 
-  Layer.fromJson({required Map<String, dynamic> json});
+  Layer.fromJson();
+
+  Map<String, dynamic> toJson() {
+    throw UnimplementedError();
+  }
 
   void drawLayer({required Canvas canvas});
 

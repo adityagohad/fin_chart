@@ -3,6 +3,7 @@ import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -136,6 +137,18 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       selectedLayer = layer;
       selectedRegion?.addLayer(layer);
       isLayerGettingAdded = false;
+    });
+  }
+
+  void addLayerFromJson() {
+    setState(() {
+      regions[0].addLayer(TrendLine.fromJson(data: {
+        'from': {'dx': 3.0, 'dy': 3354.9402431742583},
+        'to': {'dx': 12.0, 'dy': 4201.785454250064},
+        'strokeWidth': 2.0,
+        'endPointRadius': 5.0,
+        'color': '#ff000000'
+      }));
     });
   }
 

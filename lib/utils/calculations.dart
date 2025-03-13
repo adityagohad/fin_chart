@@ -102,3 +102,36 @@ Size getTextRenderBoxSize(String str, TextStyle style) {
   return Size(
       textPainter.width + fontPadding, textPainter.height + fontPadding);
 }
+
+Color colorFromJson(String? hexString) {
+  if (hexString == null || hexString.isEmpty) return Colors.black;
+  final hex = hexString.startsWith('#') ? hexString.substring(1) : hexString;
+  try {
+    final value = int.parse(hex, radix: 16);
+    if (hex.length == 6) {
+      return Color(value).withAlpha(255);
+    } else if (hex.length == 8) {
+      return Color(value);
+    } else {
+      return Colors.black;
+    }
+  } catch (e) {
+    return Colors.black;
+  }
+}
+
+String colorToJson(Color color) {
+  final hexAlpha = (color.a * 255).round().toRadixString(16).padLeft(2, '0');
+  final hexRed = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
+  final hexGreen = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
+  final hexBlue = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
+
+  return '#$hexAlpha$hexRed$hexGreen$hexBlue';
+}
+
+Offset offsetFromJson(Map<String, dynamic> json) {
+  return Offset(
+    (json['dx'] as num).toDouble(),
+    (json['dy'] as num).toDouble(),
+  );
+}
