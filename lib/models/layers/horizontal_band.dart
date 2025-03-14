@@ -31,7 +31,7 @@ class HorizontalBand extends Layer {
         Rect.fromLTWH(leftPos, toY(value) - allowedError / 2,
             rightPos - leftPos, allowedError),
         Paint()
-          ..color = Colors.blue.withAlpha(100)
+          ..color = color.withAlpha(100)
           ..strokeWidth = 2);
   }
 

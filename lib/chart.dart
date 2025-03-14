@@ -246,16 +246,16 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   void _showLayerSettingsDialog() {
     if (selectedLayer == null) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => LayerSettingsDialog(
-        selectedLayer: selectedLayer!,
-        onUpdate: (updatedLayer) {
-          setState(() {
-          });
-        },
-      ),
+    
+    showLayerSettingsDialog(
+      context, 
+      selectedLayer!, 
+      (updatedLayer) {
+        setState(() {
+          // The layer has already been updated by reference in the dialog
+          // Just trigger a rebuild
+        });
+      }
     );
   }
 
