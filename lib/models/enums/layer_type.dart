@@ -6,6 +6,7 @@ enum LayerType {
   horizontalBand,
   trendLine,
   rectArea,
+  arrow,
 }
 
 extension LayerTypeExtension on LayerType {
@@ -25,6 +26,8 @@ extension LayerTypeExtension on LayerType {
         return 'horizontalBand';
       case LayerType.rectArea:
         return 'rectArea';
+      case LayerType.arrow:
+        return 'arrow';
     }
   }
 }

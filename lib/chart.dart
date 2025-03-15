@@ -9,6 +9,7 @@ import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:fin_chart/ui/layer_settings_dialog.dart';
 
 import 'models/settings/y_axis_settings.dart';
 
@@ -76,6 +77,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   void initState() {
     currentData.addAll(widget.candles);
     regions.addAll(widget.regions);
+    xStepWidth = candleWidth;
 
     _swipeAnimationController = AnimationController(
       vsync: this,
@@ -167,34 +169,94 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
           _recalculate(constraints, regions);
-          return SizedBox(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            child: GestureDetector(
-              onTapDown: _onTapDown,
-              onDoubleTap: _onDoubleTap,
-              onScaleStart: _onScaleStart,
-              onScaleEnd: _onScaleEnd,
-              onScaleUpdate: (details) => _onScaleUpdate(details, constraints),
-              child: CustomPaint(
-                painter: ChartPainter(
-                    regions: regions,
-                    xAxisSettings: widget.xAxisSettings!,
-                    xOffset: xOffset,
-                    xStepWidth: xStepWidth,
-                    dataLength: currentData.length,
-                    leftPos: leftPos,
-                    topPos: topPos,
-                    rightPos: rightPos,
-                    bottomPos: bottomPos,
-                    data: currentData,
-                    selectedLayer: selectedLayer,
-                    animationValue: _animation.value),
-                size: Size(constraints.maxWidth, constraints.maxHeight),
+
+          if (selectedLayer != null) {
+            return Stack(
+              children: [
+                SizedBox(
+                  width: constraints.maxWidth,
+                  height: constraints.maxHeight,
+                  child: GestureDetector(
+                    onTapDown: _onTapDown,
+                    onDoubleTap: _onDoubleTap,
+                    onScaleStart: _onScaleStart,
+                    onScaleEnd: _onScaleEnd,
+                    onScaleUpdate: (details) =>
+                        _onScaleUpdate(details, constraints),
+                    child: CustomPaint(
+                      painter: ChartPainter(
+                          regions: regions,
+                          xAxisSettings: widget.xAxisSettings!,
+                          xOffset: xOffset,
+                          xStepWidth: xStepWidth,
+                          dataLength: currentData.length,
+                          leftPos: leftPos,
+                          topPos: topPos,
+                          rightPos: rightPos,
+                          bottomPos: bottomPos,
+                          data: currentData,
+                          selectedLayer: selectedLayer,
+                          animationValue: _animation.value),
+                      size: Size(constraints.maxWidth, constraints.maxHeight),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.blue),
+                    onPressed: _showLayerSettingsDialog,
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return SizedBox(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              child: GestureDetector(
+                onTapDown: _onTapDown,
+                onDoubleTap: _onDoubleTap,
+                onScaleStart: _onScaleStart,
+                onScaleEnd: _onScaleEnd,
+                onScaleUpdate: (details) =>
+                    _onScaleUpdate(details, constraints),
+                child: CustomPaint(
+                  painter: ChartPainter(
+                      regions: regions,
+                      xAxisSettings: widget.xAxisSettings!,
+                      xOffset: xOffset,
+                      xStepWidth: xStepWidth,
+                      dataLength: currentData.length,
+                      leftPos: leftPos,
+                      topPos: topPos,
+                      rightPos: rightPos,
+                      bottomPos: bottomPos,
+                      data: currentData,
+                      selectedLayer: selectedLayer,
+                      animationValue: _animation.value),
+                  size: Size(constraints.maxWidth, constraints.maxHeight),
+                ),
               ),
-            ),
-          );
+            );
+          }
         }));
+  }
+
+  void _showLayerSettingsDialog() {
+    if (selectedLayer == null) return;
+    
+    showLayerSettingsDialog(
+      context, 
+      selectedLayer!, 
+      (updatedLayer) {
+        setState(() {
+          // The layer has already been updated by reference in the dialog
+          // Just trigger a rebuild
+        });
+      }
+    );
   }
 
   void _handleSwipeAnimation() {
@@ -308,7 +370,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       horizontalScale = 1;
       previousHorizontalScale = 1;
-      xStepWidth = candleWidth * 2;
+      xStepWidth = candleWidth;
       xOffset = 0;
       _isAnimating = false;
       _swipeVelocity = 0;
@@ -409,7 +471,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
         horizontalScale = newScale;
         lastFocalPoint = details.localFocalPoint;
-        xStepWidth = (candleWidth * 2) * horizontalScale;
+        xStepWidth = candleWidth * horizontalScale;
       }
     });
   }

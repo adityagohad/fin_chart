@@ -96,7 +96,7 @@ class MACDPlotRegion extends PlotRegion {
       Canvas canvas, List<double> values, Paint posPaint, Paint negPaint) {
     if (values.isEmpty) return;
 
-    const histWidth = 2.0;
+    final histWidth = xStepWidth * 0.4;
 
     // Start from the first valid value (after sufficient periods)
     int startIndex = slowPeriod + signalPeriod - 1;

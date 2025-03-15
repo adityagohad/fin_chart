@@ -1251,10 +1251,20 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
     final numCandles = int.parse(candlesController.text);
     final random = math.Random();
 
+    // Market regime parameters
+    final trendStrength = 0.45; // How strongly price follows the trend line (0-1)
+    final volatilityFactor = 0.3; // Base volatility as fraction of price range
+    final meanReversionStrength = 0.1; // Tendency to return to the trend line
+    final momentumFactor = 0.6; // Tendency to continue recent direction
+    
     setState(() {
       final newCandles = <CandleData>[];
       double lastClose = (max + min) / 2;
-
+      double lastDirection = 0; // Track recent price direction for momentum
+      double cumulativeDeviation = 0; // Track deviation from trend for mean reversion
+      
+      final priceRange = max - min;
+      
       for (int i = 0; i < numCandles; i++) {
         // If there's an existing adjusted candle at this index, keep it
         if (i < candles.length && candles[i].isAdjusted) {
@@ -1264,19 +1274,46 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
 
         final x = i / (numCandles - 1);
         final trendValue = 1 - _interpolateTrendValue(x);
-        final range = (max - min) * 0.1;
-
-        final open = lastClose + (random.nextDouble() - 0.5) * range * 0.5;
         final targetPrice = min + (max - min) * trendValue;
-        final close = targetPrice + (random.nextDouble() - 0.5) * range;
-
-        final high = math.max(open, close) + random.nextDouble() * range * 0.5;
-        final low = math.min(open, close) - random.nextDouble() * range * 0.5;
-
-        // Generate random volume
-        final volume =
-            volumeMin + random.nextDouble() * (volumeMax - volumeMin);
-
+        
+        // Calculate volatility that increases with price
+        final volatility = priceRange * volatilityFactor * (0.8 + 0.4 * random.nextDouble());
+        
+        // Apply mean reversion to trend line
+        final reversion = -cumulativeDeviation * meanReversionStrength;
+        
+        // Momentum continues recent direction
+        final momentum = lastDirection * momentumFactor;
+        
+        // Calculate price components
+        final trendComponent = (targetPrice - lastClose) * trendStrength;
+        final randomComponent = (random.nextDouble() - 0.5) * 2 * volatility;
+        final priceChange = trendComponent + randomComponent + reversion + momentum;
+        
+        // Calculate new close price
+        final close = lastClose + priceChange;
+        
+        // Calculate open price (typically near previous close)
+        final openOffset = (random.nextDouble() - 0.5) * volatility * 0.5;
+        final open = lastClose + openOffset;
+        
+        // Calculate high and low with realistic ranges
+        final highAbove = math.max(close, open) + random.nextDouble() * volatility * (0.5 + math.min(1.0, priceChange.abs() / volatility));
+        final lowBelow = math.min(close, open) - random.nextDouble() * volatility * (0.5 + math.min(1.0, priceChange.abs() / volatility));
+        
+        final high = math.max(highAbove, math.max(close, open));
+        final low = math.min(lowBelow, math.min(close, open));
+        
+        // Generate volume that correlates with price movement
+        final priceVolatility = (close - open).abs() / ((max - min) * 0.01);
+        final volumeRange = volumeMax - volumeMin;
+        final volume = volumeMin + (volumeRange * (0.3 + 0.7 * math.min(1.0, priceVolatility * (0.5 + 0.5 * random.nextDouble()))));
+        
+        // Track values for next candle
+        lastDirection = priceChange;
+        cumulativeDeviation += (close - targetPrice) / priceRange;
+        lastClose = close;
+        
         newCandles.add(CandleData(
           open: open,
           high: high,
@@ -1284,8 +1321,6 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
           close: close,
           volume: volume,
         ));
-
-        lastClose = close;
       }
 
       candles = newCandles;

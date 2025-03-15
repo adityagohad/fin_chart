@@ -1,13 +1,29 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class CircularArea extends Layer {
-  Offset point;
+  late Offset point;
   double radius = 20;
   Color color = Colors.blue;
   bool isAnimating = false;
 
   CircularArea.fromTool({required this.point}) : super.fromTool();
+
+  CircularArea.fromJson({required Map<String, dynamic> data}): super.fromJson() {
+    point = offsetFromJson(data['point']);
+    radius = data['radius'] ?? 20.0;
+    color = colorFromJson(data['color']);
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'point': {'dx': point.dx, 'dy': point.dy},
+      'radius': radius,
+      'color': colorToJson(color)
+    };
+  }
 
   @override
   void drawLayer({required Canvas canvas}) {

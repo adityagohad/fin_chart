@@ -1,5 +1,6 @@
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/utils/constants.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class HorizontalLine extends Layer {
@@ -9,9 +10,19 @@ class HorizontalLine extends Layer {
 
   HorizontalLine.fromTool({required this.value}) : super.fromTool();
 
-  HorizontalLine.fromJson({required Map<String, dynamic> data})
-      : super.fromJson() {
+  HorizontalLine.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
     value = data['value'];
+    color = colorFromJson(data['color']);
+    strokeWidth = data['strokeWidth'] ?? 2.0;
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'color': colorToJson(color),
+      'strokeWidth': strokeWidth
+    };
   }
 
   @override
@@ -40,7 +51,7 @@ class HorizontalLine extends Layer {
             toY(value) - text.height / 2 - yLabelPadding / 2,
             text.width + 2 * xLabelPadding,
             text.height + yLabelPadding),
-        Paint()..color = Colors.blue);
+        Paint()..color = color);
 
     text.paint(canvas,
         Offset(rightPos + yLabelPadding / 2, toY(value) - text.height / 2));
