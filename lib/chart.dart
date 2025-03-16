@@ -3,7 +3,6 @@ import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -142,18 +141,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
-  void addLayerFromJson() {
-    setState(() {
-      regions[0].addLayer(TrendLine.fromJson(data: {
-        'from': {'dx': 3.0, 'dy': 3354.9402431742583},
-        'to': {'dx': 12.0, 'dy': 4201.785454250064},
-        'strokeWidth': 2.0,
-        'endPointRadius': 5.0,
-        'color': '#ff000000'
-      }));
-    });
-  }
-
   void addData(List<ICandle> newData) {
     setState(() {
       currentData.addAll(newData);
@@ -169,94 +156,60 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
           _recalculate(constraints, regions);
-
-          if (selectedLayer != null) {
-            return Stack(
-              children: [
-                SizedBox(
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                  child: GestureDetector(
-                    onTapDown: _onTapDown,
-                    onDoubleTap: _onDoubleTap,
-                    onScaleStart: _onScaleStart,
-                    onScaleEnd: _onScaleEnd,
-                    onScaleUpdate: (details) =>
-                        _onScaleUpdate(details, constraints),
-                    child: CustomPaint(
-                      painter: ChartPainter(
-                          regions: regions,
-                          xAxisSettings: widget.xAxisSettings!,
-                          xOffset: xOffset,
-                          xStepWidth: xStepWidth,
-                          dataLength: currentData.length,
-                          leftPos: leftPos,
-                          topPos: topPos,
-                          rightPos: rightPos,
-                          bottomPos: bottomPos,
-                          data: currentData,
-                          selectedLayer: selectedLayer,
-                          animationValue: _animation.value),
-                      size: Size(constraints.maxWidth, constraints.maxHeight),
-                    ),
+          return Stack(
+            children: [
+              SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                child: GestureDetector(
+                  onTapDown: _onTapDown,
+                  onDoubleTap: _onDoubleTap,
+                  onScaleStart: _onScaleStart,
+                  onScaleEnd: _onScaleEnd,
+                  onScaleUpdate: (details) =>
+                      _onScaleUpdate(details, constraints),
+                  child: CustomPaint(
+                    painter: ChartPainter(
+                        regions: regions,
+                        xAxisSettings: widget.xAxisSettings!,
+                        xOffset: xOffset,
+                        xStepWidth: xStepWidth,
+                        dataLength: currentData.length,
+                        leftPos: leftPos,
+                        topPos: topPos,
+                        rightPos: rightPos,
+                        bottomPos: bottomPos,
+                        data: currentData,
+                        selectedLayer: selectedLayer,
+                        animationValue: _animation.value),
+                    size: Size(constraints.maxWidth, constraints.maxHeight),
                   ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.blue),
-                    onPressed: _showLayerSettingsDialog,
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return SizedBox(
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              child: GestureDetector(
-                onTapDown: _onTapDown,
-                onDoubleTap: _onDoubleTap,
-                onScaleStart: _onScaleStart,
-                onScaleEnd: _onScaleEnd,
-                onScaleUpdate: (details) =>
-                    _onScaleUpdate(details, constraints),
-                child: CustomPaint(
-                  painter: ChartPainter(
-                      regions: regions,
-                      xAxisSettings: widget.xAxisSettings!,
-                      xOffset: xOffset,
-                      xStepWidth: xStepWidth,
-                      dataLength: currentData.length,
-                      leftPos: leftPos,
-                      topPos: topPos,
-                      rightPos: rightPos,
-                      bottomPos: bottomPos,
-                      data: currentData,
-                      selectedLayer: selectedLayer,
-                      animationValue: _animation.value),
-                  size: Size(constraints.maxWidth, constraints.maxHeight),
                 ),
               ),
-            );
-          }
+              selectedLayer == null
+                  ? Container()
+                  : Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.settings, color: Colors.blue),
+                        onPressed: _showLayerSettingsDialog,
+                      ),
+                    ),
+            ],
+          );
         }));
   }
 
   void _showLayerSettingsDialog() {
     if (selectedLayer == null) return;
-    
-    showLayerSettingsDialog(
-      context, 
-      selectedLayer!, 
-      (updatedLayer) {
-        setState(() {
-          // The layer has already been updated by reference in the dialog
-          // Just trigger a rebuild
-        });
-      }
-    );
+
+    showLayerSettingsDialog(context, selectedLayer!, (updatedLayer) {
+      setState(() {
+        // The layer has already been updated by reference in the dialog
+        // Just trigger a rebuild
+      });
+    });
   }
 
   void _handleSwipeAnimation() {

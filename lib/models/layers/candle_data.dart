@@ -1,7 +1,6 @@
 import 'package:fin_chart/models/enums/candle_state.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 class CandleData extends Layer {
@@ -37,14 +36,10 @@ class CandleData extends Layer {
       canvas.drawLine(Offset(toX(i.toDouble()), toY(candle.high)),
           Offset(toX(i.toDouble()), toY(candle.low)), paint);
 
-      double candleWidthFactor = 0.7; // Adjust this value (0.0 to 1.0)
-            canvas.drawRect(
-                Rect.fromLTRB(
-                    toX(i.toDouble()) - (xStepWidth * candleWidthFactor) / 2,
-                    toY(candle.open),
-                    toX(i.toDouble()) + (xStepWidth * candleWidthFactor) / 2,
-                    toY(candle.close)),
-                paint);
+      canvas.drawRect(
+          Rect.fromLTRB(toX(i.toDouble()) - xStepWidth / 4, toY(candle.open),
+              toX(i.toDouble()) + xStepWidth / 4, toY(candle.close)),
+          paint);
 
       // if (toX(i) >= leftPos && toX(i) <= rightPos) {
       //   canvas.drawLine(Offset(toX(i), toY(candle.high)),

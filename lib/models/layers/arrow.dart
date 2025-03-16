@@ -96,38 +96,38 @@ class Arrow extends Layer {
     // Determine which points to use based on direction
     Offset start = isArrowheadAtTo ? from : to;
     Offset end = isArrowheadAtTo ? to : from;
-    
+
     // Convert to canvas coordinates
     Offset startPoint = Offset(toX(start.dx), toY(start.dy));
     Offset endPoint = Offset(toX(end.dx), toY(end.dy));
-    
+
     // Calculate angle of the line
     double angle = math.atan2(
       endPoint.dy - startPoint.dy,
       endPoint.dx - startPoint.dx,
     );
-    
+
     // Create arrowhead path
     Path arrowPath = Path();
-    
+
     // Move to tip of arrow
     arrowPath.moveTo(endPoint.dx, endPoint.dy);
-    
+
     // Draw one side of arrowhead
     arrowPath.lineTo(
       endPoint.dx - arrowheadSize * math.cos(angle - math.pi / 6),
       endPoint.dy - arrowheadSize * math.sin(angle - math.pi / 6),
     );
-    
+
     // Draw the other side of arrowhead
     arrowPath.lineTo(
       endPoint.dx - arrowheadSize * math.cos(angle + math.pi / 6),
       endPoint.dy - arrowheadSize * math.sin(angle + math.pi / 6),
     );
-    
+
     // Close the path to create the filled triangle
     arrowPath.close();
-    
+
     // Draw the arrowhead
     canvas.drawPath(
       arrowPath,

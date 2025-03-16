@@ -8,10 +8,9 @@ class RsiPlotRegion extends PlotRegion {
   List<ICandle> candles;
   Color lineColor = Colors.blue;
   int period = 14;
-  final int rsiMaPeriod = 9; // Default period for the RSI moving average
+  final int rsiMaPeriod = 9;
   final Color rsiMaColor = Colors.orange;
   final List<double> rsiMaValues = [];
-
 
   final List<double> rsiValues = [];
   RsiPlotRegion(
@@ -60,7 +59,7 @@ class RsiPlotRegion extends PlotRegion {
       final x = toX((startIndex + i).toDouble());
       final y = toY(rsiValues[i]);
       final overboughtY = toY(70);
-      
+
       if (rsiValues[i] > 70) {
         if (!inOverbought) {
           // Find the exact crossing point with the overbought line
@@ -68,9 +67,10 @@ class RsiPlotRegion extends PlotRegion {
             final prevX = toX((startIndex + i - 1).toDouble());
             // ignore: unused_local_variable
             final prevY = toY(rsiValues[i - 1]);
-            final t = (70 - rsiValues[i - 1]) / (rsiValues[i] - rsiValues[i - 1]);
+            final t =
+                (70 - rsiValues[i - 1]) / (rsiValues[i] - rsiValues[i - 1]);
             final crossX = prevX + t * (x - prevX);
-            
+
             overboughtPath.moveTo(crossX, overboughtY);
           } else {
             overboughtPath.moveTo(x, overboughtY);
@@ -85,7 +85,7 @@ class RsiPlotRegion extends PlotRegion {
         final prevY = toY(rsiValues[i - 1]);
         final t = (70 - rsiValues[i]) / (rsiValues[i - 1] - rsiValues[i]);
         final crossX = x - t * (x - prevX);
-        
+
         overboughtPath.lineTo(crossX, overboughtY);
         overboughtPath.lineTo(crossX, overboughtY);
         overboughtPath.close();
@@ -109,7 +109,7 @@ class RsiPlotRegion extends PlotRegion {
       final x = toX((startIndex + i).toDouble());
       final y = toY(rsiValues[i]);
       final oversoldY = toY(30);
-      
+
       if (rsiValues[i] < 30) {
         if (!inOversold) {
           // Find the exact crossing point with the oversold line
@@ -117,9 +117,10 @@ class RsiPlotRegion extends PlotRegion {
             final prevX = toX((startIndex + i - 1).toDouble());
             // ignore: unused_local_variable
             final prevY = toY(rsiValues[i - 1]);
-            final t = (30 - rsiValues[i - 1]) / (rsiValues[i] - rsiValues[i - 1]);
+            final t =
+                (30 - rsiValues[i - 1]) / (rsiValues[i] - rsiValues[i - 1]);
             final crossX = prevX + t * (x - prevX);
-            
+
             oversoldPath.moveTo(crossX, oversoldY);
           } else {
             oversoldPath.moveTo(x, oversoldY);
@@ -134,7 +135,7 @@ class RsiPlotRegion extends PlotRegion {
         final prevY = toY(rsiValues[i - 1]);
         final t = (30 - rsiValues[i]) / (rsiValues[i - 1] - rsiValues[i]);
         final crossX = x - t * (x - prevX);
-        
+
         oversoldPath.lineTo(crossX, oversoldY);
         oversoldPath.lineTo(crossX, oversoldY);
         oversoldPath.close();
@@ -165,34 +166,34 @@ class RsiPlotRegion extends PlotRegion {
     );
 
     if (rsiMaValues.isNotEmpty) {
-    final maPath = Path();
-    
-    // Start drawing from the first calculated MA value
-    int maStartIndex = candles.length - rsiValues.length + (rsiMaPeriod - 1);
-    
-    // Set starting point
-    maPath.moveTo(
-      toX(maStartIndex.toDouble()),
-      toY(rsiMaValues[rsiMaPeriod - 1]),
-    );
-    
-    // Draw the line
-    for (int i = rsiMaPeriod; i < rsiMaValues.length; i++) {
-      maPath.lineTo(
-        toX((maStartIndex + i - (rsiMaPeriod - 1)).toDouble()),
-        toY(rsiMaValues[i]),
+      final maPath = Path();
+
+      // Start drawing from the first calculated MA value
+      int maStartIndex = candles.length - rsiValues.length + (rsiMaPeriod - 1);
+
+      // Set starting point
+      maPath.moveTo(
+        toX(maStartIndex.toDouble()),
+        toY(rsiMaValues[rsiMaPeriod - 1]),
+      );
+
+      // Draw the line
+      for (int i = rsiMaPeriod; i < rsiMaValues.length; i++) {
+        maPath.lineTo(
+          toX((maStartIndex + i - (rsiMaPeriod - 1)).toDouble()),
+          toY(rsiMaValues[i]),
+        );
+      }
+
+      // Draw the path
+      canvas.drawPath(
+        maPath,
+        Paint()
+          ..color = rsiMaColor
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke,
       );
     }
-    
-    // Draw the path
-    canvas.drawPath(
-      maPath,
-      Paint()
-        ..color = rsiMaColor
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke,
-    );
-  }
 
     // Draw the overbought line (70)
     canvas.drawLine(
