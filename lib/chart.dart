@@ -7,6 +7,7 @@ import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
@@ -83,6 +84,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     xStepWidth = candleWidth;
 
     addDataAfterWait();
+    addLayerFromJson();
 
     _swipeAnimationController = AnimationController(
       vsync: this,
@@ -107,8 +109,20 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   //dummy methods
 
   addDataAfterWait() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(milliseconds: 10));
     addData(data.map((c) => ICandle.fromJson(c)).toList());
+  }
+
+  addLayerFromJson() async {
+    await Future.delayed(const Duration(milliseconds: 2000));
+    selectedRegion = regions[0];
+    addLayer(TrendLine.fromJson(data: {
+      "from": {"dx": 10.0, "dy": 3392.888495557372},
+      "to": {"dx": 23.0, "dy": 3531.3663186563776},
+      "strokeWidth": 2.0,
+      "endPointRadius": 5.0,
+      "color": "#ff000000"
+    }));
   }
 
   //dummy methods
@@ -422,6 +436,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           }
         } else {
           selectedLayer?.onScaleUpdate(details: details);
+          print(jsonEncode(selectedLayer?.toJson()));
         }
       }
       if (details.pointerCount == 2) {
