@@ -19,12 +19,13 @@ class Arrow extends Layer {
 
   Arrow.fromTool(
       {required this.from, required this.to, required this.startPoint})
-      : super.fromTool() {
+      : super.fromTool(id: generateV4()) {
     isSelected = true;
     tempTo = to;
   }
 
-  Arrow.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+  Arrow.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     from = offsetFromJson(data['from']);
     to = offsetFromJson(data['to']);
     strokeWidth = data['strokeWidth'] ?? 2;
@@ -36,6 +37,7 @@ class Arrow extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
       'type': 'arrow',
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
@@ -69,7 +71,7 @@ class Arrow extends Layer {
       // The base of the arrowhead is at a distance of arrowheadSize from the tip
       arrowBase = Offset(
         endPoint.dx - (arrowheadSize * 0.75) * math.cos(angle),
-        endPoint.dy - (arrowheadSize *0.75)  * math.sin(angle),
+        endPoint.dy - (arrowheadSize * 0.75) * math.sin(angle),
       );
       // Draw line from start to arrowhead base
       canvas.drawLine(startPoint, arrowBase, paint);

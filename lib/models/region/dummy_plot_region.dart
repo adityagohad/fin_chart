@@ -11,7 +11,8 @@ class DummyPlotRegion extends PlotRegion {
   DummyPlotRegion(
       {required this.candles,
       super.type = PlotRegionType.indicator,
-      required super.yAxisSettings});
+      required super.yAxisSettings,
+      required super.id});
 
   @override
   void updateData(List<ICandle> data) {
@@ -54,6 +55,7 @@ class DummyPlotRegion extends PlotRegion {
   DummyPlotRegion.fromJson(Map<String, dynamic> json)
       : candles = [],
         super(
+          id: json['id'],
           type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
               orElse: () => PlotRegionType.data),
           yAxisSettings: YAxisSettings(

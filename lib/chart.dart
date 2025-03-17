@@ -210,17 +210,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         }));
   }
 
-  // void _showLayerSettingsDialog() {
-  //   if (selectedLayer == null) return;
-
-  //   showLayerSettingsDialog(context, selectedLayer!, (updatedLayer) {
-  //     setState(() {
-  //       // The layer has already been updated by reference in the dialog
-  //       // Just trigger a rebuild
-  //     });
-  //   });
-  // }
-
   void _handleSwipeAnimation() {
     if (!_isAnimating) return;
 
@@ -299,6 +288,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
     if (regions.isEmpty) {
       regions.add(MainPlotRegion(
+        id: generateV4(),
         candles: [],
         yAxisSettings: widget.yAxisSettings!,
       ));
@@ -464,9 +454,13 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         'axisColor': colorToJson(widget.yAxisSettings!.axisColor),
         'strokeWidth': widget.yAxisSettings!.strokeWidth,
         'textStyle': {
-          'color': colorToJson(widget.yAxisSettings!.axisTextStyle.color ?? Colors.black),
+          'color': colorToJson(
+              widget.yAxisSettings!.axisTextStyle.color ?? Colors.black),
           'fontSize': widget.yAxisSettings!.axisTextStyle.fontSize,
-          'fontWeight': widget.yAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
+          'fontWeight':
+              widget.yAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold
+                  ? 'bold'
+                  : 'normal',
         },
       },
       'xAxisSettings': {
@@ -474,34 +468,39 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         'axisColor': colorToJson(widget.xAxisSettings!.axisColor),
         'strokeWidth': widget.xAxisSettings!.strokeWidth,
         'textStyle': {
-          'color': colorToJson(widget.xAxisSettings!.axisTextStyle.color ?? Colors.black),
+          'color': colorToJson(
+              widget.xAxisSettings!.axisTextStyle.color ?? Colors.black),
           'fontSize': widget.xAxisSettings!.axisTextStyle.fontSize,
-          'fontWeight': widget.xAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
+          'fontWeight':
+              widget.xAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold
+                  ? 'bold'
+                  : 'normal',
         },
       },
       'regions': regions.map((region) => region.toJson()).toList(),
       'dataFit': widget.dataFit.name,
     };
   }
-  
+
   /// Create regions from JSON data
   void loadFromJson(Map<String, dynamic> json) {
     setState(() {
       if (json['regions'] != null) {
         regions.clear();
-        
+
         for (var regionJson in json['regions']) {
           String? type = regionJson['type'];
           if (type != null) {
             PlotRegion? region;
-            
+
             switch (type) {
               case 'data':
                 region = MainPlotRegion.fromJson(regionJson);
                 break;
               case 'indicator':
                 // Determine which indicator type based on properties
-                if (regionJson.containsKey('period') && !regionJson.containsKey('fastPeriod')) {
+                if (regionJson.containsKey('period') &&
+                    !regionJson.containsKey('fastPeriod')) {
                   region = RsiPlotRegion.fromJson(regionJson);
                 } else if (regionJson.containsKey('fastPeriod')) {
                   region = MACDPlotRegion.fromJson(regionJson);
@@ -512,7 +511,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                 }
                 break;
             }
-            
+
             if (region != null) {
               regions.add(region);
             }

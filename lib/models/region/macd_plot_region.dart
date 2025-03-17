@@ -24,6 +24,7 @@ class MACDPlotRegion extends PlotRegion {
     this.signalPeriod = 9,
     super.type = PlotRegionType.indicator,
     required super.yAxisSettings,
+    required super.id,
   }) {
     macdValues = [];
     signalValues = [];
@@ -235,6 +236,7 @@ class MACDPlotRegion extends PlotRegion {
         slowPeriod = json['slowPeriod'] ?? 26,
         signalPeriod = json['signalPeriod'] ?? 9,
         super(
+          id: json['id'],
           type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
               orElse: () => PlotRegionType.indicator),
           yAxisSettings: YAxisSettings(

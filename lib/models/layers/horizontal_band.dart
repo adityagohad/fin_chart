@@ -9,9 +9,10 @@ class HorizontalBand extends Layer {
   Color color = Colors.amber;
 
   HorizontalBand.fromTool({required this.value, this.allowedError = 40})
-      : super.fromTool();
+      : super.fromTool(id: generateV4());
 
-  HorizontalBand.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+  HorizontalBand.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     value = data['value'];
     allowedError = data['allowedError'] ?? 40.0;
     color = colorFromJson(data['color']);
@@ -20,6 +21,7 @@ class HorizontalBand extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
       'type': 'horizontalBand',
       'value': value,
       'allowedError': allowedError,

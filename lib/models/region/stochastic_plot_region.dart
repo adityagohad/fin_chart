@@ -28,6 +28,7 @@ class StochasticPlotRegion extends PlotRegion {
     this.dLineColor = Colors.red,
     super.type = PlotRegionType.indicator,
     required super.yAxisSettings,
+    required super.id,
   }) {
     kValues = [];
     dValues = [];
@@ -180,6 +181,7 @@ class StochasticPlotRegion extends PlotRegion {
         kLineColor = colorFromJson(json['kLineColor'] ?? '#FF0000FF'),
         dLineColor = colorFromJson(json['dLineColor'] ?? '#FF0000FF'),
         super(
+          id: json['id'],
           type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
               orElse: () => PlotRegionType.indicator),
           yAxisSettings: YAxisSettings(

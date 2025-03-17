@@ -3,9 +3,11 @@ import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
 abstract class Layer with RegionProp {
-  Layer.fromTool();
+  final String id;
 
-  Layer.fromJson();
+  Layer.fromTool({required this.id});
+
+  Layer.fromJson({required this.id});
 
   Map<String, dynamic> toJson() {
     throw UnimplementedError();

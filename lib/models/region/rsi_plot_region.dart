@@ -18,7 +18,8 @@ class RsiPlotRegion extends PlotRegion {
   RsiPlotRegion(
       {required this.candles,
       super.type = PlotRegionType.indicator,
-      required super.yAxisSettings});
+      required super.yAxisSettings,
+      required super.id});
 
   @override
   void drawBaseLayer(Canvas canvas) {
@@ -303,6 +304,7 @@ class RsiPlotRegion extends PlotRegion {
         lineColor = colorFromJson(json['lineColor'] ?? '#FF0000FF'),
         period = json['period'] ?? 14,
         super(
+          id: json['id'],
           type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
               orElse: () => PlotRegionType.indicator),
           yAxisSettings: YAxisSettings(

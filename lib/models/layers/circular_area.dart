@@ -9,9 +9,11 @@ class CircularArea extends Layer {
   Color color = Colors.blue;
   bool isAnimating = false;
 
-  CircularArea.fromTool({required this.point}) : super.fromTool();
+  CircularArea.fromTool({required this.point})
+      : super.fromTool(id: generateV4());
 
-  CircularArea.fromJson({required Map<String, dynamic> data}): super.fromJson() {
+  CircularArea.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     point = offsetFromJson(data['point']);
     radius = data['radius'] ?? 20.0;
     color = colorFromJson(data['color']);
@@ -20,6 +22,7 @@ class CircularArea extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
       'type': 'circularArea',
       'point': {'dx': point.dx, 'dy': point.dy},
       'radius': radius,
@@ -85,6 +88,7 @@ class CircularArea extends Layer {
       isAnimating = false;
     }
   }
+
   @override
   void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
     showDialog(

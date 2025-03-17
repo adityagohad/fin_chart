@@ -17,12 +17,13 @@ class TrendLine extends Layer {
 
   TrendLine.fromTool(
       {required this.from, required this.to, required this.startPoint})
-      : super.fromTool() {
+      : super.fromTool(id: generateV4()) {
     isSelected = true;
     tempTo = to;
   }
 
-  TrendLine.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+  TrendLine.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     from = offsetFromJson(data['from']);
     to = offsetFromJson(data['to']);
     strokeWidth = data['strokeWidth'] ?? 2;
@@ -33,6 +34,7 @@ class TrendLine extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
       'type': 'trendLine',
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},

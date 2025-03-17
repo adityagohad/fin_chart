@@ -15,6 +15,7 @@ import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 abstract class PlotRegion with RegionProp {
+  final String id;
   final PlotRegionType type;
   final YAxisSettings yAxisSettings;
   final List<Layer> layers;
@@ -23,7 +24,8 @@ abstract class PlotRegion with RegionProp {
   bool isSelected = false;
 
   PlotRegion(
-      {required this.type,
+      {required this.id,
+      required this.type,
       required this.yAxisSettings,
       List<Layer>? layers,
       double yMinValue = 0,
@@ -143,6 +145,7 @@ abstract class PlotRegion with RegionProp {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'type': type.name,
       'yAxisSettings': {
         'yAxisPos': yAxisSettings.yAxisPos.name,

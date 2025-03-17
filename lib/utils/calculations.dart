@@ -135,3 +135,21 @@ Offset offsetFromJson(Map<String, dynamic> json) {
     (json['dy'] as num).toDouble(),
   );
 }
+
+String generateV4() {
+  final math.Random random = math.Random.secure();
+  final List<int> bytes = List.generate(16, (_) => random.nextInt(256));
+
+  bytes[6] = (bytes[6] & 0x0F) | 0x40;
+  bytes[8] = (bytes[8] & 0x3F) | 0x80;
+
+  final List<String> hexBytes = bytes.map((byte) {
+    return byte.toRadixString(16).padLeft(2, '0');
+  }).toList();
+
+  return '${hexBytes.sublist(0, 4).join()}-'
+      '${hexBytes.sublist(4, 6).join()}-'
+      '${hexBytes.sublist(6, 8).join()}-'
+      '${hexBytes.sublist(8, 10).join()}-'
+      '${hexBytes.sublist(10, 16).join()}';
+}
