@@ -15,6 +15,7 @@ import 'package:fin_chart/models/region/rsi_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/ui/region_dialog.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/region/macd_plot_region.dart';
@@ -173,6 +174,7 @@ class _HomeState extends State<Home> {
                                     if (variety == 'RSI') {
                                       _chartKey.currentState
                                           ?.addRegion(RsiPlotRegion(
+                                        id: generateV4(),
                                         type: type,
                                         yAxisSettings: const YAxisSettings(
                                             yAxisPos: YAxisPos.right),
@@ -182,6 +184,7 @@ class _HomeState extends State<Home> {
                                       // Add MACD region with custom min/max values
                                       _chartKey.currentState
                                           ?.addRegion(MACDPlotRegion(
+                                        id: generateV4(),
                                         candles: [],
                                         type: type,
                                         yAxisSettings: const YAxisSettings(
@@ -191,6 +194,7 @@ class _HomeState extends State<Home> {
                                       // Add Stochastic region with fixed 0-100 bounds
                                       _chartKey.currentState
                                           ?.addRegion(StochasticPlotRegion(
+                                        id: generateV4(),
                                         candles: [],
                                         type: type,
                                         yAxisSettings: const YAxisSettings(
@@ -201,6 +205,7 @@ class _HomeState extends State<Home> {
                                     if (variety == 'Candle') {
                                       _chartKey.currentState
                                           ?.addRegion(MainPlotRegion(
+                                        id: generateV4(),
                                         candles: [],
                                         type: type,
                                         yAxisSettings: const YAxisSettings(
@@ -210,6 +215,7 @@ class _HomeState extends State<Home> {
                                       // Add line chart region
                                       _chartKey.currentState
                                           ?.addRegion(DummyPlotRegion(
+                                        id: generateV4(),
                                         candles: [],
                                         type: type,
                                         yAxisSettings: const YAxisSettings(

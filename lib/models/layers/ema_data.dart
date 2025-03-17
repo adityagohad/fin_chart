@@ -1,5 +1,6 @@
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class EmaData extends Layer {
@@ -12,7 +13,7 @@ class EmaData extends Layer {
     required this.candles,
     this.period = 20,
     this.lineColor = Colors.orange,
-  }) : super.fromTool() {
+  }) : super.fromTool(id: generateV4()) {
     // Calculate EMA immediately in constructor
     _calculateEMA();
   }

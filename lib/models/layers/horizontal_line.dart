@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/ui/layer_settings/horizontal_line_settings_dialog.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,11 @@ class HorizontalLine extends Layer {
   Color color = Colors.blue;
   double strokeWidth = 2;
 
-  HorizontalLine.fromTool({required this.value}) : super.fromTool();
+  HorizontalLine.fromTool({required this.value})
+      : super.fromTool(id: generateV4());
 
-  HorizontalLine.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+  HorizontalLine.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     value = data['value'];
     color = colorFromJson(data['color']);
     strokeWidth = data['strokeWidth'] ?? 2.0;
@@ -19,6 +22,8 @@ class HorizontalLine extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
+      'type': 'horizontalLine',
       'value': value,
       'color': colorToJson(color),
       'strokeWidth': strokeWidth
@@ -87,5 +92,16 @@ class HorizontalLine extends Layer {
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
     value = toYInverse(toY(value) + details.focalPointDelta.dy);
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => HorizontalLineSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }

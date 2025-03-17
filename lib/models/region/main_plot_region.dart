@@ -1,7 +1,9 @@
 import 'package:fin_chart/models/enums/candle_state.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
@@ -10,7 +12,8 @@ class MainPlotRegion extends PlotRegion {
   MainPlotRegion(
       {required this.candles,
       super.type = PlotRegionType.data,
-      required super.yAxisSettings});
+      required super.yAxisSettings,
+      required super.id});
 
   @override
   void updateData(List<ICandle> data) {
@@ -69,5 +72,48 @@ class MainPlotRegion extends PlotRegion {
       //   break;
       // }
     }
+  }
+
+  MainPlotRegion.fromJson(Map<String, dynamic> json)
+      : candles = [],
+        super(
+          id: json['id'],
+          type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
+              orElse: () => PlotRegionType.data),
+          yAxisSettings: YAxisSettings(
+            yAxisPos: YAxisPos.values.firstWhere(
+                (pos) => pos.name == json['yAxisSettings']['yAxisPos'],
+                orElse: () => YAxisPos.right),
+            axisColor: colorFromJson(json['yAxisSettings']['axisColor']),
+            strokeWidth: json['yAxisSettings']['strokeWidth'] ?? 1.0,
+            axisTextStyle: TextStyle(
+              color: colorFromJson(json['yAxisSettings']['textStyle']['color']),
+              fontSize: json['yAxisSettings']['textStyle']['fontSize'] ?? 12.0,
+              fontWeight:
+                  json['yAxisSettings']['textStyle']['fontWeight'] == 'bold'
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+            ),
+          ),
+        ) {
+    yMinValue = json['yMinValue'];
+    yMaxValue = json['yMaxValue'];
+
+    // Load layers if they exist
+    if (json['layers'] != null) {
+      for (var layerJson in json['layers']) {
+        Layer? layer = PlotRegion.layerFromJson(layerJson);
+        if (layer != null) {
+          layers.add(layer);
+        }
+      }
+    }
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    var json = super.toJson();
+    json['variety'] = 'Candle';
+    return json;
   }
 }

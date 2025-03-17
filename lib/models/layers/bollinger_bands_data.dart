@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class BollingerBandsData extends Layer {
@@ -24,7 +25,7 @@ class BollingerBandsData extends Layer {
     this.middleBandColor = Colors.blue,
     this.lowerBandColor = Colors.green,
     this.opacity = 0.2,
-  }) : super.fromTool() {
+  }) : super.fromTool(id: generateV4()) {
     _calculateBollingerBands();
   }
 

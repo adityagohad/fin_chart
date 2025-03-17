@@ -1,12 +1,13 @@
 import 'package:fin_chart/models/enums/candle_state.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class CandleData extends Layer {
   final List<ICandle> candles;
 
-  CandleData({required this.candles}) : super.fromTool();
+  CandleData({required this.candles}) : super.fromTool(id: generateV4());
 
   @override
   void onUpdateData({required List<ICandle> data}) {

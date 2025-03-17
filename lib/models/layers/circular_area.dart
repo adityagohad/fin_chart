@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/ui/layer_settings/circular_area_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
@@ -8,9 +9,11 @@ class CircularArea extends Layer {
   Color color = Colors.blue;
   bool isAnimating = false;
 
-  CircularArea.fromTool({required this.point}) : super.fromTool();
+  CircularArea.fromTool({required this.point})
+      : super.fromTool(id: generateV4());
 
-  CircularArea.fromJson({required Map<String, dynamic> data}): super.fromJson() {
+  CircularArea.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     point = offsetFromJson(data['point']);
     radius = data['radius'] ?? 20.0;
     color = colorFromJson(data['color']);
@@ -19,6 +22,8 @@ class CircularArea extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
+      'type': 'circularArea',
       'point': {'dx': point.dx, 'dy': point.dy},
       'radius': radius,
       'color': colorToJson(color)
@@ -82,5 +87,16 @@ class CircularArea extends Layer {
     } else {
       isAnimating = false;
     }
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => CircularAreaSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }

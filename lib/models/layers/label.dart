@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/ui/layer_settings/label_settings_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/utils/calculations.dart';
 
@@ -10,7 +11,7 @@ class Label extends Layer {
   late double height;
   Label.fromTool(
       {required this.pos, required this.label, required this.textStyle})
-      : super.fromTool();
+      : super.fromTool(id: generateV4());
   @override
   void drawLayer({required Canvas canvas}) {
     final TextPainter text = TextPainter(
@@ -23,14 +24,12 @@ class Label extends Layer {
 
     width = text.width;
     height = text.height;
-    //pos = toReal(Offset(toX(pos.dx) - width / 2, toY(pos.dy) - height / 2));
-    // print(pos);
-    // print(toReal(Offset(toX(pos.dx) - width / 2, toY(pos.dy) - height / 2)));
 
     text.paint(canvas, toCanvas(pos));
   }
 
-  Label.fromJson({required Map<String, dynamic> data}) : super.fromJson() {
+  Label.fromJson({required Map<String, dynamic> data})
+      : super.fromJson(id: data['id']) {
     pos = offsetFromJson(data['pos']);
     label = data['label'] ?? '';
     textStyle = TextStyle(
@@ -44,6 +43,8 @@ class Label extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': super.id,
+      'type': 'label',
       'pos': {'dx': pos.dx, 'dy': pos.dy},
       'label': label,
       'textColor': colorToJson(textStyle.color ?? Colors.black),
@@ -65,5 +66,16 @@ class Label extends Layer {
   void onScaleUpdate({required ScaleUpdateDetails details}) {
     pos = Offset(toXInverse(details.localFocalPoint.dx),
         toYInverse(details.localFocalPoint.dy).clamp(yMinValue, yMaxValue));
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => LabelSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }
