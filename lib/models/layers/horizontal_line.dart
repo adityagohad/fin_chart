@@ -20,6 +20,7 @@ class HorizontalLine extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'horizontalLine',
       'value': value,
       'color': colorToJson(color),
       'strokeWidth': strokeWidth

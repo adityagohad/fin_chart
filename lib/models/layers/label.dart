@@ -45,6 +45,7 @@ class Label extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'label',
       'pos': {'dx': pos.dx, 'dy': pos.dy},
       'label': label,
       'textColor': colorToJson(textStyle.color ?? Colors.black),

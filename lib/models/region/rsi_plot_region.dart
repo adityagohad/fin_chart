@@ -1,6 +1,8 @@
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
@@ -294,5 +296,50 @@ class RsiPlotRegion extends PlotRegion {
 
     yLabelSize = getLargetRnderBoxSizeForList(
         yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+  }
+
+  RsiPlotRegion.fromJson(Map<String, dynamic> json)
+      : candles = [],
+        lineColor = colorFromJson(json['lineColor'] ?? '#FF0000FF'),
+        period = json['period'] ?? 14,
+        super(
+          type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
+              orElse: () => PlotRegionType.indicator),
+          yAxisSettings: YAxisSettings(
+            yAxisPos: YAxisPos.values.firstWhere(
+                (pos) => pos.name == json['yAxisSettings']['yAxisPos'],
+                orElse: () => YAxisPos.right),
+            axisColor: colorFromJson(json['yAxisSettings']['axisColor']),
+            strokeWidth: json['yAxisSettings']['strokeWidth'] ?? 1.0,
+            axisTextStyle: TextStyle(
+              color: colorFromJson(json['yAxisSettings']['textStyle']['color']),
+              fontSize: json['yAxisSettings']['textStyle']['fontSize'] ?? 12.0,
+              fontWeight:
+                  json['yAxisSettings']['textStyle']['fontWeight'] == 'bold'
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+            ),
+          ),
+        ) {
+    yMinValue = json['yMinValue'];
+    yMaxValue = json['yMaxValue'];
+
+    if (json['layers'] != null) {
+      for (var layerJson in json['layers']) {
+        Layer? layer = PlotRegion.layerFromJson(layerJson);
+        if (layer != null) {
+          layers.add(layer);
+        }
+      }
+    }
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    var json = super.toJson();
+    json['variety'] = 'RSI';
+    json['lineColor'] = colorToJson(lineColor);
+    json['period'] = period;
+    return json;
   }
 }

@@ -20,6 +20,7 @@ class HorizontalBand extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'horizontalBand',
       'value': value,
       'allowedError': allowedError,
       'color': colorToJson(color)

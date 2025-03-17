@@ -36,6 +36,7 @@ class Arrow extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'arrow',
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
       'strokeWidth': strokeWidth,

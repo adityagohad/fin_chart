@@ -33,6 +33,7 @@ class TrendLine extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'trendLine',
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
       'strokeWidth': strokeWidth,

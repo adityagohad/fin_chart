@@ -37,6 +37,7 @@ class RectArea extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'rectArea',
       'topLeft': {'dx': topLeft.dx, 'dy': topLeft.dy},
       'bottomRight': {'dx': bottomRight.dx, 'dy': bottomRight.dy},
       'color': colorToJson(color)

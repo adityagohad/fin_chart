@@ -20,6 +20,7 @@ class CircularArea extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'circularArea',
       'point': {'dx': point.dx, 'dy': point.dy},
       'radius': radius,
       'color': colorToJson(color)
