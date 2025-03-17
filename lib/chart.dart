@@ -8,7 +8,6 @@ import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:fin_chart/ui/layer_settings_dialog.dart';
 
 import 'models/settings/y_axis_settings.dart';
 
@@ -206,16 +205,16 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         }));
   }
 
-  void _showLayerSettingsDialog() {
-    if (selectedLayer == null) return;
+  // void _showLayerSettingsDialog() {
+  //   if (selectedLayer == null) return;
 
-    showLayerSettingsDialog(context, selectedLayer!, (updatedLayer) {
-      setState(() {
-        // The layer has already been updated by reference in the dialog
-        // Just trigger a rebuild
-      });
-    });
-  }
+  //   showLayerSettingsDialog(context, selectedLayer!, (updatedLayer) {
+  //     setState(() {
+  //       // The layer has already been updated by reference in the dialog
+  //       // Just trigger a rebuild
+  //     });
+  //   });
+  // }
 
   void _handleSwipeAnimation() {
     if (!_isAnimating) return;

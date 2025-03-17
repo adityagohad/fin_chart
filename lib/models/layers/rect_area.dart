@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/ui/layer_settings/rect_area_settings_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/utils/calculations.dart';
 
@@ -222,5 +223,16 @@ class RectArea extends Layer {
     }
 
     super.onScaleUpdate(details: details);
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => RectAreaSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }
