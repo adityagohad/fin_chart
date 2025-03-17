@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/ui/layer_settings/label_settings_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/utils/calculations.dart';
 
@@ -44,6 +45,7 @@ class Label extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'label',
       'pos': {'dx': pos.dx, 'dy': pos.dy},
       'label': label,
       'textColor': colorToJson(textStyle.color ?? Colors.black),
@@ -65,5 +67,16 @@ class Label extends Layer {
   void onScaleUpdate({required ScaleUpdateDetails details}) {
     pos = Offset(toXInverse(details.localFocalPoint.dx),
         toYInverse(details.localFocalPoint.dy).clamp(yMinValue, yMaxValue));
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => LabelSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }

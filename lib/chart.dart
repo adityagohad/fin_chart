@@ -3,12 +3,16 @@ import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/region/dummy_plot_region.dart';
+import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/region/rsi_plot_region.dart';
+import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:fin_chart/ui/layer_settings_dialog.dart';
 
 import 'models/settings/y_axis_settings.dart';
 
@@ -192,25 +196,30 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                       top: 8,
                       right: 8,
                       child: IconButton(
-                        icon: const Icon(Icons.settings, color: Colors.blue),
-                        onPressed: _showLayerSettingsDialog,
-                      ),
+                          icon: const Icon(Icons.settings, color: Colors.blue),
+                          onPressed: () {
+                            selectedLayer?.showSettingsDialog(context, (layer) {
+                              setState(() {
+                                selectedLayer = layer;
+                              });
+                            });
+                          }),
                     ),
             ],
           );
         }));
   }
 
-  void _showLayerSettingsDialog() {
-    if (selectedLayer == null) return;
+  // void _showLayerSettingsDialog() {
+  //   if (selectedLayer == null) return;
 
-    showLayerSettingsDialog(context, selectedLayer!, (updatedLayer) {
-      setState(() {
-        // The layer has already been updated by reference in the dialog
-        // Just trigger a rebuild
-      });
-    });
-  }
+  //   showLayerSettingsDialog(context, selectedLayer!, (updatedLayer) {
+  //     setState(() {
+  //       // The layer has already been updated by reference in the dialog
+  //       // Just trigger a rebuild
+  //     });
+  //   });
+  // }
 
   void _handleSwipeAnimation() {
     if (!_isAnimating) return;
@@ -445,5 +454,71 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     widget.onInteraction(
         selectedRegion!.getRealCoordinates(details.localFocalPoint),
         details.localFocalPoint);
+  }
+
+  /// Convert chart state to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'yAxisSettings': {
+        'yAxisPos': widget.yAxisSettings!.yAxisPos.name,
+        'axisColor': colorToJson(widget.yAxisSettings!.axisColor),
+        'strokeWidth': widget.yAxisSettings!.strokeWidth,
+        'textStyle': {
+          'color': colorToJson(widget.yAxisSettings!.axisTextStyle.color ?? Colors.black),
+          'fontSize': widget.yAxisSettings!.axisTextStyle.fontSize,
+          'fontWeight': widget.yAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
+        },
+      },
+      'xAxisSettings': {
+        'xAxisPos': widget.xAxisSettings!.xAxisPos.name,
+        'axisColor': colorToJson(widget.xAxisSettings!.axisColor),
+        'strokeWidth': widget.xAxisSettings!.strokeWidth,
+        'textStyle': {
+          'color': colorToJson(widget.xAxisSettings!.axisTextStyle.color ?? Colors.black),
+          'fontSize': widget.xAxisSettings!.axisTextStyle.fontSize,
+          'fontWeight': widget.xAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
+        },
+      },
+      'regions': regions.map((region) => region.toJson()).toList(),
+      'dataFit': widget.dataFit.name,
+    };
+  }
+  
+  /// Create regions from JSON data
+  void loadFromJson(Map<String, dynamic> json) {
+    setState(() {
+      if (json['regions'] != null) {
+        regions.clear();
+        
+        for (var regionJson in json['regions']) {
+          String? type = regionJson['type'];
+          if (type != null) {
+            PlotRegion? region;
+            
+            switch (type) {
+              case 'data':
+                region = MainPlotRegion.fromJson(regionJson);
+                break;
+              case 'indicator':
+                // Determine which indicator type based on properties
+                if (regionJson.containsKey('period') && !regionJson.containsKey('fastPeriod')) {
+                  region = RsiPlotRegion.fromJson(regionJson);
+                } else if (regionJson.containsKey('fastPeriod')) {
+                  region = MACDPlotRegion.fromJson(regionJson);
+                } else if (regionJson.containsKey('kPeriod')) {
+                  region = StochasticPlotRegion.fromJson(regionJson);
+                } else {
+                  region = DummyPlotRegion.fromJson(regionJson);
+                }
+                break;
+            }
+            
+            if (region != null) {
+              regions.add(region);
+            }
+          }
+        }
+      }
+    });
   }
 }

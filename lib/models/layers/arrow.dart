@@ -1,6 +1,7 @@
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
+import 'package:fin_chart/ui/layer_settings/arrow_settings_dialog.dart';
 import 'dart:math' as math;
 
 class Arrow extends Layer {
@@ -35,6 +36,7 @@ class Arrow extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'arrow',
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
       'strokeWidth': strokeWidth,
@@ -51,12 +53,33 @@ class Arrow extends Layer {
       ..style = PaintingStyle.stroke
       ..color = color;
 
-    // Draw the main line
-    canvas.drawLine(Offset(toX(from.dx), toY(from.dy)),
-        Offset(toX(to.dx), toY(to.dy)), paint);
+    // Determine which points to use based on direction
+    Offset startPoint = isArrowheadAtTo ? toCanvas(from) : toCanvas(to);
+    Offset endPoint = isArrowheadAtTo ? toCanvas(to) : toCanvas(from);
+
+    // Calculate angle of the line
+    double angle = math.atan2(
+      endPoint.dy - startPoint.dy,
+      endPoint.dx - startPoint.dx,
+    );
+
+    // Calculate base of arrowhead (where the line should end)
+    Offset arrowBase;
+    if (isArrowheadAtTo) {
+      // The base of the arrowhead is at a distance of arrowheadSize from the tip
+      arrowBase = Offset(
+        endPoint.dx - (arrowheadSize * 0.75) * math.cos(angle),
+        endPoint.dy - (arrowheadSize *0.75)  * math.sin(angle),
+      );
+      // Draw line from start to arrowhead base
+      canvas.drawLine(startPoint, arrowBase, paint);
+    } else {
+      // If arrow is at 'from' end, draw complete line and let arrowhead overlay it
+      canvas.drawLine(startPoint, endPoint, paint);
+    }
 
     // Draw arrowhead
-    _drawArrowhead(canvas, paint);
+    _drawArrowhead(canvas, paint, angle);
 
     if (isSelected) {
       // Draw circles at endpoints
@@ -92,37 +115,26 @@ class Arrow extends Layer {
     }
   }
 
-  void _drawArrowhead(Canvas canvas, Paint linePaint) {
+  void _drawArrowhead(Canvas canvas, Paint linePaint, double angle) {
     // Determine which points to use based on direction
-    Offset start = isArrowheadAtTo ? from : to;
-    Offset end = isArrowheadAtTo ? to : from;
-
-    // Convert to canvas coordinates
-    Offset startPoint = Offset(toX(start.dx), toY(start.dy));
-    Offset endPoint = Offset(toX(end.dx), toY(end.dy));
-
-    // Calculate angle of the line
-    double angle = math.atan2(
-      endPoint.dy - startPoint.dy,
-      endPoint.dx - startPoint.dx,
-    );
+    Offset end = isArrowheadAtTo ? toCanvas(to) : toCanvas(from);
 
     // Create arrowhead path
     Path arrowPath = Path();
 
     // Move to tip of arrow
-    arrowPath.moveTo(endPoint.dx, endPoint.dy);
+    arrowPath.moveTo(end.dx, end.dy);
 
     // Draw one side of arrowhead
     arrowPath.lineTo(
-      endPoint.dx - arrowheadSize * math.cos(angle - math.pi / 6),
-      endPoint.dy - arrowheadSize * math.sin(angle - math.pi / 6),
+      end.dx - arrowheadSize * math.cos(angle - math.pi / 6),
+      end.dy - arrowheadSize * math.sin(angle - math.pi / 6),
     );
 
     // Draw the other side of arrowhead
     arrowPath.lineTo(
-      endPoint.dx - arrowheadSize * math.cos(angle + math.pi / 6),
-      endPoint.dy - arrowheadSize * math.sin(angle + math.pi / 6),
+      end.dx - arrowheadSize * math.cos(angle + math.pi / 6),
+      end.dy - arrowheadSize * math.sin(angle + math.pi / 6),
     );
 
     // Close the path to create the filled triangle
@@ -186,5 +198,16 @@ class Arrow extends Layer {
   // Method to toggle the arrow direction
   void toggleDirection() {
     isArrowheadAtTo = !isArrowheadAtTo;
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => ArrowSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }

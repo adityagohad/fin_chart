@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/ui/layer_settings/horizontal_line_settings_dialog.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ class HorizontalLine extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
+      'type': 'horizontalLine',
       'value': value,
       'color': colorToJson(color),
       'strokeWidth': strokeWidth
@@ -87,5 +89,16 @@ class HorizontalLine extends Layer {
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
     value = toYInverse(toY(value) + details.focalPointDelta.dy);
+  }
+
+  @override
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
+    showDialog(
+      context: context,
+      builder: (context) => HorizontalLineSettingsDialog(
+        layer: this,
+        onUpdate: onUpdate,
+      ),
+    );
   }
 }

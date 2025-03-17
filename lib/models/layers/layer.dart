@@ -29,4 +29,6 @@ abstract class Layer with RegionProp {
 
   void onAimationUpdate(
       {required Canvas canvas, required double animationValue}) {}
+
+  void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {}
 }
