@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:fin_chart/chart_painter.dart';
+import 'package:fin_chart/data/candle_data_json.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
@@ -78,6 +82,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     regions.addAll(widget.regions);
     xStepWidth = candleWidth;
 
+    addDataAfterWait();
+
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -97,6 +103,15 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
     super.initState();
   }
+
+  //dummy methods
+
+  addDataAfterWait() async {
+    await Future.delayed(const Duration(seconds: 3));
+    addData(data.map((c) => ICandle.fromJson(c)).toList());
+  }
+
+  //dummy methods
 
   @override
   void dispose() {

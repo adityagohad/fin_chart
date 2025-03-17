@@ -114,10 +114,14 @@ class _HomeState extends State<Home> {
                           value: drawPoints.first.dy, allowedError: 70);
                       break;
                     case LayerType.rectArea:
-                      layer = RectArea.fromTool(
-                          topLeft: drawPoints.first,
-                          bottomRight: drawPoints.last,
-                          startPoint: startingPoint);
+                      if (drawPoints.length >= 2) {
+                        layer = RectArea.fromTool(
+                            topLeft: drawPoints.first,
+                            bottomRight: drawPoints.last,
+                            startPoint: startingPoint);
+                      } else {
+                        layer = null;
+                      }
                       break;
                     case LayerType.circularArea:
                       layer = CircularArea.fromTool(point: drawPoints.first);
