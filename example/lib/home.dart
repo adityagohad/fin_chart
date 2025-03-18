@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:example/widget/layer_type_dropdown.dart';
 import 'package:fin_chart/chart.dart';
@@ -23,6 +25,7 @@ import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/layers/arrow.dart';
+import 'package:flutter/services.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -34,17 +37,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final GlobalKey<ChartState> _chartKey = GlobalKey();
   List<ICandle> candleData = [];
-  List<PlotRegion> regions = [
-    // PlotRegion(
-    //     type: PlotRegionType.indicator,
-    //     yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
-    //     yMinValue: -100,
-    //     yMaxValue: 100,
-    //     layers: [
-    //       LineData(candles: []),
-    //       HorizontalLine(value: 3500),
-    //     ])
-  ];
+  List<PlotRegion> regions = [];
   LayerType? _selectedType;
   // LayerType? layerToAdd;
   List<Offset> drawPoints = [];
@@ -55,6 +48,17 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Finance Charts"),
+        actions: [
+          // ElevatedButton(
+          //     onPressed: () {
+          //       String copy = jsonEncode(_chartKey.currentState?.toJson());
+          //       Clipboard.setData(ClipboardData(text: copy)).then((_) {
+          //         ScaffoldMessenger.of(context).showSnackBar(
+          //             SnackBar(content: Text("$copy to clipboar")));
+          //       });
+          //     },
+          //     child: const Text("export"))
+        ],
       ),
       body: SafeArea(
           child: Column(
@@ -62,25 +66,38 @@ class _HomeState extends State<Home> {
           Flexible(
               flex: 1,
               child: Container(
-                  // padding: EdgeInsets.all(10),
-                  // child: Container(
-                  //   padding: EdgeInsets.all(10),
-                  //   width: double.infinity,
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey,
-                  //     borderRadius: BorderRadius.all(Radius.circular(10)),
-                  //   ),
-                  //   child: Text("hey my instruction goes here"),
-                  // ),
-                  )),
+                // child: ElevatedButton(
+                //     onPressed: () {
+                //       _chartKey.currentState
+                //           ?.addRegion(RsiPlotRegion.fromJson(region));
+                //     },
+                //     child: Text("Add Region")),
+                padding: const EdgeInsets.all(10),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  child: const Text("hey my instruction goes here"),
+                ),
+              )),
           Flexible(
-            flex: 9,
+            flex: 8,
             child: Chart(
               key: _chartKey,
               yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
               xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
               candles: candleData,
               regions: regions,
+              onLayerSelect: (region, layer) {
+                print(region.toJson());
+                print(layer.toJson());
+              },
+              onRegionSelect: (region) {
+                print(jsonEncode(region.toJson()));
+              },
               onInteraction: (p0, p1) {
                 if (_selectedType != null) {
                   drawPoints.add(p0);
