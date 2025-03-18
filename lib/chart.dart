@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/data/candle_data_json.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
@@ -26,6 +28,8 @@ class Chart extends StatefulWidget {
   final List<ICandle> candles;
   final List<PlotRegion> regions;
   final Function(Offset, Offset) onInteraction;
+  final Function(PlotRegion region, Layer layer)? onLayerSelect;
+  final Function(PlotRegion region)? onRegionSelect;
 
   const Chart(
       {super.key,
@@ -34,6 +38,8 @@ class Chart extends StatefulWidget {
       required this.candles,
       required this.regions,
       required this.onInteraction,
+      this.onLayerSelect,
+      this.onRegionSelect,
       this.yAxisSettings = const YAxisSettings(),
       this.xAxisSettings = const XAxisSettings()});
 
@@ -84,9 +90,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     regions.addAll(widget.regions);
     xStepWidth = candleWidth;
 
-    addDataAfterWait();
-    addLayerFromJson();
-
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -106,27 +109,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
     super.initState();
   }
-
-  //dummy methods
-
-  addDataAfterWait() async {
-    await Future.delayed(const Duration(milliseconds: 10));
-    addData(data.map((c) => ICandle.fromJson(c)).toList());
-  }
-
-  addLayerFromJson() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
-    selectedRegion = regions[0];
-    addLayer(TrendLine.fromJson(data: {
-      "from": {"dx": 10.0, "dy": 3392.888495557372},
-      "to": {"dx": 23.0, "dy": 3531.3663186563776},
-      "strokeWidth": 2.0,
-      "endPointRadius": 5.0,
-      "color": "#ff000000"
-    }));
-  }
-
-  //dummy methods
 
   @override
   void dispose() {
@@ -367,9 +349,16 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
               selectedRegionForResize.add(region);
             }
           }
+          PlotRegion? tempRegion = region.regionSelect(details.localPosition);
+          if (tempRegion != null) {
+            widget.onRegionSelect?.call(tempRegion);
+          }
           for (Layer layer in region.layers) {
             if (selectedLayer == null) {
               selectedLayer = layer.onTapDown(details: details);
+              if (selectedLayer != null && tempRegion != null) {
+                widget.onLayerSelect?.call(tempRegion, selectedLayer!);
+              }
             } else {
               layer.onTapDown(details: details);
             }
