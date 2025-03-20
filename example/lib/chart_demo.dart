@@ -47,12 +47,11 @@ class _ChartDemoState extends State<ChartDemo> {
   }
 
   void onTaskRun() {
-    print(currentTask.taskType);
     switch (currentTask.taskType) {
       case TaskType.addData:
         AddDataTask task = currentTask as AddDataTask;
         _chartKey.currentState
-            ?.addData(recipe.data.sublist(0, task.atPoint + 1));
+            ?.addData(recipe.data.sublist(0, task.tillPoint + 1));
         break;
       case TaskType.addRegion:
         AddRegionTask task = currentTask as AddRegionTask;
@@ -68,9 +67,6 @@ class _ChartDemoState extends State<ChartDemo> {
           promptText = task.promptText;
         });
         break;
-      case TaskType.addLayerOfType:
-        // TODO: Handle this case.
-        throw UnimplementedError();
       case TaskType.waitTask:
         setState(() {});
         break;

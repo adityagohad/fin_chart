@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:example/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:example/editor/models/add_data.task.dart';
-import 'package:example/editor/models/add_layer_of_type.task.dart';
 import 'package:example/editor/models/add_layer.task.dart';
 import 'package:example/editor/models/add_region.task.dart';
 import 'package:example/editor/models/enums/task_type.dart';
@@ -51,14 +50,14 @@ class _HomeState extends State<Home> {
   final GlobalKey<ChartState> _chartKey = GlobalKey();
   List<ICandle> candleData = [];
   List<PlotRegion> regions = [];
-  LayerType? _selectedType;
 
   List<Offset> drawPoints = [];
   Offset startingPoint = Offset.zero;
 
   List<Task> tasks = [];
 
-  TaskType? currentType;
+  TaskType? _currentTaskType;
+  LayerType? _selectedLayerType;
 
   void prompt() async {
     await showPromptDialog(context: context).then((data) {
@@ -66,7 +65,7 @@ class _HomeState extends State<Home> {
         if (data != null) {
           tasks.add(AddPromptTask(promptText: data));
         }
-        currentType = null;
+        _currentTaskType = null;
       });
     });
   }
@@ -114,12 +113,6 @@ class _HomeState extends State<Home> {
           Expanded(
             flex: 1,
             child: Container(
-                // child: ElevatedButton(
-                //     onPressed: () {
-                //       _chartKey.currentState
-                //           ?.addRegion(RsiPlotRegion.fromJson(region));
-                //     },
-                //     child: Text("Add Region")),
                 padding: const EdgeInsets.all(10),
                 child: TaskListWidget(
                   task: tasks,
@@ -128,35 +121,26 @@ class _HomeState extends State<Home> {
                       switch (p0) {
                         case TaskType.addRegion:
                         case TaskType.addLayer:
-                          currentType = p0;
+                          _currentTaskType = p0;
                           break;
                         case TaskType.addData:
-                          currentType = p0;
+                          _chartKey.currentState?.updateLayerGettingAddedState(
+                              LayerType.verticalLine);
+                          _currentTaskType = p0;
+                          _selectedLayerType = LayerType.verticalLine;
                           break;
                         case TaskType.addPrompt:
                           prompt();
                           break;
-                        case TaskType.addLayerOfType:
-                          tasks.add(AddLayerOfTypeTask());
-                          currentType = null;
-                          break;
                         case TaskType.waitTask:
                           tasks.add(WaitTask(btnText: "Next"));
-                          currentType = null;
+                          _currentTaskType = null;
                           break;
                       }
                     });
                   },
                   onClick: (p0) {
-                    if (p0.taskType == TaskType.addRegion) {
-                      _chartKey.currentState
-                          ?.addRegion((p0 as AddRegionTask).region);
-                    } else if (p0.taskType == TaskType.addLayer) {
-                      AddLayerTask task = p0 as AddLayerTask;
-                      _chartKey.currentState
-                          ?.addLayerAtRegion(task.regionId, task.layer);
-                    } else if (p0.taskType == TaskType.addData) {
-                    } else if (p0.taskType == TaskType.addPrompt) {}
+                    p0.buildDialog(context: context);
                   },
                   onDelete: (task) {
                     setState(() {
@@ -177,17 +161,7 @@ class _HomeState extends State<Home> {
                       tasks.insert(newIndex, item);
                     });
                   },
-                )
-                // Container(
-                //   padding: const EdgeInsets.all(10),
-                //   width: double.infinity,
-                //   decoration: const BoxDecoration(
-                //     color: Colors.grey,
-                //     borderRadius: BorderRadius.all(Radius.circular(10)),
-                //   ),
-                //   child: const Text("Hey prompt text goes here"),
-                // ),
-                ),
+                )),
           ),
           Expanded(
             flex: 8,
@@ -198,36 +172,43 @@ class _HomeState extends State<Home> {
               candles: candleData,
               regions: regions,
               onLayerSelect: (region, layer) {
-                if (currentType == TaskType.addLayer) {
+                if (_currentTaskType == TaskType.addLayer) {
                   setState(() {
                     tasks.add(AddLayerTask(layer: layer, regionId: region.id));
-                    currentType = null;
+                    _currentTaskType = null;
                   });
                 }
-                if (currentType == TaskType.addData &&
-                    layer.runtimeType == VerticalLine) {
+                if (_currentTaskType == TaskType.addData &&
+                    layer is VerticalLine) {
+                  // int tillPoint = 0;
+                  // for (Task task in tasks) {
+                  //   if (task is AddDataTask) {
+                  //     if (tillPoint >= task.tillPoint) {
+
+                  //     }
+                  //   }
+                  // }
                   setState(() {
                     tasks.add(AddDataTask(
-                        atPoint: (layer as VerticalLine).pos.round()));
-                    currentType = null;
+                        fromPoint: 0, tillPoint: (layer).pos.round()));
+                    _currentTaskType = null;
                   });
                 }
               },
               onRegionSelect: (region) {
-                if (currentType == TaskType.addRegion) {
+                if (_currentTaskType == TaskType.addRegion) {
                   setState(() {
                     tasks.add(AddRegionTask(region: region));
-                    currentType = null;
+                    _currentTaskType = null;
                   });
                 }
-                // print(jsonEncode(region.toJson()));
               },
               onInteraction: (p0, p1) {
-                if (_selectedType != null) {
+                if (_selectedLayerType != null) {
                   drawPoints.add(p0);
                   startingPoint = p1;
                   Layer? layer;
-                  switch (_selectedType) {
+                  switch (_selectedLayerType) {
                     case LayerType.label:
                       layer = Label.fromTool(
                           pos: drawPoints.first,
@@ -276,6 +257,12 @@ class _HomeState extends State<Home> {
                       break;
                     case LayerType.verticalLine:
                       layer = VerticalLine.fromTool(pos: p0.dx);
+                      setState(() {
+                        tasks.add(AddDataTask(
+                            fromPoint: 0,
+                            tillPoint: (layer as VerticalLine).pos.round()));
+                        _currentTaskType = null;
+                      });
                       break;
                     case null:
                       layer = null;
@@ -283,7 +270,7 @@ class _HomeState extends State<Home> {
                   }
                   setState(() {
                     if (layer != null) {
-                      _selectedType = null;
+                      _selectedLayerType = null;
                       drawPoints.clear();
                       _chartKey.currentState?.addLayer(layer);
                     }
@@ -368,10 +355,10 @@ class _HomeState extends State<Home> {
                     child: const Text("Add Region"),
                   ),
                   LayerTypeDropdown(
-                      selectedType: _selectedType,
+                      selectedType: _selectedLayerType,
                       onChanged: (layerType) {
                         setState(() {
-                          _selectedType = layerType;
+                          _selectedLayerType = layerType;
                           _chartKey.currentState
                               ?.updateLayerGettingAddedState(layerType);
                         });
