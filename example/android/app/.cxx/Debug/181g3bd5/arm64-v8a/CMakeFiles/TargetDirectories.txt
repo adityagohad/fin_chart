@@ -1,2 +1,0 @@
-/Users/adityagohad/Developer/adzlab/fin_chart/example/android/app/.cxx/Debug/181g3bd5/arm64-v8a/CMakeFiles/edit_cache.dir
-/Users/adityagohad/Developer/adzlab/fin_chart/example/android/app/.cxx/Debug/181g3bd5/arm64-v8a/CMakeFiles/rebuild_cache.dir
