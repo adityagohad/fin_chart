@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/horizontal_band_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -9,10 +10,13 @@ class HorizontalBand extends Layer {
   Color color = Colors.amber;
 
   HorizontalBand.fromTool({required this.value, this.allowedError = 40})
-      : super.fromTool(id: generateV4());
+      : super.fromTool(id: generateV4(), type: LayerType.horizontalBand);
 
   HorizontalBand.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
+      : super.fromJson(
+            id: data['id'],
+            type: (data['type'] as String).toLayerType() ??
+                LayerType.horizontalBand) {
     value = data['value'];
     allowedError = data['allowedError'] ?? 40.0;
     color = colorFromJson(data['color']);
@@ -22,7 +26,7 @@ class HorizontalBand extends Layer {
   Map<String, dynamic> toJson() {
     return {
       'id': super.id,
-      'type': 'horizontalBand',
+      'type': LayerType.horizontalBand.name,
       'value': value,
       'allowedError': allowedError,
       'color': colorToJson(color)

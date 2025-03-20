@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/circular_area_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -10,10 +11,13 @@ class CircularArea extends Layer {
   bool isAnimating = false;
 
   CircularArea.fromTool({required this.point})
-      : super.fromTool(id: generateV4());
+      : super.fromTool(id: generateV4(), type: LayerType.circularArea);
 
   CircularArea.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
+      : super.fromJson(
+            id: data['id'],
+            type: (data['type'] as String).toLayerType() ??
+                LayerType.circularArea) {
     point = offsetFromJson(data['point']);
     radius = data['radius'] ?? 20.0;
     color = colorFromJson(data['color']);
@@ -23,7 +27,7 @@ class CircularArea extends Layer {
   Map<String, dynamic> toJson() {
     return {
       'id': super.id,
-      'type': 'circularArea',
+      'type': LayerType.circularArea.name,
       'point': {'dx': point.dx, 'dy': point.dy},
       'radius': radius,
       'color': colorToJson(color)

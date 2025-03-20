@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/trend_line_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -17,13 +18,16 @@ class TrendLine extends Layer {
 
   TrendLine.fromTool(
       {required this.from, required this.to, required this.startPoint})
-      : super.fromTool(id: generateV4()) {
+      : super.fromTool(id: generateV4(), type: LayerType.trendLine) {
     isSelected = true;
     tempTo = to;
   }
 
   TrendLine.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
+      : super.fromJson(
+            id: data['id'],
+            type:
+                (data['type'] as String).toLayerType() ?? LayerType.trendLine) {
     from = offsetFromJson(data['from']);
     to = offsetFromJson(data['to']);
     strokeWidth = data['strokeWidth'] ?? 2;
@@ -35,7 +39,7 @@ class TrendLine extends Layer {
   Map<String, dynamic> toJson() {
     return {
       'id': super.id,
-      'type': 'trendLine',
+      'type': LayerType.trendLine.name,
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
       'strokeWidth': strokeWidth,

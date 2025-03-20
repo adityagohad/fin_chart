@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/label_settings_dialog.dart';
 import 'package:flutter/material.dart';
@@ -9,27 +10,15 @@ class Label extends Layer {
   late TextStyle textStyle;
   late double width;
   late double height;
+
   Label.fromTool(
       {required this.pos, required this.label, required this.textStyle})
-      : super.fromTool(id: generateV4());
-  @override
-  void drawLayer({required Canvas canvas}) {
-    final TextPainter text = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: textStyle,
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    width = text.width;
-    height = text.height;
-
-    text.paint(canvas, toCanvas(pos));
-  }
+      : super.fromTool(id: generateV4(), type: LayerType.label);
 
   Label.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
+      : super.fromJson(
+            id: data['id'],
+            type: (data['type'] as String).toLayerType() ?? LayerType.label) {
     pos = offsetFromJson(data['pos']);
     label = data['label'] ?? '';
     textStyle = TextStyle(
@@ -44,13 +33,29 @@ class Label extends Layer {
   Map<String, dynamic> toJson() {
     return {
       'id': super.id,
-      'type': 'label',
+      'type': LayerType.label.name,
       'pos': {'dx': pos.dx, 'dy': pos.dy},
       'label': label,
       'textColor': colorToJson(textStyle.color ?? Colors.black),
       'fontSize': textStyle.fontSize,
       'fontWeight': textStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
     };
+  }
+
+  @override
+  void drawLayer({required Canvas canvas}) {
+    final TextPainter text = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: textStyle,
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    width = text.width;
+    height = text.height;
+
+    text.paint(canvas, toCanvas(pos));
   }
 
   @override

@@ -1,13 +1,15 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
 abstract class Layer with RegionProp {
   final String id;
+  final LayerType type;
 
-  Layer.fromTool({required this.id});
+  Layer.fromTool({required this.id, required this.type});
 
-  Layer.fromJson({required this.id});
+  Layer.fromJson({required this.id, required this.type});
 
   Map<String, dynamic> toJson() {
     throw UnimplementedError();

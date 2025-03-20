@@ -7,28 +7,32 @@ enum LayerType {
   trendLine,
   rectArea,
   arrow,
+  verticalLine
 }
 
 extension LayerTypeExtension on LayerType {
   String get name {
-    switch (this) {
-      // case LayerType.chartPointer:
-      //   return 'chartPointer';
-      case LayerType.circularArea:
-        return 'circularArea';
-      case LayerType.label:
-        return 'label';
-      case LayerType.trendLine:
-        return 'trendLine';
-      case LayerType.horizontalLine:
-        return 'horizontalLine';
-      case LayerType.horizontalBand:
-        return 'horizontalBand';
-      case LayerType.rectArea:
-        return 'rectArea';
-      case LayerType.arrow:
-        return 'arrow';
-    }
+    return toString().split('.').last;
+    // switch (this) {
+    //   // case LayerType.chartPointer:
+    //   //   return 'chartPointer';
+    //   case LayerType.circularArea:
+    //     return 'circularArea';
+    //   case LayerType.label:
+    //     return 'label';
+    //   case LayerType.trendLine:
+    //     return 'trendLine';
+    //   case LayerType.horizontalLine:
+    //     return 'horizontalLine';
+    //   case LayerType.horizontalBand:
+    //     return 'horizontalBand';
+    //   case LayerType.rectArea:
+    //     return 'rectArea';
+    //   case LayerType.arrow:
+    //     return 'arrow';
+    //   case LayerType.verticalLine:
+    //     return 'verticalLine';
+    // }
   }
 }
 

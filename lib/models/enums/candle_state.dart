@@ -2,14 +2,15 @@ enum CandleState { natural, highlighted, selected }
 
 extension CandleStateExtension on CandleState {
   String get name {
-    switch (this) {
-      case CandleState.natural:
-        return "natural";
-      case CandleState.highlighted:
-        return "highlighted";
-      case CandleState.selected:
-        return "selected";
-    }
+    return toString().split('.').last;
+    // switch (this) {
+    //   case CandleState.natural:
+    //     return "natural";
+    //   case CandleState.highlighted:
+    //     return "highlighted";
+    //   case CandleState.selected:
+    //     return "selected";
+    // }
   }
 }
 

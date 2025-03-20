@@ -1,17 +1,11 @@
-import 'dart:developer';
-
 import 'package:fin_chart/chart_painter.dart';
-import 'package:fin_chart/data/candle_data_json.dart';
+import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
-import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
-import 'package:fin_chart/models/region/dummy_plot_region.dart';
 import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/region/rsi_plot_region.dart';
 import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -88,7 +82,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   void initState() {
     currentData.addAll(widget.candles);
     regions.addAll(widget.regions);
-    xStepWidth = candleWidth;
+    xStepWidth = candleWidth * 2;
 
     _swipeAnimationController = AnimationController(
       vsync: this,
@@ -153,6 +147,17 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
+  void addLayerAtRegion(String regionId, Layer layer) {
+    setState(() {
+      selectedLayer = layer;
+      regions
+          .firstWhere((region) => region.id == regionId,
+              orElse: () => regions[0])
+          .addLayer(layer);
+      isLayerGettingAdded = false;
+    });
+  }
+
   void addData(List<ICandle> newData) {
     setState(() {
       currentData.addAll(newData);
@@ -167,7 +172,9 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     return Container(
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
-          _recalculate(constraints, regions);
+          if (constraints.maxHeight != 0) {
+            _recalculate(constraints, regions);
+          }
           return Stack(
             children: [
               SizedBox(
@@ -264,6 +271,11 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           yMinValue: regions[i].yMinValue,
           yMaxValue: regions[i].yMaxValue);
       tempTopPos = tempTopPos + height;
+      // print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+      // print(regions[i].id);
+      // print(regions[i].topPos);
+      // print(regions[i].bottomPos);
+      // print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     }
   }
 
@@ -360,7 +372,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                 widget.onLayerSelect?.call(tempRegion, selectedLayer!);
               }
             } else {
-              layer.onTapDown(details: details);
+              //layer.onTapDown(details: details);
             }
           }
         }
@@ -463,6 +475,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   /// Convert chart state to JSON
   Map<String, dynamic> toJson() {
+    //return {'data': currentData.map((candle) => candle.toJson()).toList()};
     return {
       'yAxisSettings': {
         'yAxisPos': widget.yAxisSettings!.yAxisPos.name,
@@ -494,6 +507,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       },
       'regions': regions.map((region) => region.toJson()).toList(),
       'dataFit': widget.dataFit.name,
+      'data': currentData.map((candle) => candle.toJson()).toList()
     };
   }
 

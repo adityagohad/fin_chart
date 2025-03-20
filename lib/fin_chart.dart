@@ -13,3 +13,5 @@ export 'package:fin_chart/models/layers/ema_data.dart';
 export 'package:fin_chart/models/layers/bollinger_bands_data.dart';
 export 'package:fin_chart/models/layers/horizontal_band.dart';
 export 'package:fin_chart/data/region_data_json.dart';
+export 'package:fin_chart/models/layers/vertical_line.dart';
+export 'package:fin_chart/data/recipe_data_json.dart';

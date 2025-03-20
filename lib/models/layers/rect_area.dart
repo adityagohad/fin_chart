@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/rect_area_settings_dialog.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +20,16 @@ class RectArea extends Layer {
       {required this.topLeft,
       required this.bottomRight,
       required this.startPoint})
-      : super.fromTool(id: generateV4()) {
+      : super.fromTool(id: generateV4(), type: LayerType.rectArea) {
     topRight = Offset(bottomRight.dx, topLeft.dy);
     bottomLeft = Offset(topLeft.dx, bottomRight.dy);
   }
 
   RectArea.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
+      : super.fromJson(
+            id: data['id'],
+            type:
+                (data['type'] as String).toLayerType() ?? LayerType.rectArea) {
     topLeft = offsetFromJson(data['topLeft']);
     bottomRight = offsetFromJson(data['bottomRight']);
     color = colorFromJson(data['color']);
@@ -39,7 +43,7 @@ class RectArea extends Layer {
   Map<String, dynamic> toJson() {
     return {
       'id': super.id,
-      'type': 'rectArea',
+      'type': LayerType.rectArea.name,
       'topLeft': {'dx': topLeft.dx, 'dy': topLeft.dy},
       'bottomRight': {'dx': bottomRight.dx, 'dy': bottomRight.dy},
       'color': colorToJson(color)

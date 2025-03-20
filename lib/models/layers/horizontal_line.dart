@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/horizontal_line_settings_dialog.dart';
 import 'package:fin_chart/utils/constants.dart';
@@ -10,10 +11,13 @@ class HorizontalLine extends Layer {
   double strokeWidth = 2;
 
   HorizontalLine.fromTool({required this.value})
-      : super.fromTool(id: generateV4());
+      : super.fromTool(id: generateV4(), type: LayerType.horizontalLine);
 
   HorizontalLine.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
+      : super.fromJson(
+            id: data['id'],
+            type: (data['type'] as String).toLayerType() ??
+                LayerType.horizontalLine) {
     value = data['value'];
     color = colorFromJson(data['color']);
     strokeWidth = data['strokeWidth'] ?? 2.0;
@@ -23,7 +27,7 @@ class HorizontalLine extends Layer {
   Map<String, dynamic> toJson() {
     return {
       'id': super.id,
-      'type': 'horizontalLine',
+      'type': LayerType.horizontalLine.name,
       'value': value,
       'color': colorToJson(color),
       'strokeWidth': strokeWidth
