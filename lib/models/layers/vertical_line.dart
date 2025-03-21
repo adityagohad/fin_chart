@@ -47,4 +47,13 @@ class VerticalLine extends Layer {
     if (isLocked) return;
     pos = toXInverse(details.localFocalPoint.dx);
   }
+
+  @override
+  Widget layerToolTip(
+      {Widget? child,
+      required Function()? onSettings,
+      required Function()? onLockUpdate,
+      required Function()? onDelete}) {
+    return Container();
+  }
 }

@@ -107,10 +107,6 @@ class MainPlotRegion extends PlotRegion {
               toX(i.toDouble()) + (xStepWidth) / 4, toY(candle.close)),
           paint);
 
-      for (Indicator indicator in indicators) {
-        indicator.drawIndicator(canvas: canvas);
-      }
-
       // if (toX(i) >= leftPos && toX(i) <= rightPos) {
       //   canvas.drawLine(Offset(toX(i), toY(candle.high)),
       //       Offset(toX(i), toY(candle.low)), paint);
@@ -123,6 +119,10 @@ class MainPlotRegion extends PlotRegion {
       // if (toX(i) > rightPos) {
       //   break;
       // }
+    }
+
+    for (Indicator indicator in indicators) {
+      indicator.drawIndicator(canvas: canvas);
     }
   }
 

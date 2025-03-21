@@ -64,6 +64,7 @@ class CircularArea extends Layer {
 
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
+    if (isLocked) return;
     point = Offset(toXInverse(details.localFocalPoint.dx),
         toYInverse(details.localFocalPoint.dy).clamp(yMinValue, yMaxValue));
   }

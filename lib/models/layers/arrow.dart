@@ -12,7 +12,6 @@ class Arrow extends Layer {
   double strokeWidth = 2;
   double arrowheadSize = 15;
   bool isArrowheadAtTo = true;
-  bool isSelected = false;
   late Offset startPoint;
   Offset? tempFrom;
   Offset? tempTo;
@@ -206,22 +205,6 @@ class Arrow extends Layer {
   }
 
   @override
-  Widget? layerToolTip() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        IconButton(
-            onPressed: () {
-              isLocked = !isLocked;
-            },
-            icon:
-                isLocked ? const Icon(Icons.lock) : const Icon(Icons.unarchive))
-      ],
-    );
-  }
-
-  @override
   void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {
     showDialog(
       context: context,
@@ -231,4 +214,34 @@ class Arrow extends Layer {
       ),
     );
   }
+
+  // @override
+  // Widget? layerToolTip(
+  //     {required Function()? onLockUpdate, required Function()? onDelete}) {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //         color: Colors.white,
+  //         border: Border.all(),
+  //         borderRadius: BorderRadius.circular(10)),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.start,
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         const Icon(
+  //           Icons.drag_indicator,
+  //           color: Colors.grey,
+  //         ),
+  //         IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+  //         IconButton(
+  //             onPressed: onLockUpdate,
+  //             icon: isLocked
+  //                 ? const Icon(Icons.lock_outline_rounded)
+  //                 : const Icon(Icons.lock_open_rounded)),
+  //         IconButton(
+  //             onPressed: onDelete, icon: const Icon(Icons.delete_rounded))
+  //       ],
+  //     ),
+  //   );
+  // }
 }

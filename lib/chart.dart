@@ -254,7 +254,34 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
               ),
               selectedLayer == null
                   ? Container()
-                  : selectedLayer?.layerToolTip() ?? Container()
+                  : selectedLayer?.layerToolTip(
+                          child:
+                              Text(selectedLayer?.type.name.capitalize() ?? ""),
+                          onSettings: () {
+                            selectedLayer?.showSettingsDialog(context, (layer) {
+                              setState(() {
+                                selectedLayer = layer;
+                              });
+                            });
+                          },
+                          onLockUpdate: () {
+                            setState(() {
+                              if (selectedLayer!.isLocked) {
+                                selectedLayer?.isLocked = false;
+                              } else {
+                                selectedLayer?.isLocked = true;
+                                selectedLayer?.isSelected = false;
+                                selectedLayer = null;
+                              }
+                            });
+                          },
+                          onDelete: () {
+                            setState(() {
+                              removeLayerById(selectedLayer!.id);
+                              selectedLayer == null;
+                            });
+                          }) ??
+                      Container()
 
               // Positioned(
               //     top: 8,
