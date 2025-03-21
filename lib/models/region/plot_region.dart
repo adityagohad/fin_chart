@@ -1,11 +1,8 @@
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
-import 'package:fin_chart/models/region/rsi_plot_region.dart';
-import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/models/layers/arrow.dart';
 import 'package:fin_chart/models/layers/circular_area.dart';
@@ -153,12 +150,6 @@ abstract class PlotRegion with RegionProp {
     switch (json['variety']) {
       case 'Candle':
         return MainPlotRegion.fromJson(json);
-      case 'MACD':
-        return MACDPlotRegion.fromJson(json);
-      case "RSI":
-        return RsiPlotRegion.fromJson(json);
-      case "Stochastic":
-        return StochasticPlotRegion.fromJson(json);
     }
     throw UnimplementedError(
         'PlotRegion.fromJson must be implemented by subclasses');

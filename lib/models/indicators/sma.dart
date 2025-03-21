@@ -23,8 +23,6 @@ class Sma extends Indicator {
   drawIndicator({required Canvas canvas}) {
     if (candles.isEmpty || smaValues.isEmpty) return;
 
-    print("Drawing SMA (Data length: ${candles.length})");
-
     final paint = Paint()
       ..color = lineColor
       ..strokeWidth = 2.5
@@ -35,7 +33,7 @@ class Sma extends Indicator {
     if (startIndex >= smaValues.length) return;
 
     final path = Path();
-    
+
     // Initial point
     path.moveTo(toX(startIndex.toDouble()), toY(smaValues[startIndex]));
 
@@ -63,10 +61,10 @@ class Sma extends Indicator {
     }
 
     _calculateSMA();
-    
+
     // Note: For DisplayMode.main, we don't need to set yMinValue and yMaxValue
     // as the indicator will use the values from the main chart
-    
+
     // However, still set yLabelSize for consistency
     yLabelSize = getLargetRnderBoxSizeForList(
         ['0.00'], // Just a placeholder

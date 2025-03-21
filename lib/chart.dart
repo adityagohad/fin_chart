@@ -5,11 +5,9 @@ import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/panel_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
@@ -266,9 +264,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                           });
                         },
                         child: selectedLayer?.layerToolTip(
-                                child: Text(
-                                    selectedLayer?.type.name.capitalize() ??
-                                        ""),
+                                child: Text(selectedLayer?.type.name ?? ""),
                                 onSettings: () {
                                   selectedLayer?.showSettingsDialog(context,
                                       (layer) {
@@ -578,42 +574,5 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       'dataFit': widget.dataFit.name,
       'data': currentData.map((candle) => candle.toJson()).toList()
     };
-  }
-
-  /// Create regions from JSON data
-  void loadFromJson(Map<String, dynamic> json) {
-    setState(() {
-      if (json['regions'] != null) {
-        regions.clear();
-
-        for (var regionJson in json['regions']) {
-          String? type = regionJson['type'];
-          if (type != null) {
-            PlotRegion? region;
-
-            switch (type) {
-              case 'data':
-                region = MainPlotRegion.fromJson(regionJson);
-                break;
-              case 'indicator':
-                // Determine which indicator type based on properties
-                if (regionJson.containsKey('period') &&
-                    !regionJson.containsKey('fastPeriod')) {
-                  region = RsiPlotRegion.fromJson(regionJson);
-                } else if (regionJson.containsKey('fastPeriod')) {
-                  region = MACDPlotRegion.fromJson(regionJson);
-                } else if (regionJson.containsKey('kPeriod')) {
-                  region = StochasticPlotRegion.fromJson(regionJson);
-                }
-                break;
-            }
-
-            if (region != null) {
-              regions.add(region);
-            }
-          }
-        }
-      }
-    });
   }
 }

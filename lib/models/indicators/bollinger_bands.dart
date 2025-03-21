@@ -33,8 +33,6 @@ class BollingerBands extends Indicator {
   drawIndicator({required Canvas canvas}) {
     if (candles.isEmpty || smaValues.isEmpty) return;
 
-    print("Drawing Bollinger Bands (Data length: ${candles.length})");
-
     // Draw filled area between bands for visualization first (so it's behind the lines)
     _drawFilledArea(canvas, upperBandValues, lowerBandValues);
 
@@ -135,7 +133,6 @@ class BollingerBands extends Indicator {
   }
 
   void _calculateBollingerBands() {
-    print("Calculating Bollinger Bands for ${candles.length} candles");
     if (candles.length < period) {
       smaValues.clear();
       upperBandValues.clear();
