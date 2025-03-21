@@ -226,4 +226,9 @@ class StochasticPlotRegion extends PlotRegion {
     json['dLineColor'] = colorToJson(dLineColor);
     return json;
   }
+
+  @override
+  void drawYAxis(Canvas canvas) {
+    // TODO: implement drawYAxis
+  }
 }

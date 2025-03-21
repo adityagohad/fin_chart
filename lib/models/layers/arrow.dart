@@ -11,8 +11,7 @@ class Arrow extends Layer {
   Color color = Colors.black;
   double strokeWidth = 2;
   double arrowheadSize = 15;
-  bool isArrowheadAtTo = true; // Direction flag (true = arrow at 'to' end)
-
+  bool isArrowheadAtTo = true;
   bool isSelected = false;
   late Offset startPoint;
   Offset? tempFrom;
@@ -40,7 +39,7 @@ class Arrow extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
-      'id': super.id,
+      'id': id,
       'type': type.name,
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},

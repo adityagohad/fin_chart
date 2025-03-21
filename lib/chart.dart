@@ -2,13 +2,15 @@ import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
+import 'package:fin_chart/models/enums/plot_region_type.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
+import 'package:fin_chart/models/region/panel_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -20,7 +22,6 @@ class Chart extends StatefulWidget {
   final YAxisSettings? yAxisSettings;
   final XAxisSettings? xAxisSettings;
   final List<ICandle> candles;
-  final List<PlotRegion> regions;
   final Function(Offset, Offset) onInteraction;
   final Function(PlotRegion region, Layer layer)? onLayerSelect;
   final Function(PlotRegion region)? onRegionSelect;
@@ -30,7 +31,6 @@ class Chart extends StatefulWidget {
       this.padding = const EdgeInsets.all(8),
       this.dataFit = DataFit.adaptiveWidth,
       required this.candles,
-      required this.regions,
       required this.onInteraction,
       this.onLayerSelect,
       this.onRegionSelect,
@@ -76,12 +76,15 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   List<PlotRegion> selectedRegionForResize = [];
   PlotRegion? selectedRegion;
 
-  bool isInit = false;
+  bool isInit = true;
 
   @override
   void initState() {
     currentData.addAll(widget.candles);
-    regions.addAll(widget.regions);
+    regions.add(MainPlotRegion(
+      candles: currentData,
+      yAxisSettings: widget.yAxisSettings!,
+    ));
     xStepWidth = candleWidth * 2;
 
     _swipeAnimationController = AnimationController(
@@ -133,13 +136,48 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
+  void addIndicator(Indicator indicator) {
+    setState(() {
+      if (indicator.displayMode == DisplayMode.panel) {
+        PanelPlotRegion region = PanelPlotRegion(
+            indicator: indicator, yAxisSettings: widget.yAxisSettings!);
+
+        double addRegionWeight = 1 / (regions.length + 1);
+        double multiplier = 1 - addRegionWeight;
+
+        _updateRegionBounds(multiplier);
+
+        region.updateData(currentData);
+
+        region.updateRegionProp(
+            leftPos: leftPos,
+            topPos: topPos + (bottomPos - topPos) * multiplier,
+            rightPos: rightPos,
+            bottomPos: bottomPos,
+            xStepWidth: xStepWidth,
+            xOffset: xOffset,
+            yMinValue: indicator.yMinValue,
+            yMaxValue: indicator.yMaxValue);
+
+        regions.add(region);
+      } else if (indicator.displayMode == DisplayMode.main) {
+        for (PlotRegion region in regions) {
+          if (region.type == PlotRegionType.data) {
+            indicator.updateData(currentData);
+            (region as MainPlotRegion).indicators.add(indicator);
+          }
+        }
+      }
+    });
+  }
+
   void updateLayerGettingAddedState(LayerType layerType) {
     setState(() {
       isLayerGettingAdded = true;
     });
   }
 
-  void addLayer(Layer layer) {
+  void addLayerUsingTool(Layer layer) {
     setState(() {
       selectedLayer = layer;
       selectedRegion?.addLayer(layer);
@@ -167,13 +205,22 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
+  void removeLayerById(String layerId) {
+    setState(() {
+      for (PlotRegion region in regions) {
+        region.layers.removeWhere((layer) => layer.id == layerId);
+      }
+      selectedLayer = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
           if (constraints.maxHeight != 0) {
-            _recalculate(constraints, regions);
+            _recalculate(constraints);
           }
           return Stack(
             children: [
@@ -261,6 +308,18 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       double height = totalHeight *
           (regions[i].bottomPos - regions[i].topPos) /
           (bottomPos - topPos);
+
+      // if (regions[i] is PanelPlotRegion) {
+      //   (regions[i] as PanelPlotRegion).indicator.updateRegionProp(
+      //       leftPos: leftPos,
+      //       topPos: tempTopPos,
+      //       rightPos: rightPos,
+      //       bottomPos: tempTopPos + height,
+      //       xStepWidth: xStepWidth,
+      //       xOffset: xOffset,
+      //       yMinValue: regions[i].yMinValue,
+      //       yMaxValue: regions[i].yMaxValue);
+      // }
       regions[i].updateRegionProp(
           leftPos: leftPos,
           topPos: tempTopPos,
@@ -271,15 +330,10 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           yMinValue: regions[i].yMinValue,
           yMaxValue: regions[i].yMaxValue);
       tempTopPos = tempTopPos + height;
-      // print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-      // print(regions[i].id);
-      // print(regions[i].topPos);
-      // print(regions[i].bottomPos);
-      // print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     }
   }
 
-  _recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
+  _recalculate(BoxConstraints constraints) {
     for (PlotRegion region in regions) {
       if (region.yLabelSize.width > yLabelWidth) {
         yLabelWidth = region.yLabelSize.width;
@@ -306,13 +360,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
 
-    if (regions.isEmpty) {
-      regions.add(MainPlotRegion(
-        id: generateV4(),
-        candles: [],
-        yAxisSettings: widget.yAxisSettings!,
-      ));
-
+    if (isInit) {
       regions[0].updateRegionProp(
           leftPos: leftPos,
           topPos: topPos,
@@ -323,6 +371,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           yMinValue: regions[0].yMinValue,
           yMaxValue: regions[0].yMaxValue);
     }
+
+    isInit = false;
 
     _updateRegionBounds(1);
   }
@@ -477,34 +527,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   Map<String, dynamic> toJson() {
     //return {'data': currentData.map((candle) => candle.toJson()).toList()};
     return {
-      'yAxisSettings': {
-        'yAxisPos': widget.yAxisSettings!.yAxisPos.name,
-        'axisColor': colorToJson(widget.yAxisSettings!.axisColor),
-        'strokeWidth': widget.yAxisSettings!.strokeWidth,
-        'textStyle': {
-          'color': colorToJson(
-              widget.yAxisSettings!.axisTextStyle.color ?? Colors.black),
-          'fontSize': widget.yAxisSettings!.axisTextStyle.fontSize,
-          'fontWeight':
-              widget.yAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold
-                  ? 'bold'
-                  : 'normal',
-        },
-      },
-      'xAxisSettings': {
-        'xAxisPos': widget.xAxisSettings!.xAxisPos.name,
-        'axisColor': colorToJson(widget.xAxisSettings!.axisColor),
-        'strokeWidth': widget.xAxisSettings!.strokeWidth,
-        'textStyle': {
-          'color': colorToJson(
-              widget.xAxisSettings!.axisTextStyle.color ?? Colors.black),
-          'fontSize': widget.xAxisSettings!.axisTextStyle.fontSize,
-          'fontWeight':
-              widget.xAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold
-                  ? 'bold'
-                  : 'normal',
-        },
-      },
+      'yAxisSettings': widget.yAxisSettings?.toJson(),
+      'xAxisSettings': widget.xAxisSettings?.toJson(),
       'regions': regions.map((region) => region.toJson()).toList(),
       'dataFit': widget.dataFit.name,
       'data': currentData.map((candle) => candle.toJson()).toList()
@@ -535,8 +559,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                   region = MACDPlotRegion.fromJson(regionJson);
                 } else if (regionJson.containsKey('kPeriod')) {
                   region = StochasticPlotRegion.fromJson(regionJson);
-                } else {
-                  region = DummyPlotRegion.fromJson(regionJson);
                 }
                 break;
             }

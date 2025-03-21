@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 abstract class Layer with RegionProp {
   final String id;
   final LayerType type;
+  bool isLocked = false;
 
   Layer.fromTool({required this.id, required this.type});
 

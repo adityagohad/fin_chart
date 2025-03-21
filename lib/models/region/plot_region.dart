@@ -15,7 +15,6 @@ import 'package:fin_chart/models/layers/label.dart';
 import 'package:fin_chart/models/layers/rect_area.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/utils/calculations.dart';
-import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 abstract class PlotRegion with RegionProp {
@@ -93,53 +92,7 @@ abstract class PlotRegion with RegionProp {
     }
   }
 
-  void drawYAxis(Canvas canvas) {
-    double valuseDiff = yValues.last - yValues.first;
-    double posDiff = bottomPos - topPos;
-
-    for (double value in yValues) {
-      double pos = bottomPos - (value - yValues.first) * posDiff / valuseDiff;
-
-      if (!(value == yValues.first || value == yValues.last)) {
-        canvas.drawLine(Offset(leftPos, pos), (Offset(rightPos, pos)), Paint());
-        final TextPainter text = TextPainter(
-          text: TextSpan(
-            text: value.toStringAsFixed(2),
-            style: yAxisSettings.axisTextStyle,
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-
-        if (yAxisSettings.yAxisPos == YAxisPos.left) {
-          text.paint(
-              canvas,
-              Offset(leftPos - (text.width + yLabelPadding / 2),
-                  pos - text.height / 2));
-        }
-        if (yAxisSettings.yAxisPos == YAxisPos.right) {
-          text.paint(canvas,
-              Offset(rightPos + yLabelPadding / 2, pos - text.height / 2));
-        }
-      }
-    }
-
-    if (yAxisSettings.yAxisPos == YAxisPos.left) {
-      canvas.drawLine(
-          Offset(leftPos, topPos),
-          Offset(leftPos, bottomPos),
-          Paint()
-            ..color = yAxisSettings.axisColor
-            ..strokeWidth = yAxisSettings.strokeWidth);
-    }
-    if (yAxisSettings.yAxisPos == YAxisPos.right) {
-      canvas.drawLine(
-          Offset(rightPos, topPos),
-          Offset(rightPos, bottomPos),
-          Paint()
-            ..color = yAxisSettings.axisColor
-            ..strokeWidth = yAxisSettings.strokeWidth);
-    }
-  }
+  void drawYAxis(Canvas canvas);
 
   void drawLayers(Canvas canvas) {
     for (final layer in layers) {

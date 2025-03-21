@@ -120,7 +120,8 @@ Color colorFromJson(String? hexString) {
   }
 }
 
-String colorToJson(Color color) {
+String? colorToJson(Color? color) {
+  if (color == null) return null;
   final hexAlpha = (color.a * 255).round().toRadixString(16).padLeft(2, '0');
   final hexRed = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
   final hexGreen = (color.g * 255).round().toRadixString(16).padLeft(2, '0');

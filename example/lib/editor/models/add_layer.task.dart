@@ -12,10 +12,12 @@ import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/utils/calculations.dart';
 
 class AddLayerTask extends Task {
-  final Layer layer;
   final String regionId;
-  AddLayerTask({required this.layer, required this.regionId})
-      : super(
+  final Layer layer;
+  AddLayerTask({
+    required this.regionId,
+    required this.layer,
+  }) : super(
             id: generateV4(),
             actionType: ActionType.empty,
             taskType: TaskType.addLayer);

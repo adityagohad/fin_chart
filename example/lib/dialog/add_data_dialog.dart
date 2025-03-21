@@ -16,7 +16,7 @@ class AddDataDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         width: MediaQuery.of(context).size.width - 20,
-        height: MediaQuery.of(context).size.height * 0.7,
+        //height: MediaQuery.of(context).size.height * 0.7,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

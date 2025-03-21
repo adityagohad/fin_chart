@@ -51,7 +51,7 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.addData:
         AddDataTask task = currentTask as AddDataTask;
         _chartKey.currentState
-            ?.addData(recipe.data.sublist(0, task.tillPoint + 1));
+            ?.addData(recipe.data.sublist(task.fromPoint, task.tillPoint));
         break;
       case TaskType.addRegion:
         AddRegionTask task = currentTask as AddRegionTask;
@@ -114,7 +114,6 @@ class _ChartDemoState extends State<ChartDemo> {
                   yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
                   xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
                   candles: const [],
-                  regions: const [],
                   onInteraction: (p0, p1) {})),
           Flexible(
             flex: 1,

@@ -4,12 +4,15 @@ import 'package:example/editor/models/task.dart';
 import 'package:fin_chart/utils/calculations.dart';
 
 class AddDataTask extends Task {
-  int fromPoint;
-  int tillPoint;
-  AddDataTask({
-    required this.fromPoint,
-    required this.tillPoint,
-  }) : super(
+  final String verticleLineId;
+  final int fromPoint;
+  final int tillPoint;
+
+  AddDataTask(
+      {required this.verticleLineId,
+      required this.fromPoint,
+      required this.tillPoint})
+      : super(
             id: generateV4(),
             actionType: ActionType.empty,
             taskType: TaskType.addData);
@@ -24,8 +27,8 @@ class AddDataTask extends Task {
 
   factory AddDataTask.fromJson(Map<String, dynamic> json) {
     return AddDataTask(
-      fromPoint: json['fromPoint'],
-      tillPoint: json['tillPoint'],
-    );
+        verticleLineId: "",
+        fromPoint: json['fromPoint'],
+        tillPoint: json['tillPoint']);
   }
 }

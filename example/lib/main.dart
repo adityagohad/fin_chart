@@ -1,4 +1,4 @@
-import 'package:example/home.dart';
+import 'package:example/editor/ui/editor_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: "/",
-      routes: {"/": (context) => const Home()},
+      routes: {"/": (context) => const EditorPage()},
     );
   }
 }

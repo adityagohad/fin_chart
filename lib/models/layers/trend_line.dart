@@ -38,7 +38,7 @@ class TrendLine extends Layer {
   @override
   Map<String, dynamic> toJson() {
     return {
-      'id': super.id,
+      'id': id,
       'type': LayerType.trendLine.name,
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},

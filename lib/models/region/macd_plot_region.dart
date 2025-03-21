@@ -281,4 +281,9 @@ class MACDPlotRegion extends PlotRegion {
     json['signalPeriod'] = signalPeriod;
     return json;
   }
+
+  @override
+  void drawYAxis(Canvas canvas) {
+    // TODO: implement drawYAxis
+  }
 }

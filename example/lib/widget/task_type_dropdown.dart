@@ -13,19 +13,39 @@ class TaskTypeDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<TaskType>(
-      value: selectedType,
-      onChanged: (TaskType? newValue) {
-        if (newValue != null) {
-          onChanged(newValue);
-        }
-      },
-      items: TaskType.values.map<DropdownMenuItem<TaskType>>((TaskType type) {
-        return DropdownMenuItem<TaskType>(
-          value: type,
-          child: Text(type.name),
-        );
-      }).toList(),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.black),
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: DropdownButton<TaskType>(
+        value: selectedType,
+        onChanged: (TaskType? newValue) {
+          if (newValue != null) {
+            onChanged(newValue);
+          }
+        },
+        items: TaskType.values.map<DropdownMenuItem<TaskType>>((TaskType type) {
+          return DropdownMenuItem<TaskType>(
+            value: type,
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 4.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+              decoration: BoxDecoration(
+                border: Border.all(),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(type.name),
+            ),
+          );
+        }).toList(),
+        underline: const SizedBox.shrink(),
+        isExpanded: true,
+        menuWidth: 300,
+      ),
     );
   }
 }
