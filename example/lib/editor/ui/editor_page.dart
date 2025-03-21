@@ -10,12 +10,21 @@ import 'package:example/editor/models/enums/task_type.dart';
 import 'package:example/editor/models/recipe.dart';
 import 'package:example/editor/models/task.dart';
 import 'package:example/editor/models/wait.task.dart';
+import 'package:example/widget/indicator_type_dropdown';
 import 'package:example/widget/layer_type_dropdown.dart';
 import 'package:example/widget/task_list_widget.dart';
 import 'package:fin_chart/chart.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/indicators/bollinger_bands.dart';
+import 'package:fin_chart/models/indicators/ema.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/models/indicators/line.dart';
+import 'package:fin_chart/models/indicators/macd.dart';
+import 'package:fin_chart/models/indicators/rsi.dart';
+import 'package:fin_chart/models/indicators/sma.dart';
+import 'package:fin_chart/models/indicators/stochastic.dart';
 import 'package:fin_chart/models/layers/arrow.dart';
 import 'package:fin_chart/models/layers/circular_area.dart';
 import 'package:fin_chart/models/layers/horizontal_band.dart';
@@ -25,7 +34,6 @@ import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/layers/rect_area.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/layers/vertical_line.dart';
-import 'package:fin_chart/models/region/macd_plot_region.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/region/rsi_plot_region.dart';
@@ -50,6 +58,7 @@ class _EditorPageState extends State<EditorPage> {
   List<Task> tasks = [];
 
   LayerType? _selectedLayerType;
+  IndicatorType? _selectedIndicatorType;
   List<Offset> drawPoints = [];
   Offset startingPoint = Offset.zero;
 
@@ -63,7 +72,7 @@ class _EditorPageState extends State<EditorPage> {
         ElevatedButton(
             onPressed: () {
               //log(jsonEncode(_chartKey.currentState?.toJson()));
-              //_chartKey.currentState?.addIndicator(Rsi());
+              _chartKey.currentState?.addIndicator(Rsi());
             },
             child: const Text("Action")),
         const SizedBox(
@@ -442,57 +451,11 @@ class _EditorPageState extends State<EditorPage> {
             ElevatedButton(
                 onPressed: _showAddDataDialog, child: const Text("Add Data")),
             const SizedBox(width: 20),
-            ElevatedButton(
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return RegionDialog(
-                        onSubmit: (type, variety, yMin, yMax) {
-                          if (type == PlotRegionType.indicator) {
-                            if (variety == 'RSI') {
-                              _chartKey.currentState?.addRegion(RsiPlotRegion(
-                                id: generateV4(),
-                                type: type,
-                                yAxisSettings: const YAxisSettings(
-                                    yAxisPos: YAxisPos.right),
-                                candles: [],
-                              ));
-                            } else if (variety == 'MACD') {
-                              // Add MACD region with custom min/max values
-                              _chartKey.currentState?.addRegion(MACDPlotRegion(
-                                id: generateV4(),
-                                candles: [],
-                                type: type,
-                                yAxisSettings: const YAxisSettings(
-                                    yAxisPos: YAxisPos.right),
-                              ));
-                            } else if (variety == 'Stochastic') {
-                              // Add Stochastic region with fixed 0-100 bounds
-                              _chartKey.currentState
-                                  ?.addRegion(StochasticPlotRegion(
-                                id: generateV4(),
-                                candles: [],
-                                type: type,
-                                yAxisSettings: const YAxisSettings(
-                                    yAxisPos: YAxisPos.right),
-                              ));
-                            }
-                          } else if (type == PlotRegionType.data) {
-                            if (variety == 'Candle') {
-                              _chartKey.currentState?.addRegion(MainPlotRegion(
-                                candles: [],
-                                yAxisSettings: const YAxisSettings(
-                                    yAxisPos: YAxisPos.right),
-                              ));
-                            }
-                          }
-                        },
-                      );
-                    });
-              },
-              child: const Text("Add Region"),
-            ),
+            IndicatorTypeDropdown(
+                selectedType: _selectedIndicatorType,
+                onChanged: (indicatorType) {
+                  _addIndicator(indicatorType);
+                }),
             const SizedBox(width: 20),
             LayerTypeDropdown(
                 selectedType: _selectedLayerType,
@@ -520,6 +483,35 @@ class _EditorPageState extends State<EditorPage> {
             _chartKey.currentState?.addData(data);
           });
         });
+  }
+
+  void _addIndicator(IndicatorType indicatorType) {
+    Indicator? indicator;
+
+    switch (indicatorType) {
+      case IndicatorType.rsi:
+        indicator = Rsi();
+        break;
+      case IndicatorType.line:
+        indicator = Line();
+        break;
+      case IndicatorType.macd:
+        indicator = Macd();
+        break;
+      case IndicatorType.sma:
+        indicator = Sma();
+        break;
+      case IndicatorType.ema:
+        indicator = Ema();
+        break;
+      case IndicatorType.bollingerBand:
+        indicator = BollingerBands();
+        break;
+      case IndicatorType.stochastic:
+        indicator = Stochastic();
+        break;
+    }
+    _chartKey.currentState?.addIndicator(indicator);
   }
 }
 
