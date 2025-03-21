@@ -11,7 +11,6 @@ class TrendLine extends Layer {
   double strokeWidth = 2;
   double endPointRadius = 5;
 
-  bool isSelected = false;
   late Offset startPoint;
   Offset? tempFrom;
   Offset? tempTo;

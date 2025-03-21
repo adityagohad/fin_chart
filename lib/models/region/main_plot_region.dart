@@ -120,9 +120,10 @@ class MainPlotRegion extends PlotRegion {
       //   break;
       // }
     }
-        for (Indicator indicator in indicators) {
-        indicator.drawIndicator(canvas: canvas);
-      }
+
+    for (Indicator indicator in indicators) {
+      indicator.drawIndicator(canvas: canvas);
+    }
   }
 
   @override

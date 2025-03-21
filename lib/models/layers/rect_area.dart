@@ -11,7 +11,6 @@ class RectArea extends Layer {
   late Offset bottomRight;
   late Offset topRight;
   late Offset bottomLeft;
-  bool isSelected = false;
   Color color = Colors.amber;
   late Offset startPoint;
   Edges? selectedEdge;
