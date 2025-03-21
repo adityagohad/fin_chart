@@ -186,6 +186,7 @@ class Arrow extends Layer {
 
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
+    if (isLocked) return;
     Offset displacement =
         displacementOffset(startPoint, details.localFocalPoint);
 
@@ -202,6 +203,22 @@ class Arrow extends Layer {
   // Method to toggle the arrow direction
   void toggleDirection() {
     isArrowheadAtTo = !isArrowheadAtTo;
+  }
+
+  @override
+  Widget? layerToolTip() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        IconButton(
+            onPressed: () {
+              isLocked = !isLocked;
+            },
+            icon:
+                isLocked ? const Icon(Icons.lock) : const Icon(Icons.unarchive))
+      ],
+    );
   }
 
   @override

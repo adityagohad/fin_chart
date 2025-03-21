@@ -36,4 +36,8 @@ abstract class Layer with RegionProp {
       {required Canvas canvas, required double animationValue}) {}
 
   void showSettingsDialog(BuildContext context, Function(Layer) onUpdate) {}
+
+  Widget? layerToolTip() {
+    return null;
+  }
 }

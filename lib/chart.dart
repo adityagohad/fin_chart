@@ -254,19 +254,21 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
               ),
               selectedLayer == null
                   ? Container()
-                  : Positioned(
-                      top: 8,
-                      right: 8,
-                      child: IconButton(
-                          icon: const Icon(Icons.settings, color: Colors.blue),
-                          onPressed: () {
-                            selectedLayer?.showSettingsDialog(context, (layer) {
-                              setState(() {
-                                selectedLayer = layer;
-                              });
-                            });
-                          }),
-                    ),
+                  : selectedLayer?.layerToolTip() ?? Container()
+
+              // Positioned(
+              //     top: 8,
+              //     right: 8,
+              //     child: IconButton(
+              //         icon: const Icon(Icons.settings, color: Colors.blue),
+              //         onPressed: () {
+              //           selectedLayer?.showSettingsDialog(context, (layer) {
+              //             setState(() {
+              //               selectedLayer = layer;
+              //             });
+              //           });
+              //         }),
+              //   ),
             ],
           );
         }));
