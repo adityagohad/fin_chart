@@ -78,6 +78,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   bool isInit = true;
 
+  Offset layerToolBoxOffset = Offset.zero;
+
   @override
   void initState() {
     currentData.addAll(widget.candles);
@@ -254,34 +256,47 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
               ),
               selectedLayer == null
                   ? Container()
-                  : selectedLayer?.layerToolTip(
-                          child:
-                              Text(selectedLayer?.type.name.capitalize() ?? ""),
-                          onSettings: () {
-                            selectedLayer?.showSettingsDialog(context, (layer) {
-                              setState(() {
-                                selectedLayer = layer;
-                              });
-                            });
-                          },
-                          onLockUpdate: () {
-                            setState(() {
-                              if (selectedLayer!.isLocked) {
-                                selectedLayer?.isLocked = false;
-                              } else {
-                                selectedLayer?.isLocked = true;
-                                selectedLayer?.isSelected = false;
-                                selectedLayer = null;
-                              }
-                            });
-                          },
-                          onDelete: () {
-                            setState(() {
-                              removeLayerById(selectedLayer!.id);
-                              selectedLayer == null;
-                            });
-                          }) ??
-                      Container()
+                  : Positioned(
+                      left: layerToolBoxOffset.dx,
+                      top: layerToolBoxOffset.dy,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          setState(() {
+                            layerToolBoxOffset += details.delta;
+                          });
+                        },
+                        child: selectedLayer?.layerToolTip(
+                                child: Text(
+                                    selectedLayer?.type.name.capitalize() ??
+                                        ""),
+                                onSettings: () {
+                                  selectedLayer?.showSettingsDialog(context,
+                                      (layer) {
+                                    setState(() {
+                                      selectedLayer = layer;
+                                    });
+                                  });
+                                },
+                                onLockUpdate: () {
+                                  setState(() {
+                                    if (selectedLayer!.isLocked) {
+                                      selectedLayer?.isLocked = false;
+                                    } else {
+                                      selectedLayer?.isLocked = true;
+                                      selectedLayer?.isSelected = false;
+                                      selectedLayer = null;
+                                    }
+                                  });
+                                },
+                                onDelete: () {
+                                  setState(() {
+                                    removeLayerById(selectedLayer!.id);
+                                    selectedLayer == null;
+                                  });
+                                }) ??
+                            Container(),
+                      ),
+                    )
 
               // Positioned(
               //     top: 8,
@@ -421,10 +436,11 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       horizontalScale = 1;
       previousHorizontalScale = 1;
-      xStepWidth = candleWidth;
+      xStepWidth = candleWidth * 2;
       xOffset = 0;
       _isAnimating = false;
       _swipeVelocity = 0;
+      layerToolBoxOffset = Offset.zero;
     });
   }
 
