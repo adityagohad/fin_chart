@@ -5,12 +5,11 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class Stochastic extends Indicator {
-  Color kLineColor = Colors.blue;
-  Color dLineColor = Colors.red;
-  
   int kPeriod = 14;
   int dPeriod = 3;
-  
+  Color kLineColor = Colors.blue;
+  Color dLineColor = Colors.red;
+
   final List<double> kValues = [];
   final List<double> dValues = [];
   final List<ICandle> candles = [];
@@ -18,15 +17,20 @@ class Stochastic extends Indicator {
   Stochastic({
     this.kPeriod = 14,
     this.dPeriod = 3,
-    Color? kLineColor,
-    Color? dLineColor,
+    this.kLineColor = Colors.blue,
+    this.dLineColor = Colors.red,
   }) : super(
             id: generateV4(),
             type: IndicatorType.stochastic,
-            displayMode: DisplayMode.panel) {
-    if (kLineColor != null) this.kLineColor = kLineColor;
-    if (dLineColor != null) this.dLineColor = dLineColor;
-  }
+            displayMode: DisplayMode.panel);
+
+  Stochastic._fromJson({
+    required super.id,
+    this.kPeriod = 14,
+    this.dPeriod = 3,
+    this.kLineColor = Colors.blue,
+    this.dLineColor = Colors.red,
+  }) : super(type: IndicatorType.stochastic, displayMode: DisplayMode.panel);
 
   @override
   drawIndicator({required Canvas canvas}) {
@@ -155,7 +159,7 @@ class Stochastic extends Indicator {
         tempKValues[i] = 50;
       }
     }
-    
+
     kValues.addAll(tempKValues);
 
     // Calculate %D (simple moving average of %K)
@@ -168,7 +172,7 @@ class Stochastic extends Indicator {
       }
       tempDValues[i] = sum / dPeriod;
     }
-    
+
     dValues.addAll(tempDValues);
   }
 
@@ -180,5 +184,19 @@ class Stochastic extends Indicator {
     json['kLineColor'] = colorToJson(kLineColor);
     json['dLineColor'] = colorToJson(dLineColor);
     return json;
+  }
+
+  factory Stochastic.fromJson(Map<String, dynamic> json) {
+    return Stochastic._fromJson(
+      id: json['id'] ?? generateV4(),
+      kPeriod: json['kPeriod'] ?? 14,
+      dPeriod: json['dPeriod'] ?? 3,
+      kLineColor: json['kLineColor'] != null
+          ? colorFromJson(json['kLineColor'])
+          : Colors.blue,
+      dLineColor: json['dLineColor'] != null
+          ? colorFromJson(json['dLineColor'])
+          : Colors.red,
+    );
   }
 }

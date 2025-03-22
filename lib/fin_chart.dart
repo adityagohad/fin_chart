@@ -8,7 +8,6 @@ export 'package:fin_chart/data/region_data_json.dart';
 export 'package:fin_chart/models/layers/vertical_line.dart';
 export 'package:fin_chart/data/recipe_data_json.dart';
 export 'package:fin_chart/models/indicators/rsi.dart';
-export 'package:fin_chart/models/indicators/line.dart';
 export 'package:fin_chart/models/indicators/macd.dart';
 export 'package:fin_chart/models/indicators/stochastic.dart';
 export 'package:fin_chart/models/indicators/sma.dart';

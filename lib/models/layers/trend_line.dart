@@ -123,6 +123,7 @@ class TrendLine extends Layer {
 
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
+    if (isLocked) return;
     Offset displacement =
         displacementOffset(startPoint, details.localFocalPoint);
 

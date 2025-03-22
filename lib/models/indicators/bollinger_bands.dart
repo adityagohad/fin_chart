@@ -29,6 +29,18 @@ class BollingerBands extends Indicator {
             type: IndicatorType.bollingerBand,
             displayMode: DisplayMode.main);
 
+  BollingerBands._fromJson({
+    required super.id,
+    required super.type,
+    required super.displayMode,
+    this.period = 20,
+    this.multiplier = 2.0,
+    this.upperBandColor = Colors.red,
+    this.middleBandColor = Colors.blue,
+    this.lowerBandColor = Colors.green,
+    this.opacity = 0.2,
+  });
+
   @override
   drawIndicator({required Canvas canvas}) {
     if (candles.isEmpty || smaValues.isEmpty) return;
@@ -184,5 +196,25 @@ class BollingerBands extends Indicator {
     json['lowerBandColor'] = colorToJson(lowerBandColor);
     json['opacity'] = opacity;
     return json;
+  }
+
+  factory BollingerBands.fromJson(Map<String, dynamic> json) {
+    return BollingerBands._fromJson(
+      id: json['id'],
+      type: IndicatorType.bollingerBand,
+      displayMode: DisplayMode.main,
+      period: json['period'] ?? 20,
+      multiplier: json['multiplier'] ?? 2.0,
+      upperBandColor: json['upperBandColor'] != null
+          ? colorFromJson(json['upperBandColor'])
+          : Colors.red,
+      middleBandColor: json['middleBandColor'] != null
+          ? colorFromJson(json['middleBandColor'])
+          : Colors.blue,
+      lowerBandColor: json['lowerBandColor'] != null
+          ? colorFromJson(json['lowerBandColor'])
+          : Colors.green,
+      opacity: json['opacity'] ?? 0.2,
+    );
   }
 }

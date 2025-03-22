@@ -1,5 +1,4 @@
 import 'package:fin_chart/models/enums/candle_state.dart';
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
@@ -13,7 +12,7 @@ class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
   final List<Indicator> indicators = [];
   MainPlotRegion({required this.candles, required super.yAxisSettings})
-      : super(id: generateV4(), type: PlotRegionType.data) {
+      : super(id: generateV4()) {
     (double, double) range = findMinMaxWithPercentage(candles);
     yMinValue = range.$1;
     yMaxValue = range.$2;
@@ -179,8 +178,6 @@ class MainPlotRegion extends PlotRegion {
       : candles = [],
         super(
           id: json['id'],
-          type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
-              orElse: () => PlotRegionType.data),
           yAxisSettings: YAxisSettings(
             yAxisPos: YAxisPos.values.firstWhere(
                 (pos) => pos.name == json['yAxisSettings']['yAxisPos'],
@@ -216,5 +213,27 @@ class MainPlotRegion extends PlotRegion {
     var json = super.toJson();
     json['variety'] = 'Candle';
     return json;
+  }
+
+  @override
+  Widget renderIndicatorToolTip(
+      {required Indicator? selectedIndicator,
+      required Function(Indicator)? onClick,
+      required Function()? onSettings,
+      required Function()? onDelete}) {
+    return Positioned(
+        left: leftPos,
+        top: topPos,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...indicators.map((indicator) => indicator.indicatorToolTip(
+                selectedIndicator: selectedIndicator,
+                onClick: onClick,
+                onSettings: onSettings,
+                onDelete: onDelete))
+          ],
+        ));
   }
 }

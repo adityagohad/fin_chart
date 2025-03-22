@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 class Sma extends Indicator {
   Color lineColor = Colors.blue;
   int period = 20;
+
   final List<double> smaValues = [];
   final List<ICandle> candles = [];
 
@@ -16,6 +17,14 @@ class Sma extends Indicator {
             id: generateV4(),
             type: IndicatorType.sma,
             displayMode: DisplayMode.main) {
+    if (lineColor != null) this.lineColor = lineColor;
+  }
+
+  Sma._fromJson({
+    required super.id,
+    this.period = 20,
+    Color? lineColor,
+  }) : super(type: IndicatorType.sma, displayMode: DisplayMode.main) {
     if (lineColor != null) this.lineColor = lineColor;
   }
 
@@ -98,5 +107,15 @@ class Sma extends Indicator {
     json['period'] = period;
     json['lineColor'] = colorToJson(lineColor);
     return json;
+  }
+
+  factory Sma.fromJson(Map<String, dynamic> json) {
+    return Sma._fromJson(
+      id: json['id'] ?? generateV4(),
+      period: json['period'] ?? 20,
+      lineColor: json['lineColor'] != null
+          ? colorFromJson(json['lineColor'])
+          : Colors.blue,
+    );
   }
 }

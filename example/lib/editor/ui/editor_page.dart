@@ -19,7 +19,6 @@ import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/bollinger_bands.dart';
 import 'package:fin_chart/models/indicators/ema.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
-import 'package:fin_chart/models/indicators/line.dart';
 import 'package:fin_chart/models/indicators/macd.dart';
 import 'package:fin_chart/models/indicators/rsi.dart';
 import 'package:fin_chart/models/indicators/sma.dart';
@@ -485,9 +484,6 @@ class _EditorPageState extends State<EditorPage> {
     switch (indicatorType) {
       case IndicatorType.rsi:
         indicator = Rsi();
-        break;
-      case IndicatorType.line:
-        indicator = Line();
         break;
       case IndicatorType.macd:
         indicator = Macd();

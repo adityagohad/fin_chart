@@ -95,6 +95,7 @@ class HorizontalLine extends Layer {
 
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
+    if (isLocked) return;
     value = toYInverse(toY(value) + details.focalPointDelta.dy);
   }
 

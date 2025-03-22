@@ -1,5 +1,4 @@
 enum LayerType {
-  //chartPointer,
   circularArea,
   label,
   horizontalLine,

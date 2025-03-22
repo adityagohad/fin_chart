@@ -4,10 +4,11 @@ import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class Rsi extends Indicator {
-  Color rsiColor = Colors.blue;
-  Color rsiMaColor = Colors.orange;
   int rsiMaPeriod = 9;
   int rsiPeriod = 14;
+  Color rsiColor = Colors.blue;
+  Color rsiMaColor = Colors.orange;
+
   final List<double> rsiMaValues = [];
   final List<double> rsiValues = [];
   final List<ICandle> candles = [];
@@ -17,6 +18,14 @@ class Rsi extends Indicator {
             id: generateV4(),
             type: IndicatorType.rsi,
             displayMode: DisplayMode.panel);
+
+  Rsi._fromJson({
+    required super.id,
+    this.rsiPeriod = 14,
+    this.rsiMaPeriod = 9,
+    this.rsiColor = Colors.blue,
+    this.rsiMaColor = Colors.orange,
+  }) : super(type: IndicatorType.rsi, displayMode: DisplayMode.panel);
 
   @override
   drawIndicator({required Canvas canvas}) {
@@ -311,5 +320,19 @@ class Rsi extends Indicator {
     json['rsiColor'] = colorToJson(rsiColor);
     json['rsiMaColor'] = colorToJson(rsiMaColor);
     return json;
+  }
+
+  factory Rsi.fromJson(Map<String, dynamic> json) {
+    return Rsi._fromJson(
+      id: json['id'],
+      rsiPeriod: json['rsiPeriod'] ?? 14,
+      rsiMaPeriod: json['rsiMaPeriod'] ?? 9,
+      rsiColor: json['rsiColor'] != null
+          ? colorFromJson(json['rsiColor'])
+          : Colors.blue,
+      rsiMaColor: json['rsiMaColor'] != null
+          ? colorFromJson(json['rsiMaColor'])
+          : Colors.orange,
+    );
   }
 }

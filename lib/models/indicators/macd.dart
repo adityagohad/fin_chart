@@ -23,19 +23,27 @@ class Macd extends Indicator {
     this.fastPeriod = 12,
     this.slowPeriod = 26,
     this.signalPeriod = 9,
-    Color? macdLineColor,
-    Color? signalLineColor,
-    Color? posHistogramColor,
-    Color? negHistogramColor,
+    Color macdLineColor = Colors.blue,
+    Color signalLineColor = Colors.red,
+    Color posHistogramColor = Colors.green,
+    Color negHistogramColor = Colors.red,
   }) : super(
             id: generateV4(),
             type: IndicatorType.macd,
-            displayMode: DisplayMode.panel) {
-    if (macdLineColor != null) this.macdLineColor = macdLineColor;
-    if (signalLineColor != null) this.signalLineColor = signalLineColor;
-    if (posHistogramColor != null) this.posHistogramColor = posHistogramColor;
-    if (negHistogramColor != null) this.negHistogramColor = negHistogramColor;
-  }
+            displayMode: DisplayMode.panel);
+
+  Macd._fromJson({
+    required super.id,
+    required super.type,
+    required super.displayMode,
+    this.fastPeriod = 12,
+    this.slowPeriod = 26,
+    this.signalPeriod = 9,
+    this.macdLineColor = Colors.blue,
+    this.signalLineColor = Colors.red,
+    this.posHistogramColor = Colors.green,
+    this.negHistogramColor = Colors.red,
+  });
 
   @override
   drawIndicator({required Canvas canvas}) {
@@ -231,5 +239,28 @@ class Macd extends Indicator {
     json['posHistogramColor'] = colorToJson(posHistogramColor);
     json['negHistogramColor'] = colorToJson(negHistogramColor);
     return json;
+  }
+
+  factory Macd.fromJson(Map<String, dynamic> json) {
+    return Macd._fromJson(
+      id: json['id'],
+      type: IndicatorType.macd,
+      displayMode: DisplayMode.panel,
+      fastPeriod: json['fastPeriod'] ?? 12,
+      slowPeriod: json['slowPeriod'] ?? 26,
+      signalPeriod: json['signalPeriod'] ?? 9,
+      macdLineColor: json['macdLineColor'] != null
+          ? colorFromJson(json['macdLineColor'])
+          : Colors.blue,
+      signalLineColor: json['signalLineColor'] != null
+          ? colorFromJson(json['signalLineColor'])
+          : Colors.red,
+      posHistogramColor: json['posHistogramColor'] != null
+          ? colorFromJson(json['posHistogramColor'])
+          : Colors.green,
+      negHistogramColor: json['negHistogramColor'] != null
+          ? colorFromJson(json['negHistogramColor'])
+          : Colors.red,
+    );
   }
 }

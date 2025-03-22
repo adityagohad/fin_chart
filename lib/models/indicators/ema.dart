@@ -6,18 +6,25 @@ import 'package:flutter/material.dart';
 class Ema extends Indicator {
   Color lineColor = Colors.orange;
   int period = 20;
+
   final List<double> emaValues = [];
   final List<ICandle> candles = [];
 
   Ema({
     this.period = 20,
-    Color? lineColor,
+    this.lineColor = Colors.orange,
   }) : super(
             id: generateV4(),
             type: IndicatorType.ema,
-            displayMode: DisplayMode.main) {
-    if (lineColor != null) this.lineColor = lineColor;
-  }
+            displayMode: DisplayMode.main);
+
+  Ema._fromJson({
+    required super.id,
+    required super.type,
+    required super.displayMode,
+    this.period = 20,
+    this.lineColor = Colors.orange,
+  });
 
   @override
   drawIndicator({required Canvas canvas}) {
@@ -71,10 +78,10 @@ class Ema extends Indicator {
     }
 
     _calculateEMA();
-    
+
     // For DisplayMode.main, we don't need to set yMinValue and yMaxValue
     // as the indicator will use the values from the main chart
-    
+
     // However, still set yLabelSize for consistency
     yLabelSize = getLargetRnderBoxSizeForList(
         ['0.00'], // Just a placeholder
@@ -124,5 +131,17 @@ class Ema extends Indicator {
     json['period'] = period;
     json['lineColor'] = colorToJson(lineColor);
     return json;
+  }
+
+  factory Ema.fromJson(Map<String, dynamic> json) {
+    return Ema._fromJson(
+      id: json['id'] ?? generateV4(), // Fallback to new ID if not provided
+      type: IndicatorType.ema,
+      displayMode: DisplayMode.main,
+      period: json['period'] ?? 20,
+      lineColor: json['lineColor'] != null
+          ? colorFromJson(json['lineColor'])
+          : Colors.orange,
+    );
   }
 }

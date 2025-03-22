@@ -2,7 +2,7 @@ import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
-enum IndicatorType { rsi, macd, sma, ema, bollingerBand, stochastic, line }
+enum IndicatorType { rsi, macd, sma, ema, bollingerBand, stochastic }
 
 enum DisplayMode { main, panel }
 
@@ -19,8 +19,58 @@ abstract class Indicator with RegionProp {
 
   drawIndicator({required Canvas canvas});
 
-  Widget buidlIndictorChartWidget() {
-    throw UnimplementedError();
+  Widget indicatorToolTip(
+      {Widget? child,
+      required Indicator? selectedIndicator,
+      required Function(Indicator)? onClick,
+      required Function()? onSettings,
+      required Function()? onDelete}) {
+    return InkWell(
+        onTap: () {
+          onClick?.call(this);
+        },
+        child: selectedIndicator == this
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    child ?? Text(type.name.toUpperCase()),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    IconButton(
+                      onPressed: onSettings,
+                      icon: const Icon(
+                        Icons.settings,
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    IconButton(
+                      onPressed: onDelete,
+                      icon: const Icon(
+                        Icons.delete_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Container(
+                decoration: const BoxDecoration(color: Colors.white),
+                child: Text(
+                  type.name.toUpperCase(),
+                  style: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ));
   }
 
   showIndicatorSettings(BuildContext context, Indicator indicator) {
@@ -33,9 +83,5 @@ abstract class Indicator with RegionProp {
       'type': type.name,
       'displayMode': displayMode.name,
     };
-  }
-
-  factory Indicator.fromJson(Map<String, dynamic> json) {
-    throw UnimplementedError();
   }
 }

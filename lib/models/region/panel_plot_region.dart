@@ -1,4 +1,3 @@
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
@@ -10,7 +9,7 @@ import 'package:flutter/material.dart';
 class PanelPlotRegion extends PlotRegion {
   final Indicator indicator;
   PanelPlotRegion({required this.indicator, required super.yAxisSettings})
-      : super(id: generateV4(), type: PlotRegionType.data);
+      : super(id: generateV4());
 
   @override
   void updateRegionProp(
@@ -103,5 +102,21 @@ class PanelPlotRegion extends PlotRegion {
             ..color = yAxisSettings.axisColor
             ..strokeWidth = yAxisSettings.strokeWidth);
     }
+  }
+
+  @override
+  Widget renderIndicatorToolTip(
+      {required Indicator? selectedIndicator,
+      required Function(Indicator)? onClick,
+      required Function()? onSettings,
+      required Function()? onDelete}) {
+    return Positioned(
+        left: leftPos,
+        top: topPos + 10,
+        child: indicator.indicatorToolTip(
+            selectedIndicator: selectedIndicator,
+            onClick: onClick,
+            onSettings: onSettings,
+            onDelete: onDelete));
   }
 }

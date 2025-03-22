@@ -2,7 +2,6 @@ import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
@@ -73,6 +72,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
   PlotRegion? selectedRegion;
+  Indicator? selectedIndicator;
 
   bool isInit = true;
 
@@ -162,12 +162,44 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         regions.add(region);
       } else if (indicator.displayMode == DisplayMode.main) {
         for (PlotRegion region in regions) {
-          if (region.type == PlotRegionType.data) {
+          if (region is MainPlotRegion) {
             indicator.updateData(currentData);
-            (region as MainPlotRegion).indicators.add(indicator);
+            region.indicators.add(indicator);
           }
         }
       }
+    });
+  }
+
+  void removeIndicator(Indicator indicator) {
+    setState(() {
+      if (indicator.displayMode == DisplayMode.panel) {
+        regions.removeWhere((region) =>
+            region is PanelPlotRegion && (region).indicator == indicator);
+        double heightRatio = 1.0 / regions.length;
+        double currentTop = topPos;
+
+        for (int i = 0; i < regions.length; i++) {
+          double regionHeight = (bottomPos - topPos) * heightRatio;
+          regions[i].updateRegionProp(
+              leftPos: leftPos,
+              topPos: currentTop,
+              rightPos: rightPos,
+              bottomPos: currentTop + regionHeight,
+              xStepWidth: xStepWidth,
+              xOffset: xOffset,
+              yMinValue: regions[i].yMinValue,
+              yMaxValue: regions[i].yMaxValue);
+          currentTop += regionHeight;
+        }
+      } else if (indicator.displayMode == DisplayMode.main) {
+        for (PlotRegion region in regions) {
+          if (region is MainPlotRegion) {
+            region.indicators.removeWhere((i) => i == indicator);
+          }
+        }
+      }
+      selectedIndicator = null;
     });
   }
 
@@ -252,6 +284,17 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              ...regions.map((region) => region.renderIndicatorToolTip(
+                  selectedIndicator: selectedIndicator,
+                  onClick: (indicator) {
+                    setState(() {
+                      selectedIndicator = indicator;
+                    });
+                  },
+                  onSettings: () {},
+                  onDelete: () {
+                    removeIndicator(selectedIndicator!);
+                  })),
               selectedLayer == null
                   ? Container()
                   : Positioned(
@@ -292,21 +335,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                                 }) ??
                             Container(),
                       ),
-                    )
-
-              // Positioned(
-              //     top: 8,
-              //     right: 8,
-              //     child: IconButton(
-              //         icon: const Icon(Icons.settings, color: Colors.blue),
-              //         onPressed: () {
-              //           selectedLayer?.showSettingsDialog(context, (layer) {
-              //             setState(() {
-              //               selectedLayer = layer;
-              //             });
-              //           });
-              //         }),
-              //   ),
+                    ),
             ],
           );
         }));
@@ -442,6 +471,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   _onTapDown(TapDownDetails details) {
     setState(() {
+      selectedIndicator = null;
       if (isLayerGettingAdded) {
         _handleTapDownWhenLayerToAdd(details);
       } else {

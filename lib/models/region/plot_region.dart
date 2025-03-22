@@ -1,5 +1,5 @@
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
@@ -16,7 +16,6 @@ import 'package:flutter/material.dart';
 
 abstract class PlotRegion with RegionProp {
   final String id;
-  final PlotRegionType type;
   final YAxisSettings yAxisSettings;
   final List<Layer> layers;
   late Size yLabelSize;
@@ -25,7 +24,6 @@ abstract class PlotRegion with RegionProp {
 
   PlotRegion(
       {required this.id,
-      required this.type,
       required this.yAxisSettings,
       List<Layer>? layers,
       double yMinValue = 0,
@@ -50,6 +48,12 @@ abstract class PlotRegion with RegionProp {
       return null;
     }
   }
+
+  Widget renderIndicatorToolTip(
+      {required Indicator? selectedIndicator,
+      required Function(Indicator)? onClick,
+      required Function()? onSettings,
+      required Function()? onDelete});
 
   PlotRegion? regionSelect(Offset selectedPoint) {
     if (isPointNearRectFromDiagonalVertices(
@@ -100,7 +104,6 @@ abstract class PlotRegion with RegionProp {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'type': type.name,
       'yAxisSettings': {
         'yAxisPos': yAxisSettings.yAxisPos.name,
         'axisColor': colorToJson(yAxisSettings.axisColor),
