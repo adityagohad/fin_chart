@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:example/chart_demo.dart';
+import 'package:example/editor/ui/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:example/editor/models/add_data.task.dart';
 import 'package:example/editor/models/add_layer.task.dart';
@@ -10,10 +10,12 @@ import 'package:example/editor/models/enums/task_type.dart';
 import 'package:example/editor/models/recipe.dart';
 import 'package:example/editor/models/task.dart';
 import 'package:example/editor/models/wait.task.dart';
-import 'package:example/widget/indicator_type_dropdown';
+import 'package:example/widget/blinking_text.dart';
+import 'package:example/widget/indicator_type_dropdown.dart';
 import 'package:example/widget/layer_type_dropdown.dart';
 import 'package:example/widget/task_list_widget.dart';
 import 'package:fin_chart/chart.dart';
+import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/bollinger_bands.dart';
@@ -57,21 +59,41 @@ class _EditorPageState extends State<EditorPage> {
 
   TaskType? _currentTaskType;
 
+  bool _isRecording = false;
+
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      title: const Text("Finance Charts"),
+      title: _currentTaskType != null
+          ? BlinkingText(text: "Waiting for ${_currentTaskType?.name}")
+          : _isRecording
+              ? const BlinkingText(
+                  text: "RECORDING",
+                  style: TextStyle(color: Colors.red, fontSize: 24),
+                )
+              : const Text("Finance Charts"),
       actions: [
-        ElevatedButton(
-            onPressed: () {
-              //log(jsonEncode(_chartKey.currentState?.toJson()));
-              _chartKey.currentState?.addIndicator(Rsi());
-            },
-            child: const Text("Action")),
-        const SizedBox(
-          width: 20,
+        // ElevatedButton(
+        //     onPressed: () {
+        //       //log(jsonEncode(_chartKey.currentState?.toJson()));
+        //       //_chartKey.currentState?.addIndicator(Rsi());
+        //     },
+        //     child: const Text("Action")),
+        // const SizedBox(
+        //   width: 20,
+        // ),
+        Switch(
+          value: _isRecording,
+          onChanged: (value) {
+            setState(() {
+              _isRecording = value;
+              if (value) {
+                _currentTaskType = null;
+              }
+            });
+          },
         ),
-        ElevatedButton(
+        IconButton(
             onPressed: () {
               Navigator.push(
                   context,
@@ -81,23 +103,24 @@ class _EditorPageState extends State<EditorPage> {
                             Recipe(data: candleData, tasks: tasks).toJson())),
                   ));
             },
-            child: const Text("Preview")),
-        const SizedBox(
-          width: 20,
-        ),
-        ElevatedButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(
-                      text: jsonEncode(
-                          Recipe(data: candleData, tasks: tasks).toJson())))
-                  .then((_) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("recipe to clipboar")));
-                }
-              });
-            },
-            child: const Text("export"))
+            iconSize: 42,
+            icon: const Icon(Icons.play_arrow_rounded)),
+
+        IconButton(
+          onPressed: () {
+            Clipboard.setData(ClipboardData(
+                    text: jsonEncode(
+                        Recipe(data: candleData, tasks: tasks).toJson())))
+                .then((_) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("recipe to clipboar")));
+              }
+            });
+          },
+          iconSize: 42,
+          icon: const Icon(Icons.copy_all_rounded),
+        )
       ],
     );
   }
@@ -120,17 +143,27 @@ class _EditorPageState extends State<EditorPage> {
               flex: 8,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(100),
+                  color: _isRecording
+                      ? Colors.red.withAlpha(50)
+                      : Colors.white.withAlpha(100),
                 ),
                 child: Chart(
                     key: _chartKey,
                     candles: candleData,
+                    dataFit: DataFit.adaptiveWidth,
                     yAxisSettings:
                         const YAxisSettings(yAxisPos: YAxisPos.right),
                     xAxisSettings:
                         const XAxisSettings(xAxisPos: XAxisPos.bottom),
                     onLayerSelect: _onLayerSelect,
                     onRegionSelect: _onRegionSelect,
+                    onIndicatorSelect: (indicator) {
+                      setState(() {
+                        if (_isRecording) return;
+                        tasks.add(AddIndicatorTask(indicator: indicator));
+                        _currentTaskType = null;
+                      });
+                    },
                     onInteraction: _onInteraction),
               )),
           Expanded(flex: 1, child: _buildToolBox()),
@@ -149,9 +182,9 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   _onRegionSelect(PlotRegion region) {
-    if (_currentTaskType == TaskType.addRegion) {
+    if (_currentTaskType == TaskType.addIndicator) {
       setState(() {
-        tasks.add(AddRegionTask(region: region));
+        //tasks.add(AddIndicatorTask(indicator: region));
         _currentTaskType = null;
       });
     }
@@ -262,7 +295,7 @@ class _EditorPageState extends State<EditorPage> {
   _onTaskAdd(TaskType taskType) {
     setState(() {
       switch (taskType) {
-        case TaskType.addRegion:
+        case TaskType.addIndicator:
         case TaskType.addLayer:
           _currentTaskType = taskType;
           break;
@@ -436,10 +469,12 @@ class _EditorPageState extends State<EditorPage> {
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(right: 20),
         reverse: true,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
             ElevatedButton(
                 onPressed: _showAddDataDialog, child: const Text("Add Data")),
@@ -480,7 +515,6 @@ class _EditorPageState extends State<EditorPage> {
 
   void _addIndicator(IndicatorType indicatorType) {
     Indicator? indicator;
-
     switch (indicatorType) {
       case IndicatorType.rsi:
         indicator = Rsi();
@@ -502,6 +536,9 @@ class _EditorPageState extends State<EditorPage> {
         break;
     }
     _chartKey.currentState?.addIndicator(indicator);
+    if (_isRecording) {
+      tasks.add(AddIndicatorTask(indicator: indicator));
+    }
   }
 }
 

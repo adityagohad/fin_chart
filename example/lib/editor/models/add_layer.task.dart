@@ -32,7 +32,7 @@ class AddLayerTask extends Task {
 
   factory AddLayerTask.fromJson(Map<String, dynamic> json) {
     return AddLayerTask(
-      layer: layerFromJson(json['layer']),
+      layer: Layer.fromJson(json: json['layer']),
       regionId: json['regionId'],
     );
   }
@@ -40,19 +40,19 @@ class AddLayerTask extends Task {
   static Layer layerFromJson(Map<String, dynamic> json) {
     switch (json['type']) {
       case 'trendLine':
-        return TrendLine.fromJson(data: json);
+        return TrendLine.fromJson(json: json);
       case 'horizontalLine':
-        return HorizontalLine.fromJson(data: json);
+        return HorizontalLine.fromJson(json: json);
       case 'horizontalBand':
-        return HorizontalBand.fromJson(data: json);
+        return HorizontalBand.fromJson(json: json);
       case 'label':
-        return Label.fromJson(data: json);
+        return Label.fromJson(json: json);
       case 'circularArea':
-        return CircularArea.fromJson(data: json);
+        return CircularArea.fromJson(json: json);
       case 'rectArea':
-        return RectArea.fromJson(data: json);
+        return RectArea.fromJson(json: json);
       case 'arrow':
-        return Arrow.fromJson(data: json);
+        return Arrow.fromJson(json: json);
     }
     throw ArgumentError('Invalid layer type: ${json['type']}');
   }

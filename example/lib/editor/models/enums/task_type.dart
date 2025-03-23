@@ -1,6 +1,6 @@
 enum TaskType {
   addData,
-  addRegion,
+  addIndicator,
   addLayer,
   addPrompt,
   // addLayerOfType,

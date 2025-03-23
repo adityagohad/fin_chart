@@ -4,7 +4,7 @@ import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
 class Rsi extends Indicator {
-  int rsiMaPeriod = 9;
+  int rsiMaPeriod = 14;
   int rsiPeriod = 14;
   Color rsiColor = Colors.blue;
   Color rsiMaColor = Colors.orange;
@@ -19,7 +19,7 @@ class Rsi extends Indicator {
             type: IndicatorType.rsi,
             displayMode: DisplayMode.panel);
 
-  Rsi._fromJson({
+  Rsi._({
     required super.id,
     this.rsiPeriod = 14,
     this.rsiMaPeriod = 9,
@@ -323,7 +323,7 @@ class Rsi extends Indicator {
   }
 
   factory Rsi.fromJson(Map<String, dynamic> json) {
-    return Rsi._fromJson(
+    return Rsi._(
       id: json['id'],
       rsiPeriod: json['rsiPeriod'] ?? 14,
       rsiMaPeriod: json['rsiMaPeriod'] ?? 9,

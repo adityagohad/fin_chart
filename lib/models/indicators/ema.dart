@@ -18,7 +18,7 @@ class Ema extends Indicator {
             type: IndicatorType.ema,
             displayMode: DisplayMode.main);
 
-  Ema._fromJson({
+  Ema._({
     required super.id,
     required super.type,
     required super.displayMode,
@@ -134,7 +134,7 @@ class Ema extends Indicator {
   }
 
   factory Ema.fromJson(Map<String, dynamic> json) {
-    return Ema._fromJson(
+    return Ema._(
       id: json['id'] ?? generateV4(), // Fallback to new ID if not provided
       type: IndicatorType.ema,
       displayMode: DisplayMode.main,

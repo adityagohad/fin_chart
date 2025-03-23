@@ -32,7 +32,7 @@ class Macd extends Indicator {
             type: IndicatorType.macd,
             displayMode: DisplayMode.panel);
 
-  Macd._fromJson({
+  Macd._({
     required super.id,
     required super.type,
     required super.displayMode,
@@ -242,7 +242,7 @@ class Macd extends Indicator {
   }
 
   factory Macd.fromJson(Map<String, dynamic> json) {
-    return Macd._fromJson(
+    return Macd._(
       id: json['id'],
       type: IndicatorType.macd,
       displayMode: DisplayMode.panel,

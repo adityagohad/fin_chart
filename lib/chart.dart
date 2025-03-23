@@ -22,15 +22,17 @@ class Chart extends StatefulWidget {
   final Function(Offset, Offset) onInteraction;
   final Function(PlotRegion region, Layer layer)? onLayerSelect;
   final Function(PlotRegion region)? onRegionSelect;
+  final Function(Indicator indicator)? onIndicatorSelect;
 
   const Chart(
       {super.key,
       this.padding = const EdgeInsets.all(8),
-      this.dataFit = DataFit.adaptiveWidth,
+      this.dataFit = DataFit.fixedWidth,
       required this.candles,
       required this.onInteraction,
       this.onLayerSelect,
       this.onRegionSelect,
+      this.onIndicatorSelect,
       this.yAxisSettings = const YAxisSettings(),
       this.xAxisSettings = const XAxisSettings()});
 
@@ -176,22 +178,11 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       if (indicator.displayMode == DisplayMode.panel) {
         regions.removeWhere((region) =>
             region is PanelPlotRegion && (region).indicator == indicator);
-        double heightRatio = 1.0 / regions.length;
-        double currentTop = topPos;
 
-        for (int i = 0; i < regions.length; i++) {
-          double regionHeight = (bottomPos - topPos) * heightRatio;
-          regions[i].updateRegionProp(
-              leftPos: leftPos,
-              topPos: currentTop,
-              rightPos: rightPos,
-              bottomPos: currentTop + regionHeight,
-              xStepWidth: xStepWidth,
-              xOffset: xOffset,
-              yMinValue: regions[i].yMinValue,
-              yMaxValue: regions[i].yMaxValue);
-          currentTop += regionHeight;
-        }
+        double multiplier = 1 +
+            ((indicator.bottomPos - indicator.topPos) /
+                (indicator.topPos - topPos + bottomPos - indicator.bottomPos));
+        _updateRegionBounds(multiplier);
       } else if (indicator.displayMode == DisplayMode.main) {
         for (PlotRegion region in regions) {
           if (region is MainPlotRegion) {
@@ -287,6 +278,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
               ...regions.map((region) => region.renderIndicatorToolTip(
                   selectedIndicator: selectedIndicator,
                   onClick: (indicator) {
+                    widget.onIndicatorSelect?.call(indicator);
                     setState(() {
                       selectedIndicator = indicator;
                     });
@@ -378,17 +370,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           (regions[i].bottomPos - regions[i].topPos) /
           (bottomPos - topPos);
 
-      // if (regions[i] is PanelPlotRegion) {
-      //   (regions[i] as PanelPlotRegion).indicator.updateRegionProp(
-      //       leftPos: leftPos,
-      //       topPos: tempTopPos,
-      //       rightPos: rightPos,
-      //       bottomPos: tempTopPos + height,
-      //       xStepWidth: xStepWidth,
-      //       xOffset: xOffset,
-      //       yMinValue: regions[i].yMinValue,
-      //       yMaxValue: regions[i].yMaxValue);
-      // }
       regions[i].updateRegionProp(
           leftPos: leftPos,
           topPos: tempTopPos,
@@ -429,6 +410,16 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
 
+    switch (widget.dataFit) {
+      case DataFit.fixedWidth:
+        xStepWidth =
+            ((rightPos - leftPos) / currentData.length) * horizontalScale;
+        break;
+      case DataFit.adaptiveWidth:
+        xStepWidth = candleWidth * 2 * horizontalScale;
+        break;
+    }
+
     if (isInit) {
       regions[0].updateRegionProp(
           leftPos: leftPos,
@@ -461,7 +452,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       horizontalScale = 1;
       previousHorizontalScale = 1;
-      xStepWidth = candleWidth * 2;
+      //xStepWidth = candleWidth * 2;
       xOffset = 0;
       _isAnimating = false;
       _swipeVelocity = 0;
@@ -596,11 +587,9 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   /// Convert chart state to JSON
   Map<String, dynamic> toJson() {
-    //return {'data': currentData.map((candle) => candle.toJson()).toList()};
     return {
       'yAxisSettings': widget.yAxisSettings?.toJson(),
       'xAxisSettings': widget.xAxisSettings?.toJson(),
-      'regions': regions.map((region) => region.toJson()).toList(),
       'dataFit': widget.dataFit.name,
       'data': currentData.map((candle) => candle.toJson()).toList()
     };

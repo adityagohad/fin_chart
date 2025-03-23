@@ -20,7 +20,7 @@ class Sma extends Indicator {
     if (lineColor != null) this.lineColor = lineColor;
   }
 
-  Sma._fromJson({
+  Sma._({
     required super.id,
     this.period = 20,
     Color? lineColor,
@@ -110,7 +110,7 @@ class Sma extends Indicator {
   }
 
   factory Sma.fromJson(Map<String, dynamic> json) {
-    return Sma._fromJson(
+    return Sma._(
       id: json['id'] ?? generateV4(),
       period: json['period'] ?? 20,
       lineColor: json['lineColor'] != null

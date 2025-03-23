@@ -1,5 +1,11 @@
+import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
-import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/layers/arrow.dart';
+import 'package:fin_chart/models/layers/circular_area.dart';
+import 'package:fin_chart/models/layers/horizontal_line.dart';
+import 'package:fin_chart/models/layers/label.dart';
+import 'package:fin_chart/models/layers/rect_area.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
@@ -9,12 +15,40 @@ abstract class Layer with RegionProp {
   bool isLocked = false;
   bool isSelected = false;
 
+  Layer({required this.id, required this.type, required this.isLocked});
+
   Layer.fromTool({required this.id, required this.type});
 
-  Layer.fromJson({required this.id, required this.type});
+  factory Layer.fromJson({required Map<String, dynamic> json}) {
+    switch (json['type'].toLayerType()) {
+      case LayerType.circularArea:
+        return CircularArea.fromJson(json: json);
+      case LayerType.label:
+        return Label.fromJson(json: json);
+      case LayerType.horizontalLine:
+        return HorizontalLine.fromJson(json: json);
+      case LayerType.horizontalBand:
+        return HorizontalBand.fromJson(json: json);
+      case LayerType.trendLine:
+        return TrendLine.fromJson(json: json);
+      case LayerType.rectArea:
+        return RectArea.fromJson(json: json);
+      case LayerType.arrow:
+        return Arrow.fromJson(json: json);
+      case LayerType.verticalLine:
+        return VerticalLine.fromJson(json: json);
+      default:
+        throw UnimplementedError();
+    }
+  }
 
   Map<String, dynamic> toJson() {
-    throw UnimplementedError();
+    return {
+      'id': id,
+      'type': type,
+      'isLocked': isLocked,
+      'isSelectd': isSelected
+    };
   }
 
   void drawLayer({required Canvas canvas});

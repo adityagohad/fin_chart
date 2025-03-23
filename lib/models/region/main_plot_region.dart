@@ -1,7 +1,6 @@
 import 'package:fin_chart/models/enums/candle_state.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
-import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -11,6 +10,7 @@ import 'package:flutter/material.dart';
 class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
   final List<Indicator> indicators = [];
+
   MainPlotRegion({required this.candles, required super.yAxisSettings})
       : super(id: generateV4()) {
     (double, double) range = findMinMaxWithPercentage(candles);
@@ -198,21 +198,14 @@ class MainPlotRegion extends PlotRegion {
     yMaxValue = json['yMaxValue'];
 
     // Load layers if they exist
-    if (json['layers'] != null) {
-      for (var layerJson in json['layers']) {
-        Layer? layer = PlotRegion.layerFromJson(layerJson);
-        if (layer != null) {
-          layers.add(layer);
-        }
-      }
-    }
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    var json = super.toJson();
-    json['variety'] = 'Candle';
-    return json;
+    // if (json['layers'] != null) {
+    //   for (var layerJson in json['layers']) {
+    //     Layer? layer = PlotRegion.layerFromJson(layerJson);
+    //     if (layer != null) {
+    //       layers.add(layer);
+    //     }
+    //   }
+    // }
   }
 
   @override

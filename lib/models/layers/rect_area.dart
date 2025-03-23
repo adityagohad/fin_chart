@@ -9,11 +9,20 @@ enum Edges { left, top, right, bottom }
 class RectArea extends Layer {
   late Offset topLeft;
   late Offset bottomRight;
+  Color color = Colors.amber;
+
   late Offset topRight;
   late Offset bottomLeft;
-  Color color = Colors.amber;
   late Offset startPoint;
   Edges? selectedEdge;
+
+  RectArea._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required this.topLeft,
+      required this.bottomRight,
+      required this.color});
 
   RectArea.fromTool(
       {required this.topLeft,
@@ -24,29 +33,25 @@ class RectArea extends Layer {
     bottomLeft = Offset(topLeft.dx, bottomRight.dy);
   }
 
-  RectArea.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type:
-                (data['type'] as String).toLayerType() ?? LayerType.rectArea) {
-    topLeft = offsetFromJson(data['topLeft']);
-    bottomRight = offsetFromJson(data['bottomRight']);
-    color = colorFromJson(data['color']);
-    // Initialize derived values
-    topRight = Offset(bottomRight.dx, topLeft.dy);
-    bottomLeft = Offset(topLeft.dx, bottomRight.dy);
-    startPoint = Offset.zero; // Default value, will be set on interaction
+  factory RectArea.fromJson({required Map<String, dynamic> json}) {
+    return RectArea._(
+        id: json['id'],
+        type: (json['type'] as String).toLayerType() ?? LayerType.rectArea,
+        topLeft: offsetFromJson(json['topLeft']),
+        bottomRight: offsetFromJson(json['bottomRight']),
+        color: colorFromJson(json['color']),
+        isLocked: json['isLocked'] ?? false);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': LayerType.rectArea.name,
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'topLeft': {'dx': topLeft.dx, 'dy': topLeft.dy},
       'bottomRight': {'dx': bottomRight.dx, 'dy': bottomRight.dy},
       'color': colorToJson(color)
-    };
+    });
+    return json;
   }
 
   @override

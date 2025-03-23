@@ -1,27 +1,27 @@
 import 'package:example/editor/models/task.dart';
-import 'package:fin_chart/models/region/plot_region.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:example/editor/models/enums/action_type.dart';
 import 'package:example/editor/models/enums/task_type.dart';
 
-class AddRegionTask extends Task {
-  final PlotRegion region;
-  AddRegionTask({required this.region})
+class AddIndicatorTask extends Task {
+  final Indicator indicator;
+  AddIndicatorTask({required this.indicator})
       : super(
             id: generateV4(),
             actionType: ActionType.empty,
-            taskType: TaskType.addRegion);
+            taskType: TaskType.addIndicator);
 
   @override
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = super.toJson();
-    data['region'] = region.toJson();
+    data['indicator'] = indicator.toJson();
     return data;
   }
 
-  factory AddRegionTask.fromJson(Map<String, dynamic> json) {
-    return AddRegionTask(
-      region: PlotRegion.fromJson(json['region']),
+  factory AddIndicatorTask.fromJson(Map<String, dynamic> json) {
+    return AddIndicatorTask(
+      indicator: Indicator.fromJson(json: json['indicator']),
     );
   }
 }

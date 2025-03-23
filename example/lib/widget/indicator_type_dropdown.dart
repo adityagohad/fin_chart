@@ -1,11 +1,11 @@
-import 'package:fin_chart/models/enums/layer_type.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:flutter/material.dart';
 
-class LayerTypeDropdown extends StatelessWidget {
-  final LayerType? selectedType;
-  final Function(LayerType) onChanged;
+class IndicatorTypeDropdown extends StatelessWidget {
+  final IndicatorType? selectedType;
+  final Function(IndicatorType) onChanged;
 
-  const LayerTypeDropdown({
+  const IndicatorTypeDropdown({
     super.key,
     required this.selectedType,
     required this.onChanged,
@@ -20,16 +20,17 @@ class LayerTypeDropdown extends StatelessWidget {
         border: Border.all(color: Colors.black),
         borderRadius: BorderRadius.circular(4.0),
       ),
-      child: DropdownButton<LayerType>(
+      child: DropdownButton<IndicatorType>(
         value: selectedType,
-        onChanged: (LayerType? newValue) {
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        onChanged: (IndicatorType? newValue) {
           if (newValue != null) {
             onChanged(newValue);
           }
         },
-        items:
-            LayerType.values.map<DropdownMenuItem<LayerType>>((LayerType type) {
-          return DropdownMenuItem<LayerType>(
+        items: IndicatorType.values
+            .map<DropdownMenuItem<IndicatorType>>((IndicatorType type) {
+          return DropdownMenuItem<IndicatorType>(
             value: type,
             child: Container(
               width: double.infinity,

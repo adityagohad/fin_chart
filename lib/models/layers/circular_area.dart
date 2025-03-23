@@ -8,30 +8,39 @@ class CircularArea extends Layer {
   late Offset point;
   double radius = 20;
   Color color = Colors.blue;
+
   bool isAnimating = false;
+
+  CircularArea._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required Offset point,
+      required double radius,
+      required Color color});
 
   CircularArea.fromTool({required this.point})
       : super.fromTool(id: generateV4(), type: LayerType.circularArea);
 
-  CircularArea.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type: (data['type'] as String).toLayerType() ??
-                LayerType.circularArea) {
-    point = offsetFromJson(data['point']);
-    radius = data['radius'] ?? 20.0;
-    color = colorFromJson(data['color']);
+  factory CircularArea.fromJson({required Map<String, dynamic> json}) {
+    return CircularArea._(
+        id: json['id'],
+        type: (json['type'] as String).toLayerType() ?? LayerType.circularArea,
+        isLocked: json['isLocked'] ?? false,
+        point: offsetFromJson(json['point']),
+        radius: json['radius'] ?? 20.0,
+        color: colorFromJson(json['color']));
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': LayerType.circularArea.name,
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'point': {'dx': point.dx, 'dy': point.dy},
       'radius': radius,
-      'color': colorToJson(color)
-    };
+      'color': colorToJson(color),
+    });
+    return json;
   }
 
   @override

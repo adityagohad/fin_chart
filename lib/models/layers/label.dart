@@ -11,35 +11,45 @@ class Label extends Layer {
   late double width;
   late double height;
 
+  Label._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required this.pos,
+      required this.label,
+      required this.textStyle});
+
   Label.fromTool(
       {required this.pos, required this.label, required this.textStyle})
       : super.fromTool(id: generateV4(), type: LayerType.label);
 
-  Label.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type: (data['type'] as String).toLayerType() ?? LayerType.label) {
-    pos = offsetFromJson(data['pos']);
-    label = data['label'] ?? '';
-    textStyle = TextStyle(
-      color: colorFromJson(data['textColor']),
-      fontSize: data['fontSize'] ?? 16.0,
-      fontWeight:
-          data['fontWeight'] == 'bold' ? FontWeight.bold : FontWeight.normal,
+  factory Label.fromJson({required Map<String, dynamic> json}) {
+    return Label._(
+      id: json['id'],
+      type: (json['type'] as String).toLayerType() ?? LayerType.label,
+      pos: offsetFromJson(json['pos']),
+      label: json['label'] ?? '',
+      textStyle: TextStyle(
+        color: colorFromJson(json['textColor']),
+        fontSize: json['fontSize'] ?? 16.0,
+        fontWeight:
+            json['fontWeight'] == 'bold' ? FontWeight.bold : FontWeight.normal,
+      ),
+      isLocked: json['isLocked'] ?? false,
     );
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': LayerType.label.name,
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'pos': {'dx': pos.dx, 'dy': pos.dy},
       'label': label,
       'textColor': colorToJson(textStyle.color ?? Colors.black),
       'fontSize': textStyle.fontSize,
-      'fontWeight': textStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal',
-    };
+      'fontWeight': textStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal'
+    });
+    return json;
   }
 
   @override

@@ -10,7 +10,7 @@ class BollingerBands extends Indicator {
   Color upperBandColor;
   Color middleBandColor;
   Color lowerBandColor;
-  double opacity;
+  int alpha;
 
   final List<double> smaValues = [];
   final List<double> upperBandValues = [];
@@ -23,13 +23,13 @@ class BollingerBands extends Indicator {
     this.upperBandColor = Colors.red,
     this.middleBandColor = Colors.blue,
     this.lowerBandColor = Colors.green,
-    this.opacity = 0.2,
+    this.alpha = 51,
   }) : super(
             id: generateV4(),
             type: IndicatorType.bollingerBand,
             displayMode: DisplayMode.main);
 
-  BollingerBands._fromJson({
+  BollingerBands._({
     required super.id,
     required super.type,
     required super.displayMode,
@@ -38,7 +38,7 @@ class BollingerBands extends Indicator {
     this.upperBandColor = Colors.red,
     this.middleBandColor = Colors.blue,
     this.lowerBandColor = Colors.green,
-    this.opacity = 0.2,
+    this.alpha = 51,
   });
 
   @override
@@ -88,7 +88,7 @@ class BollingerBands extends Indicator {
 
   void _drawFilledArea(Canvas canvas, List<double> upper, List<double> lower) {
     final fillPaint = Paint()
-      ..color = middleBandColor.withOpacity(opacity)
+      ..color = middleBandColor.withAlpha(alpha)
       ..style = PaintingStyle.fill;
 
     final path = Path();
@@ -194,12 +194,12 @@ class BollingerBands extends Indicator {
     json['upperBandColor'] = colorToJson(upperBandColor);
     json['middleBandColor'] = colorToJson(middleBandColor);
     json['lowerBandColor'] = colorToJson(lowerBandColor);
-    json['opacity'] = opacity;
+    json['alpha'] = alpha;
     return json;
   }
 
   factory BollingerBands.fromJson(Map<String, dynamic> json) {
-    return BollingerBands._fromJson(
+    return BollingerBands._(
       id: json['id'],
       type: IndicatorType.bollingerBand,
       displayMode: DisplayMode.main,
@@ -214,7 +214,7 @@ class BollingerBands extends Indicator {
       lowerBandColor: json['lowerBandColor'] != null
           ? colorFromJson(json['lowerBandColor'])
           : Colors.green,
-      opacity: json['opacity'] ?? 0.2,
+      alpha: json['alpha'] ?? 0.2,
     );
   }
 }

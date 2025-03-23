@@ -53,9 +53,9 @@ class _ChartDemoState extends State<ChartDemo> {
         _chartKey.currentState
             ?.addData(recipe.data.sublist(task.fromPoint, task.tillPoint));
         break;
-      case TaskType.addRegion:
-        AddRegionTask task = currentTask as AddRegionTask;
-        _chartKey.currentState?.addRegion(task.region);
+      case TaskType.addIndicator:
+        AddIndicatorTask task = currentTask as AddIndicatorTask;
+        _chartKey.currentState?.addIndicator(task.indicator);
         break;
       case TaskType.addLayer:
         AddLayerTask task = currentTask as AddLayerTask;

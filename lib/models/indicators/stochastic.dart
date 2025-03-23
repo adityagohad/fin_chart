@@ -24,7 +24,7 @@ class Stochastic extends Indicator {
             type: IndicatorType.stochastic,
             displayMode: DisplayMode.panel);
 
-  Stochastic._fromJson({
+  Stochastic._({
     required super.id,
     this.kPeriod = 14,
     this.dPeriod = 3,
@@ -187,7 +187,7 @@ class Stochastic extends Indicator {
   }
 
   factory Stochastic.fromJson(Map<String, dynamic> json) {
-    return Stochastic._fromJson(
+    return Stochastic._(
       id: json['id'] ?? generateV4(),
       kPeriod: json['kPeriod'] ?? 14,
       dPeriod: json['dPeriod'] ?? 3,

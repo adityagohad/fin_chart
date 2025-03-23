@@ -1,4 +1,4 @@
-import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
@@ -77,11 +77,46 @@ abstract class Indicator with RegionProp {
     throw UnimplementedError();
   }
 
+  factory Indicator.fromJson({required Map<String, dynamic> json}) {
+    IndicatorType type = json['type'].toString().toIndicatorType()!;
+    switch (type) {
+      case IndicatorType.rsi:
+        return Rsi.fromJson(json);
+      case IndicatorType.macd:
+        return Macd.fromJson(json);
+      case IndicatorType.sma:
+        return Sma.fromJson(json);
+      case IndicatorType.ema:
+        return Ema.fromJson(json);
+      case IndicatorType.bollingerBand:
+        return BollingerBands.fromJson(json);
+      case IndicatorType.stochastic:
+        return Stochastic.fromJson(json);
+    }
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'type': type.name,
       'displayMode': displayMode.name,
     };
+  }
+}
+
+extension IndicatorTypeParsingExtension on String {
+  IndicatorType? toIndicatorType({bool ignoreCase = true}) {
+    final input = ignoreCase ? toLowerCase() : this;
+
+    for (final type in IndicatorType.values) {
+      final typeName = type.toString().split('.').last;
+      final compareValue = ignoreCase ? typeName.toLowerCase() : typeName;
+
+      if (input == compareValue) {
+        return type;
+      }
+    }
+
+    return null;
   }
 }

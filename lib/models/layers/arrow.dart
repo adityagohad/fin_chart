@@ -10,11 +10,25 @@ class Arrow extends Layer {
   late Offset to;
   Color color = Colors.black;
   double strokeWidth = 2;
+  double endPointRadius = 5;
   double arrowheadSize = 15;
   bool isArrowheadAtTo = true;
+
   late Offset startPoint;
   Offset? tempFrom;
   Offset? tempTo;
+
+  Arrow._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required Offset from,
+      required Offset to,
+      required Color color,
+      required double strokeWidth,
+      required double endPointRadius,
+      required double arrowheadSize,
+      required bool isArrowheadAtTo});
 
   Arrow.fromTool(
       {required this.from, required this.to, required this.startPoint})
@@ -23,30 +37,33 @@ class Arrow extends Layer {
     tempTo = to;
   }
 
-  Arrow.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type: (data['type'] as String).toLayerType() ?? LayerType.arrow) {
-    from = offsetFromJson(data['from']);
-    to = offsetFromJson(data['to']);
-    strokeWidth = data['strokeWidth'] ?? 2;
-    arrowheadSize = data['arrowheadSize'] ?? 10;
-    color = colorFromJson(data['color']);
-    isArrowheadAtTo = data['isArrowheadAtTo'] ?? true;
+  factory Arrow.fromJson({required Map<String, dynamic> json}) {
+    return Arrow._(
+        id: json['id'],
+        type: (json['type'] as String).toLayerType() ?? LayerType.arrow,
+        isLocked: json['isLocked'] ?? false,
+        from: offsetFromJson(json['from']),
+        to: offsetFromJson(json['to']),
+        color: colorFromJson(json['color']),
+        strokeWidth: json['strokeWidth'] ?? 2,
+        endPointRadius: json['endPointRadius'] ?? 5,
+        arrowheadSize: json['arrowheadSize'] ?? 15,
+        isArrowheadAtTo: json['isArrowheadAtTo'] ?? true);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type.name,
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
       'strokeWidth': strokeWidth,
       'arrowheadSize': arrowheadSize,
+      'endPointRadius': endPointRadius,
       'color': colorToJson(color),
       'isArrowheadAtTo': isArrowheadAtTo
-    };
+    });
+    return json;
   }
 
   @override
@@ -88,14 +105,13 @@ class Arrow extends Layer {
       // Draw circles at endpoints
       canvas.drawCircle(
           toCanvas(from),
-          arrowheadSize,
+          endPointRadius,
           Paint()
             ..color = Colors.white
-            ..style = PaintingStyle.fill
-            ..strokeWidth = arrowheadSize);
+            ..style = PaintingStyle.fill);
       canvas.drawCircle(
           toCanvas(from),
-          arrowheadSize,
+          endPointRadius,
           Paint()
             ..color = color
             ..style = PaintingStyle.stroke
@@ -103,14 +119,13 @@ class Arrow extends Layer {
 
       canvas.drawCircle(
           toCanvas(to),
-          arrowheadSize,
+          endPointRadius,
           Paint()
             ..color = Colors.white
-            ..style = PaintingStyle.fill
-            ..strokeWidth = arrowheadSize);
+            ..style = PaintingStyle.fill);
       canvas.drawCircle(
           toCanvas(to),
-          arrowheadSize,
+          endPointRadius,
           Paint()
             ..color = color
             ..style = PaintingStyle.stroke

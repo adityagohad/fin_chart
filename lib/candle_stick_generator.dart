@@ -991,7 +991,7 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
 
   void _toggleTrendlineVisibility() {
     setState(() {
-      final values = TrendlineVisibility.values;
+      const values = TrendlineVisibility.values;
       final currentIndex = values.indexOf(trendlineVisibility);
       trendlineVisibility = values[(currentIndex + 1) % values.length];
     });
@@ -1328,11 +1328,6 @@ class _CandleStickGeneratorState extends State<CandleStickGenerator> {
   }
 
   void _handleDoubleTap(Offset position, Size size) {
-    // Convert position to relative coordinates
-    final x = position.dx / size.width;
-    final y = position.dy / size.height;
-
-    // Check if there's an existing point nearby
     int? nearbyPointIndex;
     double minDistance = double.infinity;
 
@@ -1461,8 +1456,8 @@ class TrendLinePainter extends CustomPainter {
     // Draw trend line if not invisible
     if (visibility != TrendlineVisibility.invisible) {
       final linePaint = Paint()
-        ..color = Colors.blue.withOpacity(
-            visibility == TrendlineVisibility.translucent ? 0.3 : 1.0)
+        ..color = Colors.blue
+            .withAlpha(visibility == TrendlineVisibility.translucent ? 77 : 255)
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke;
 
@@ -1506,7 +1501,6 @@ class TrendLinePainter extends CustomPainter {
     }
 
     // Draw candles
-    final candlePaint = Paint()..strokeWidth = 1;
     final candleWidth = size.width / (candles.length + 1);
 
     for (var i = 0; i < candles.length; i++) {
@@ -1525,12 +1519,12 @@ class TrendLinePainter extends CustomPainter {
           Offset(x, yLow),
           Paint()
             ..color = (candle.close > candle.open ? Colors.green : Colors.red)
-                .withOpacity(isSelected ? 0.5 : 1.0));
+                .withAlpha(isSelected ? 128 : 255));
 
       // Draw candle body
       final bodyPaint = Paint()
         ..color = (candle.close > candle.open ? Colors.green : Colors.red)
-            .withOpacity(isSelected ? 0.5 : 1.0);
+            .withAlpha(isSelected ? 128 : 255);
 
       final bodyRect = Rect.fromPoints(
         Offset(x - candleWidth * 0.3, yOpen),

@@ -5,22 +5,31 @@ import 'package:flutter/material.dart';
 
 class VerticalLine extends Layer {
   late double pos;
+
   late Offset startPoint;
+
+  VerticalLine._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required this.pos});
 
   VerticalLine.fromTool({required this.pos})
       : super.fromTool(id: generateV4(), type: LayerType.trendLine);
 
-  VerticalLine.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type: (data['type'] as String).toLayerType() ??
-                LayerType.verticalLine) {
-    pos = data['pos'];
+  factory VerticalLine.fromJson({required Map<String, dynamic> json}) {
+    return VerticalLine._(
+        id: json['id'],
+        type: (json['type'] as String).toLayerType() ?? LayerType.verticalLine,
+        isLocked: json['isLocked'] ?? false,
+        pos: json['pos'] ?? 0.0);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {'id': id, 'type': LayerType.verticalLine.name, 'pos': pos};
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({'pos': pos});
+    return json;
   }
 
   @override

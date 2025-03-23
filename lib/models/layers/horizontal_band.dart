@@ -9,28 +9,37 @@ class HorizontalBand extends Layer {
   late double allowedError;
   Color color = Colors.amber;
 
+  HorizontalBand._(
+      {required super.id,
+      required super.type,
+      required this.value,
+      required this.allowedError,
+      required this.color,
+      required super.isLocked});
+
   HorizontalBand.fromTool({required this.value, this.allowedError = 40})
       : super.fromTool(id: generateV4(), type: LayerType.horizontalBand);
 
-  HorizontalBand.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type: (data['type'] as String).toLayerType() ??
-                LayerType.horizontalBand) {
-    value = data['value'];
-    allowedError = data['allowedError'] ?? 40.0;
-    color = colorFromJson(data['color']);
+  factory HorizontalBand.fromJson({required Map<String, dynamic> json}) {
+    return HorizontalBand._(
+        id: json['id'],
+        type:
+            (json['type'] as String).toLayerType() ?? LayerType.horizontalBand,
+        value: json['value'] ?? 0.0,
+        allowedError: json['allowedError'] ?? 40.0,
+        color: colorFromJson(json['color']),
+        isLocked: json['isLocked'] ?? false);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': LayerType.horizontalBand.name,
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'value': value,
       'allowedError': allowedError,
       'color': colorToJson(color)
-    };
+    });
+    return json;
   }
 
   @override

@@ -10,28 +10,37 @@ class HorizontalLine extends Layer {
   Color color = Colors.blue;
   double strokeWidth = 2;
 
+  HorizontalLine._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required this.value,
+      required this.color,
+      required this.strokeWidth});
+
   HorizontalLine.fromTool({required this.value})
       : super.fromTool(id: generateV4(), type: LayerType.horizontalLine);
 
-  HorizontalLine.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(
-            id: data['id'],
-            type: (data['type'] as String).toLayerType() ??
-                LayerType.horizontalLine) {
-    value = data['value'];
-    color = colorFromJson(data['color']);
-    strokeWidth = data['strokeWidth'] ?? 2.0;
+  factory HorizontalLine.fromJson({required Map<String, dynamic> json}) {
+    return HorizontalLine._(
+        id: json['id'],
+        type:
+            (json['type'] as String).toLayerType() ?? LayerType.horizontalLine,
+        value: json['value'] ?? 0.0,
+        color: colorFromJson(json['color']),
+        strokeWidth: json['strokeWidth'] ?? 2.0,
+        isLocked: json['isLocked'] ?? false);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': LayerType.horizontalLine.name,
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'value': value,
       'color': colorToJson(color),
       'strokeWidth': strokeWidth
-    };
+    });
+    return json;
   }
 
   @override

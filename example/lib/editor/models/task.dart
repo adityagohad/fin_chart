@@ -48,8 +48,8 @@ abstract class Task {
         return AddLayerTask.fromJson(json);
       case 'addPrompt':
         return AddPromptTask.fromJson(json);
-      case 'addRegion':
-        return AddRegionTask.fromJson(json);
+      case 'addIndicator':
+        return AddIndicatorTask.fromJson(json);
       case 'waitTask':
         return WaitTask.fromJson(json);
       default:
