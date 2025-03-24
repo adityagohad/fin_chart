@@ -1,5 +1,6 @@
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/rsi_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
@@ -310,6 +311,21 @@ class Rsi extends Indicator {
 
     // yLabelSize = getLargetRnderBoxSizeForList(
     //     yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+  }
+
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => RsiSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override

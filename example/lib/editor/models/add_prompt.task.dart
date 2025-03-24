@@ -5,7 +5,8 @@ import 'package:example/editor/models/enums/task_type.dart';
 
 class AddPromptTask extends Task {
   String promptText;
-  AddPromptTask({required this.promptText})
+  bool isExplanation;
+  AddPromptTask({required this.promptText, this.isExplanation = false})
       : super(
             id: generateV4(),
             actionType: ActionType.empty,
@@ -15,12 +16,12 @@ class AddPromptTask extends Task {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = super.toJson();
     data['promptText'] = promptText;
+    data['isExplanation'] = isExplanation;
     return data;
   }
 
   factory AddPromptTask.fromJson(Map<String, dynamic> json) {
     return AddPromptTask(
-      promptText: json['promptText'],
-    );
+        promptText: json['promptText'], isExplanation: json['isExplanation']);
   }
 }

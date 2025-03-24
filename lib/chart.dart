@@ -27,7 +27,7 @@ class Chart extends StatefulWidget {
   const Chart(
       {super.key,
       this.padding = const EdgeInsets.all(8),
-      this.dataFit = DataFit.fixedWidth,
+      this.dataFit = DataFit.adaptiveWidth,
       required this.candles,
       required this.onInteraction,
       this.onLayerSelect,
@@ -116,28 +116,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void addRegion(PlotRegion region) {
-    setState(() {
-      double addRegionWeight = 1 / (regions.length + 1);
-      double multiplier = 1 - addRegionWeight;
-
-      _updateRegionBounds(multiplier);
-
-      region.updateData(currentData);
-      region.updateRegionProp(
-          leftPos: leftPos,
-          topPos: topPos + (bottomPos - topPos) * multiplier,
-          rightPos: rightPos,
-          bottomPos: bottomPos,
-          xStepWidth: xStepWidth,
-          xOffset: xOffset,
-          yMinValue: region.yMinValue,
-          yMaxValue: region.yMaxValue);
-
-      regions.add(region);
-    });
-  }
-
   void addIndicator(Indicator indicator) {
     setState(() {
       if (indicator.displayMode == DisplayMode.panel) {
@@ -197,6 +175,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   void updateLayerGettingAddedState(LayerType layerType) {
     setState(() {
       isLayerGettingAdded = true;
+      selectedLayer?.isSelected = false;
+      selectedLayer = null;
     });
   }
 
@@ -210,7 +190,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   void addLayerAtRegion(String regionId, Layer layer) {
     setState(() {
-      selectedLayer = layer;
+      //selectedLayer = layer;
       regions
           .firstWhere((region) => region.id == regionId,
               orElse: () => regions[0])
@@ -283,7 +263,15 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                       selectedIndicator = indicator;
                     });
                   },
-                  onSettings: () {},
+                  onSettings: () {
+                    selectedIndicator?.showIndicatorSettings(
+                        context: context,
+                        onUpdate: (indicator) {
+                          setState(() {
+                            selectedIndicator = indicator;
+                          });
+                        });
+                  },
                   onDelete: () {
                     removeIndicator(selectedIndicator!);
                   })),
@@ -463,28 +451,41 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   _onTapDown(TapDownDetails details) {
     setState(() {
       selectedIndicator = null;
-      if (isLayerGettingAdded) {
-        _handleTapDownWhenLayerToAdd(details);
-      } else {
+      for (PlotRegion region in regions) {
+        if (selectedRegionForResize.length < 2) {
+          if (region.isRegionReadyForResize(details.localPosition) != null) {
+            selectedRegionForResize.add(region);
+          }
+        }
+      }
+
+      if (selectedRegionForResize.length == 2) {
+        selectedLayer?.isSelected = false;
         selectedLayer = null;
-        for (PlotRegion region in regions) {
-          if (selectedRegionForResize.length < 2) {
-            if (region.isRegionReadyForResize(details.localPosition) != null) {
-              selectedRegionForResize.add(region);
-            }
-          }
-          PlotRegion? tempRegion = region.regionSelect(details.localPosition);
-          if (tempRegion != null) {
-            widget.onRegionSelect?.call(tempRegion);
-          }
-          for (Layer layer in region.layers) {
-            if (selectedLayer == null) {
-              selectedLayer = layer.onTapDown(details: details);
-              if (selectedLayer != null && tempRegion != null) {
-                widget.onLayerSelect?.call(tempRegion, selectedLayer!);
+        return;
+      }
+
+      selectedLayer = null;
+      selectedRegion = null;
+      for (PlotRegion region in regions) {
+        selectedRegion ??= region.regionSelect(details.localPosition);
+
+        if (selectedRegion != null) {
+          widget.onRegionSelect?.call(selectedRegion!);
+          if (isLayerGettingAdded) {
+            widget.onInteraction(
+                selectedRegion!.getRealCoordinates(details.localPosition),
+                details.localPosition);
+          } else {
+            for (Layer layer in region.layers) {
+              if (selectedLayer == null) {
+                selectedLayer = layer.onTapDown(details: details);
+                if (selectedLayer != null && selectedRegion != null) {
+                  widget.onLayerSelect?.call(selectedRegion!, selectedLayer!);
+                }
+              } else {
+                layer.isSelected = false;
               }
-            } else {
-              //layer.onTapDown(details: details);
             }
           }
         }
@@ -514,7 +515,9 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       if (details.pointerCount == 1) {
         if (isLayerGettingAdded && selectedRegion != null) {
-          _handleDragWhenLayerToAdd(details);
+          widget.onInteraction(
+              selectedRegion!.getRealCoordinates(details.localFocalPoint),
+              details.localFocalPoint);
         } else if (selectedLayer == null) {
           if (selectedRegionForResize.length == 2) {
             selectedRegionForResize[0].updateRegionProp(
@@ -565,24 +568,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         xStepWidth = candleWidth * horizontalScale;
       }
     });
-  }
-
-  _handleTapDownWhenLayerToAdd(TapDownDetails details) {
-    for (PlotRegion region in regions) {
-      selectedRegion = region.regionSelect(details.localPosition);
-      if (selectedRegion != null) {
-        widget.onInteraction(
-            selectedRegion!.getRealCoordinates(details.localPosition),
-            details.localPosition);
-        break;
-      }
-    }
-  }
-
-  _handleDragWhenLayerToAdd(ScaleUpdateDetails details) {
-    widget.onInteraction(
-        selectedRegion!.getRealCoordinates(details.localFocalPoint),
-        details.localFocalPoint);
   }
 
   /// Convert chart state to JSON

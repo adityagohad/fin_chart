@@ -32,9 +32,10 @@ abstract class PlotRegion with RegionProp {
 
   PlotRegion? isRegionReadyForResize(Offset selectedPoint) {
     if (isPointOnLine(selectedPoint, Offset(leftPos, bottomPos),
-            Offset(rightPos, bottomPos)) ||
+            Offset(rightPos, bottomPos), tolerance: 3) ||
         isPointOnLine(
-            selectedPoint, Offset(leftPos, topPos), Offset(rightPos, topPos))) {
+            selectedPoint, Offset(leftPos, topPos), Offset(rightPos, topPos),
+            tolerance: 3)) {
       return this;
     } else {
       return null;
@@ -49,7 +50,8 @@ abstract class PlotRegion with RegionProp {
 
   PlotRegion? regionSelect(Offset selectedPoint) {
     if (isPointNearRectFromDiagonalVertices(
-        selectedPoint, Offset(leftPos, topPos), Offset(rightPos, bottomPos))) {
+        selectedPoint, Offset(leftPos, topPos), Offset(rightPos, bottomPos),
+        tolerance: 0)) {
       isSelected = true;
       return this;
     } else {

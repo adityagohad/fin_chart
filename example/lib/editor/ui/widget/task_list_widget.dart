@@ -1,5 +1,6 @@
+import 'package:example/editor/models/add_data.task.dart';
 import 'package:example/editor/models/task.dart';
-import 'package:example/widget/task_type_dropdown.dart';
+import 'package:example/editor/ui/widget/task_type_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:example/editor/models/enums/action_type.dart';
 import 'package:example/editor/models/enums/task_type.dart';
@@ -8,6 +9,7 @@ class TaskListWidget extends StatefulWidget {
   final List<Task> task;
   final Function(TaskType) onTaskAdd;
   final Function(Task) onTaskClick;
+  final Function(Task) onTaskEdit;
   final Function(Task) onTaskDelete;
   final Function(int, int) onTaskReorder;
 
@@ -16,6 +18,7 @@ class TaskListWidget extends StatefulWidget {
     required this.task,
     required this.onTaskAdd,
     required this.onTaskClick,
+    required this.onTaskEdit,
     required this.onTaskDelete,
     required this.onTaskReorder,
   });
@@ -79,6 +82,7 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                         Text(
                           '${task.taskType.toString().split('.').last} ${task.actionType == ActionType.interupt ? ":" : ""}',
                         ),
+                        taskBaseOptions(task),
                         const SizedBox(
                           width: 20,
                         ),
@@ -111,5 +115,37 @@ class _TaskListWidgetState extends State<TaskListWidget> {
         ),
       ],
     );
+  }
+
+  Widget taskBaseOptions(Task task) {
+    switch (task.taskType) {
+      case TaskType.addData:
+        task as AddDataTask;
+        return Text("${task.fromPoint} - ${task.tillPoint}");
+      case TaskType.addIndicator:
+      case TaskType.addLayer:
+        return Container();
+      case TaskType.addPrompt:
+      case TaskType.waitTask:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 20,
+            ),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+    }
   }
 }

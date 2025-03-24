@@ -1,5 +1,6 @@
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/macd_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
@@ -226,6 +227,21 @@ class Macd extends Indicator {
     }
 
     return emaValues;
+  }
+
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => MacdSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override

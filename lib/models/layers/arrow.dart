@@ -22,13 +22,13 @@ class Arrow extends Layer {
       {required super.id,
       required super.type,
       required super.isLocked,
-      required Offset from,
-      required Offset to,
-      required Color color,
-      required double strokeWidth,
-      required double endPointRadius,
-      required double arrowheadSize,
-      required bool isArrowheadAtTo});
+      required this.from,
+      required this.to,
+      required this.color,
+      required this.strokeWidth,
+      required this.endPointRadius,
+      required this.arrowheadSize,
+      required this.isArrowheadAtTo});
 
   Arrow.fromTool(
       {required this.from, required this.to, required this.startPoint})

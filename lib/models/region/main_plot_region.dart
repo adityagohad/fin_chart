@@ -11,8 +11,9 @@ class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
   final List<Indicator> indicators = [];
 
-  MainPlotRegion({required this.candles, required super.yAxisSettings})
-      : super(id: generateV4()) {
+  MainPlotRegion(
+      {String? id, required this.candles, required super.yAxisSettings})
+      : super(id: id ?? generateV4()) {
     (double, double) range = findMinMaxWithPercentage(candles);
     yMinValue = range.$1;
     yMaxValue = range.$2;

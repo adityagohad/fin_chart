@@ -1,5 +1,6 @@
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/sma_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
@@ -23,10 +24,8 @@ class Sma extends Indicator {
   Sma._({
     required super.id,
     this.period = 20,
-    Color? lineColor,
-  }) : super(type: IndicatorType.sma, displayMode: DisplayMode.main) {
-    if (lineColor != null) this.lineColor = lineColor;
-  }
+    this.lineColor = Colors.blue,
+  }) : super(type: IndicatorType.sma, displayMode: DisplayMode.main);
 
   @override
   drawIndicator({required Canvas canvas}) {
@@ -99,6 +98,21 @@ class Sma extends Indicator {
         smaValues.add(sum / period);
       }
     }
+  }
+
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => SmaSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override

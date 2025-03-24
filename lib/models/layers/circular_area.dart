@@ -15,9 +15,9 @@ class CircularArea extends Layer {
       {required super.id,
       required super.type,
       required super.isLocked,
-      required Offset point,
-      required double radius,
-      required Color color});
+      required this.point,
+      required this.radius,
+      required this.color});
 
   CircularArea.fromTool({required this.point})
       : super.fromTool(id: generateV4(), type: LayerType.circularArea);

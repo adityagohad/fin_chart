@@ -2,14 +2,14 @@ import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
-import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 class PanelPlotRegion extends PlotRegion {
   final Indicator indicator;
+
   PanelPlotRegion({required this.indicator, required super.yAxisSettings})
-      : super(id: generateV4());
+      : super(id: indicator.id);
 
   @override
   void updateRegionProp(

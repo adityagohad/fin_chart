@@ -20,7 +20,7 @@ abstract class Layer with RegionProp {
   Layer.fromTool({required this.id, required this.type});
 
   factory Layer.fromJson({required Map<String, dynamic> json}) {
-    switch (json['type'].toLayerType()) {
+    switch ((json['type'] as String).toLayerType()) {
       case LayerType.circularArea:
         return CircularArea.fromJson(json: json);
       case LayerType.label:
@@ -45,7 +45,7 @@ abstract class Layer with RegionProp {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'type': type,
+      'type': type.name,
       'isLocked': isLocked,
       'isSelectd': isSelected
     };

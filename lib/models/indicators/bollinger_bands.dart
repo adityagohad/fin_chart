@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/bollinger_band_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
@@ -129,11 +130,27 @@ class BollingerBands extends Indicator {
   updateData(List<ICandle> data) {
     if (data.isEmpty) return;
 
-    // Clear the existing candles list before adding new data
-    candles.clear();
-    candles.addAll(data);
+    // If our candles list is empty, initialize it
+    if (candles.isEmpty) {
+      candles.addAll(data);
+    } else {
+      // Only add new candles
+      int existingCount = candles.length;
+      if (data.length > existingCount) {
+        candles.addAll(data.sublist(existingCount));
+      }
+    }
 
-    _calculateBollingerBands();
+    // if (data.isEmpty) return;
+
+    // // Clear the existing candles list before adding new data
+    // print(candles.length);
+    // candles.clear();
+    // candles.addAll(data);
+
+    // print(candles.length);
+
+    // _calculateBollingerBands();
 
     // For DisplayMode.main, we don't need to set yMinValue and yMaxValue
     // as the indicator will use the values from the main chart
@@ -184,6 +201,21 @@ class BollingerBands extends Indicator {
       upperBandValues.add(sma + (multiplier * stdDev));
       lowerBandValues.add(sma - (multiplier * stdDev));
     }
+  }
+
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => BollingerBandSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override

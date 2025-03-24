@@ -73,9 +73,8 @@ abstract class Indicator with RegionProp {
               ));
   }
 
-  showIndicatorSettings(BuildContext context, Indicator indicator) {
-    throw UnimplementedError();
-  }
+  showIndicatorSettings(
+      {required BuildContext context, required Function(Indicator) onUpdate}) {}
 
   factory Indicator.fromJson({required Map<String, dynamic> json}) {
     IndicatorType type = json['type'].toString().toIndicatorType()!;

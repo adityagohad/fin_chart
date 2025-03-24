@@ -10,10 +10,10 @@ import 'package:example/editor/models/enums/task_type.dart';
 import 'package:example/editor/models/recipe.dart';
 import 'package:example/editor/models/task.dart';
 import 'package:example/editor/models/wait.task.dart';
-import 'package:example/widget/blinking_text.dart';
-import 'package:example/widget/indicator_type_dropdown.dart';
-import 'package:example/widget/layer_type_dropdown.dart';
-import 'package:example/widget/task_list_widget.dart';
+import 'package:example/editor/ui/widget/blinking_text.dart';
+import 'package:example/editor/ui/widget/indicator_type_dropdown.dart';
+import 'package:example/editor/ui/widget/layer_type_dropdown.dart';
+import 'package:example/editor/ui/widget/task_list_widget.dart';
 import 'package:fin_chart/chart.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
@@ -56,6 +56,7 @@ class _EditorPageState extends State<EditorPage> {
   IndicatorType? _selectedIndicatorType;
   List<Offset> drawPoints = [];
   Offset startingPoint = Offset.zero;
+  PlotRegion? selectedRegion;
 
   TaskType? _currentTaskType;
 
@@ -95,6 +96,7 @@ class _EditorPageState extends State<EditorPage> {
         ),
         IconButton(
             onPressed: () {
+              //log(jsonEncode(Recipe(data: candleData, tasks: tasks).toJson()));
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -127,7 +129,7 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   void initState() {
-    candleData.addAll(data.map((data) => ICandle.fromJson(data)).toList());
+    //candleData.addAll(data.map((data) => ICandle.fromJson(data)).toList());
     super.initState();
   }
 
@@ -159,9 +161,10 @@ class _EditorPageState extends State<EditorPage> {
                     onRegionSelect: _onRegionSelect,
                     onIndicatorSelect: (indicator) {
                       setState(() {
-                        if (_isRecording) return;
-                        tasks.add(AddIndicatorTask(indicator: indicator));
-                        _currentTaskType = null;
+                        if (_currentTaskType == TaskType.addIndicator) {
+                          tasks.add(AddIndicatorTask(indicator: indicator));
+                          _currentTaskType = null;
+                        }
                       });
                     },
                     onInteraction: _onInteraction),
@@ -182,12 +185,7 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   _onRegionSelect(PlotRegion region) {
-    if (_currentTaskType == TaskType.addIndicator) {
-      setState(() {
-        //tasks.add(AddIndicatorTask(indicator: region));
-        _currentTaskType = null;
-      });
-    }
+    selectedRegion = region;
   }
 
   _onInteraction(Offset tapDownPoint, Offset updatedPoint) {
@@ -236,10 +234,14 @@ class _EditorPageState extends State<EditorPage> {
           layer = CircularArea.fromTool(point: drawPoints.first);
           break;
         case LayerType.arrow:
-          layer = Arrow.fromTool(
-              from: drawPoints.first,
-              to: drawPoints.last,
-              startPoint: startingPoint);
+          if (drawPoints.length >= 2) {
+            layer = Arrow.fromTool(
+                from: drawPoints.first,
+                to: drawPoints.last,
+                startPoint: startingPoint);
+          } else {
+            layer = null;
+          }
           break;
         case LayerType.verticalLine:
           layer = VerticalLine.fromTool(pos: tapDownPoint.dx);
@@ -247,7 +249,7 @@ class _EditorPageState extends State<EditorPage> {
           int fromPoint = 0;
           for (Task task in tasks) {
             if (task is AddDataTask) {
-              if (tapDownPoint.dx.round() <= task.tillPoint) {
+              if (tapDownPoint.dx.round() < task.tillPoint) {
                 return;
               } else {
                 fromPoint = task.tillPoint;
@@ -270,7 +272,22 @@ class _EditorPageState extends State<EditorPage> {
         if (layer != null) {
           _selectedLayerType = null;
           drawPoints.clear();
+          layer.updateRegionProp(
+              leftPos: selectedRegion!.leftPos,
+              topPos: selectedRegion!.topPos,
+              rightPos: selectedRegion!.rightPos,
+              bottomPos: selectedRegion!.bottomPos,
+              xStepWidth: selectedRegion!.xStepWidth,
+              xOffset: selectedRegion!.xOffset,
+              yMinValue: selectedRegion!.yMinValue,
+              yMaxValue: selectedRegion!.yMaxValue);
           _chartKey.currentState?.addLayerUsingTool(layer);
+          if (_isRecording) {
+            setState(() {
+              tasks.add(
+                  AddLayerTask(regionId: selectedRegion!.id, layer: layer!));
+            });
+          }
         }
       });
     }
@@ -286,6 +303,7 @@ class _EditorPageState extends State<EditorPage> {
         task: tasks,
         onTaskAdd: _onTaskAdd,
         onTaskClick: _onTaskClick,
+        onTaskEdit: _onTaskEdit,
         onTaskDelete: _onTaskDelete,
         onTaskReorder: _onTaskReorder,
       ),
@@ -319,6 +337,21 @@ class _EditorPageState extends State<EditorPage> {
     task.buildDialog(context: context);
   }
 
+  _onTaskEdit(Task task) {
+    switch (task.taskType) {
+      case TaskType.addData:
+      case TaskType.addIndicator:
+      case TaskType.addLayer:
+        break;
+      case TaskType.addPrompt:
+        editPrompt(task as AddPromptTask);
+        break;
+      case TaskType.waitTask:
+        editWaitTask(task as WaitTask);
+        break;
+    }
+  }
+
   _onTaskDelete(Task task) {
     setState(() {
       tasks.removeWhere((t) => t == task);
@@ -347,111 +380,207 @@ class _EditorPageState extends State<EditorPage> {
     await showPromptDialog(context: context).then((data) {
       setState(() {
         if (data != null) {
-          tasks.add(AddPromptTask(promptText: data));
+          tasks.add(data);
         }
         _currentTaskType = null;
+      });
+    });
+  }
+
+  void editPrompt(AddPromptTask task) async {
+    await showPromptDialog(context: context, initialTask: task).then((data) {
+      setState(() {
+        if (data != null) {
+          setState(() {
+            task.promptText = data.promptText;
+            task.isExplanation = data.isExplanation;
+          });
+        }
       });
     });
   }
 
   void waitTaskPrompt() async {
-    await showButtonTextDialog(context).then((data) {
+    await showWaitTaskDialog(context: context).then((data) {
       setState(() {
         if (data != null) {
-          tasks.add(WaitTask(btnText: data));
+          tasks.add(data);
         }
         _currentTaskType = null;
       });
     });
   }
 
-  Future<String?> showPromptDialog({
+  void editWaitTask(WaitTask task) async {
+    await showWaitTaskDialog(context: context, initialTask: task).then((data) {
+      setState(() {
+        if (data != null) {
+          task.btnText = data.btnText;
+        }
+      });
+    });
+  }
+
+  Future<AddPromptTask?> showPromptDialog({
     required BuildContext context,
     String title = 'Enter Text',
     String hintText = 'Enter your text here',
-    String initialText = '',
     String okButtonText = 'OK',
     String cancelButtonText = 'Cancel',
-    int? maxLines,
+    AddPromptTask? initialTask,
+    int? maxLines = 5,
     TextInputType keyboardType = TextInputType.multiline,
   }) async {
     final TextEditingController textController =
-        TextEditingController(text: initialText);
+        TextEditingController(text: initialTask?.promptText ?? '');
 
-    return showDialog<String>(
+    // Track if this is an explanation
+    bool isExplanation = initialTask?.isExplanation ?? false;
+
+    return showDialog<AddPromptTask>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog.fullscreen(
-          child: Scaffold(
-            appBar: AppBar(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
               title: Text(title),
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  Navigator.of(context).pop(); // Returns null
-                },
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: textController,
+                      decoration: InputDecoration(
+                        hintText: hintText,
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                      ),
+                      maxLines: maxLines,
+                      keyboardType: keyboardType,
+                      textCapitalization: TextCapitalization.sentences,
+                      autofocus: true,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isExplanation,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              isExplanation = value ?? false;
+                            });
+                          },
+                        ),
+                        const Text('Is Explanation'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context)
-                        .pop(textController.text); // Returns the entered text
+                    Navigator.of(context).pop(); // Returns null
+                  },
+                  child: Text(cancelButtonText),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final text = textController.text.trim();
+                    if (text.isNotEmpty) {
+                      // Create and return a new AddPromptTask
+                      final task = AddPromptTask(
+                        promptText: text,
+                        isExplanation: isExplanation,
+                      );
+                      Navigator.of(context).pop(task);
+                    } else {
+                      // Show error or just close with null
+                      Navigator.of(context).pop();
+                    }
                   },
                   child: Text(okButtonText),
                 ),
               ],
-            ),
-            body: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: textController,
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  border: const OutlineInputBorder(),
-                  filled: true,
-                ),
-                maxLines: maxLines, // null means unlimited lines
-                keyboardType: keyboardType,
-                textCapitalization: TextCapitalization.sentences,
-                autofocus: true,
-              ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  Future<String?> showButtonTextDialog(BuildContext context) {
-    final TextEditingController textController = TextEditingController();
+  Future<WaitTask?> showWaitTaskDialog({
+    required BuildContext context,
+    WaitTask? initialTask,
+  }) {
+    final TextEditingController textController = TextEditingController(
+      text: initialTask?.btnText ?? 'Done',
+    );
 
-    return showDialog<String>(
+    final List<String> quickOptions = [
+      'Done',
+      'Understood',
+      "Let's Go",
+      "Okay",
+      "Got it",
+      "Next"
+    ];
+
+    return showDialog<WaitTask>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Button Text'),
-          content: TextField(
-            controller: textController,
-            decoration: const InputDecoration(
-              hintText: 'Enter text for button',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 1,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (value) {
-              Navigator.of(context).pop(value);
-            },
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: textController,
+                decoration: const InputDecoration(
+                  hintText: 'Enter text for button',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 1,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (value) {
+                  if (value.isNotEmpty) {
+                    Navigator.of(context).pop(WaitTask(btnText: value));
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              const Text('Quick Select:'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: quickOptions.map((option) {
+                  return ActionChip(
+                    label: Text(option),
+                    onPressed: () {
+                      textController.text = option;
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(), // Returns null on cancel
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(textController.text);
+                final text = textController.text.trim();
+                if (text.isNotEmpty) {
+                  Navigator.of(context).pop(WaitTask(btnText: text));
+                } else {
+                  // If empty, use default "Done"
+                  Navigator.of(context).pop(WaitTask(btnText: 'Done'));
+                }
               },
               child: const Text('OK'),
             ),
@@ -537,7 +666,9 @@ class _EditorPageState extends State<EditorPage> {
     }
     _chartKey.currentState?.addIndicator(indicator);
     if (_isRecording) {
-      tasks.add(AddIndicatorTask(indicator: indicator));
+      setState(() {
+        tasks.add(AddIndicatorTask(indicator: indicator!));
+      });
     }
   }
 }
