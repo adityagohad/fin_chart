@@ -1,7 +1,7 @@
-import 'package:example/editor/models/task.dart';
+import 'package:fin_chart/models/tasks/task.dart';
 import 'package:fin_chart/utils/calculations.dart';
-import 'package:example/editor/models/enums/action_type.dart';
-import 'package:example/editor/models/enums/task_type.dart';
+import 'package:fin_chart/models/enums/action_type.dart';
+import 'package:fin_chart/models/enums/task_type.dart';
 
 class WaitTask extends Task {
   String btnText;

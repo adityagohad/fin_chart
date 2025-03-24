@@ -1,6 +1,6 @@
-import 'package:example/editor/models/enums/action_type.dart';
-import 'package:example/editor/models/enums/task_type.dart';
-import 'package:example/editor/models/task.dart';
+import 'package:fin_chart/models/enums/action_type.dart';
+import 'package:fin_chart/models/enums/task_type.dart';
+import 'package:fin_chart/models/tasks/task.dart';
 import 'package:fin_chart/utils/calculations.dart';
 
 class AddDataTask extends Task {

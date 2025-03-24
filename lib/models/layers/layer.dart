@@ -37,6 +37,8 @@ abstract class Layer with RegionProp {
         return Arrow.fromJson(json: json);
       case LayerType.verticalLine:
         return VerticalLine.fromJson(json: json);
+      case LayerType.parallelChannel:
+        return ParallelChannel.fromJson(json: json);
       default:
         throw UnimplementedError();
     }

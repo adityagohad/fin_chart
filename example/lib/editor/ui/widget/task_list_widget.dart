@@ -1,9 +1,12 @@
-import 'package:example/editor/models/add_data.task.dart';
-import 'package:example/editor/models/task.dart';
+import 'package:fin_chart/models/tasks/add_data.task.dart';
+import 'package:fin_chart/models/tasks/add_indicator.task.dart';
+import 'package:fin_chart/models/tasks/add_layer.task.dart';
+import 'package:fin_chart/models/tasks/task.dart';
 import 'package:example/editor/ui/widget/task_type_dropdown.dart';
+import 'package:fin_chart/models/tasks/wait.task.dart';
 import 'package:flutter/material.dart';
-import 'package:example/editor/models/enums/action_type.dart';
-import 'package:example/editor/models/enums/task_type.dart';
+import 'package:fin_chart/models/enums/action_type.dart';
+import 'package:fin_chart/models/enums/task_type.dart';
 
 class TaskListWidget extends StatefulWidget {
   final List<Task> task;
@@ -80,7 +83,7 @@ class _TaskListWidgetState extends State<TaskListWidget> {
                           ),
                         ),
                         Text(
-                          '${task.taskType.toString().split('.').last} ${task.actionType == ActionType.interupt ? ":" : ""}',
+                          '${task.taskType.toString().split('.').last} ${task.actionType == ActionType.interupt ? ": " : ""}',
                         ),
                         taskBaseOptions(task),
                         const SizedBox(
@@ -123,14 +126,38 @@ class _TaskListWidgetState extends State<TaskListWidget> {
         task as AddDataTask;
         return Text("${task.fromPoint} - ${task.tillPoint}");
       case TaskType.addIndicator:
+        return Text((task as AddIndicatorTask).indicator.type.name);
       case TaskType.addLayer:
-        return Container();
+        return Text((task as AddLayerTask).layer.type.name);
       case TaskType.addPrompt:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 20,
+            ),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
       case TaskType.waitTask:
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              (task as WaitTask).btnText,
+              //style: const TextStyle(fontSize: 10),
+            ),
             const SizedBox(
               width: 20,
             ),

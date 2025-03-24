@@ -17,7 +17,7 @@ abstract class AxisSettings {
       'axisTextStyle': {
         'color': colorToJson(axisTextStyle.color),
         'fontSize': axisTextStyle.fontSize,
-        'fontWeight': axisTextStyle.fontWeight.toString()
+        'fontWeight': fontWeightToJson(axisTextStyle.fontWeight)
       },
       'strokeWidth': strokeWidth,
       'axisColor': colorToJson(axisColor),
@@ -28,10 +28,7 @@ abstract class AxisSettings {
     return TextStyle(
       color: colorFromJson(json['color']),
       fontSize: json['fontSize'],
-      fontWeight: FontWeight.values.firstWhere(
-        (weight) => weight.index == json['fontWeight'].index,
-        orElse: () => FontWeight.w400,
-      ),
+      fontWeight: fontWeightFromJson(json['fontWeight']),
     );
   }
 }

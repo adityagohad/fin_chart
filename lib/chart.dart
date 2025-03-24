@@ -1,9 +1,11 @@
 import 'package:fin_chart/chart_painter.dart';
 import 'package:fin_chart/fin_chart.dart';
+import 'package:fin_chart/models/chart_settings.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/recipe.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/panel_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
@@ -19,22 +21,46 @@ class Chart extends StatefulWidget {
   final YAxisSettings? yAxisSettings;
   final XAxisSettings? xAxisSettings;
   final List<ICandle> candles;
-  final Function(Offset, Offset) onInteraction;
+  final Function(Offset, Offset)? onInteraction;
   final Function(PlotRegion region, Layer layer)? onLayerSelect;
   final Function(PlotRegion region)? onRegionSelect;
   final Function(Indicator indicator)? onIndicatorSelect;
+  final Recipe? recipe;
 
   const Chart(
       {super.key,
+      required this.candles,
       this.padding = const EdgeInsets.all(8),
       this.dataFit = DataFit.adaptiveWidth,
-      required this.candles,
-      required this.onInteraction,
+      this.onInteraction,
       this.onLayerSelect,
       this.onRegionSelect,
       this.onIndicatorSelect,
       this.yAxisSettings = const YAxisSettings(),
-      this.xAxisSettings = const XAxisSettings()});
+      this.xAxisSettings = const XAxisSettings(),
+      this.recipe});
+
+  factory Chart.from(
+      {required GlobalKey key,
+      required Recipe recipe,
+      Function(Offset, Offset)? onInteraction,
+      Function(PlotRegion region, Layer layer)? onLayerSelect,
+      final Function(PlotRegion region)? onRegionSelect,
+      final Function(Indicator indicator)? onIndicatorSelect}) {
+    return Chart(
+      key: key,
+      candles: recipe.data,
+      padding: const EdgeInsets.all(8),
+      dataFit: recipe.chartSettings.dataFit,
+      onInteraction: onInteraction,
+      onLayerSelect: onLayerSelect,
+      onRegionSelect: onRegionSelect,
+      onIndicatorSelect: onIndicatorSelect,
+      yAxisSettings: recipe.chartSettings.yAxisSettings,
+      xAxisSettings: recipe.chartSettings.xAxisSettings,
+      recipe: recipe,
+    );
+  }
 
   @override
   State<Chart> createState() => ChartState();
@@ -82,13 +108,35 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   @override
   void initState() {
+    super.initState();
+    if (widget.recipe != null) {
+      _initializeFromFactory();
+    } else {
+      _initializeDefault();
+    }
+    _initializeControllers();
+  }
+
+  void _initializeDefault() {
     currentData.addAll(widget.candles);
     regions.add(MainPlotRegion(
       candles: currentData,
       yAxisSettings: widget.yAxisSettings!,
     ));
-    xStepWidth = candleWidth * 2;
+  }
 
+  void _initializeFromFactory() {
+    Recipe recipe = widget.recipe!;
+
+    regions.add(MainPlotRegion(
+      id: recipe.chartSettings.mainPlotRegionId,
+      candles: currentData,
+      yAxisSettings: widget.yAxisSettings!,
+    ));
+  }
+
+  void _initializeControllers() {
+    xStepWidth = candleWidth * 2;
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -105,8 +153,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       parent: _controller,
       curve: Curves.bounceOut,
     );
-
-    super.initState();
   }
 
   @override
@@ -190,7 +236,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   void addLayerAtRegion(String regionId, Layer layer) {
     setState(() {
-      //selectedLayer = layer;
       regions
           .firstWhere((region) => region.id == regionId,
               orElse: () => regions[0])
@@ -473,7 +518,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
         if (selectedRegion != null) {
           widget.onRegionSelect?.call(selectedRegion!);
           if (isLayerGettingAdded) {
-            widget.onInteraction(
+            widget.onInteraction?.call(
                 selectedRegion!.getRealCoordinates(details.localPosition),
                 details.localPosition);
           } else {
@@ -515,7 +560,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       if (details.pointerCount == 1) {
         if (isLayerGettingAdded && selectedRegion != null) {
-          widget.onInteraction(
+          widget.onInteraction?.call(
               selectedRegion!.getRealCoordinates(details.localFocalPoint),
               details.localFocalPoint);
         } else if (selectedLayer == null) {
@@ -552,7 +597,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       }
       if (details.pointerCount == 2) {
         final newScale =
-            (previousHorizontalScale * details.scale).clamp(0.5, 5.0);
+            (previousHorizontalScale * details.scale).clamp(0.0, 150.0);
         if (lastFocalPoint != null) {
           final focalPointRatio = lastFocalPoint!.dx / constraints.maxWidth;
           final scaleDiff = newScale - horizontalScale;
@@ -571,12 +616,12 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   }
 
   /// Convert chart state to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'yAxisSettings': widget.yAxisSettings?.toJson(),
-      'xAxisSettings': widget.xAxisSettings?.toJson(),
-      'dataFit': widget.dataFit.name,
-      'data': currentData.map((candle) => candle.toJson()).toList()
-    };
+  ChartSettings getChartSettings() {
+    return ChartSettings(
+        dataFit: widget.dataFit,
+        yAxisSettings: widget.yAxisSettings!,
+        xAxisSettings: widget.xAxisSettings!,
+        mainPlotRegionId:
+            regions.firstWhere((region) => region is MainPlotRegion).id);
   }
 }

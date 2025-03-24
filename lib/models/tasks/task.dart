@@ -1,10 +1,10 @@
-import 'package:example/editor/models/add_data.task.dart';
-import 'package:example/editor/models/add_layer.task.dart';
-import 'package:example/editor/models/add_prompt.task.dart';
-import 'package:example/editor/models/add_region.task.dart';
-import 'package:example/editor/models/enums/action_type.dart';
-import 'package:example/editor/models/enums/task_type.dart';
-import 'package:example/editor/models/wait.task.dart';
+import 'package:fin_chart/models/enums/action_type.dart';
+import 'package:fin_chart/models/enums/task_type.dart';
+import 'package:fin_chart/models/tasks/add_data.task.dart';
+import 'package:fin_chart/models/tasks/add_layer.task.dart';
+import 'package:fin_chart/models/tasks/add_prompt.task.dart';
+import 'package:fin_chart/models/tasks/add_indicator.task.dart';
+import 'package:fin_chart/models/tasks/wait.task.dart';
 import 'package:flutter/material.dart';
 
 abstract class Task {

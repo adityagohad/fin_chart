@@ -6,7 +6,8 @@ enum LayerType {
   trendLine,
   rectArea,
   arrow,
-  verticalLine
+  verticalLine,
+  parallelChannel
 }
 
 extension LayerTypeExtension on LayerType {

@@ -15,7 +15,7 @@ class VerticalLine extends Layer {
       required this.pos});
 
   VerticalLine.fromTool({required this.pos})
-      : super.fromTool(id: generateV4(), type: LayerType.trendLine);
+      : super.fromTool(id: generateV4(), type: LayerType.verticalLine);
 
   factory VerticalLine.fromJson({required Map<String, dynamic> json}) {
     return VerticalLine._(

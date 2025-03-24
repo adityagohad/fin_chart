@@ -1,4 +1,4 @@
-import 'package:example/editor/models/enums/task_type.dart';
+import 'package:fin_chart/models/enums/task_type.dart';
 import 'package:flutter/material.dart';
 
 class TaskTypeDropdown extends StatelessWidget {

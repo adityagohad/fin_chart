@@ -30,11 +30,11 @@ class Label extends Layer {
       pos: offsetFromJson(json['pos']),
       label: json['label'] ?? '',
       textStyle: TextStyle(
-        color: colorFromJson(json['textColor']),
-        fontSize: json['fontSize'] ?? 16.0,
-        fontWeight:
-            json['fontWeight'] == 'bold' ? FontWeight.bold : FontWeight.normal,
-      ),
+          color: colorFromJson(json['textColor']),
+          fontSize: json['fontSize'] ?? 16.0,
+          fontWeight: fontWeightFromJson(json[
+              'fontWeight']) //json['fontWeight'] == 'bold' ? FontWeight.bold : FontWeight.normal,
+          ),
       isLocked: json['isLocked'] ?? false,
     );
   }
@@ -47,7 +47,8 @@ class Label extends Layer {
       'label': label,
       'textColor': colorToJson(textStyle.color ?? Colors.black),
       'fontSize': textStyle.fontSize,
-      'fontWeight': textStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal'
+      'fontWeight': fontWeightToJson(textStyle
+          .fontWeight) //textStyle.fontWeight == FontWeight.bold ? 'bold' : 'normal'
     });
     return json;
   }

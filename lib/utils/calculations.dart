@@ -137,6 +137,17 @@ Offset offsetFromJson(Map<String, dynamic> json) {
   );
 }
 
+String? fontWeightToJson(FontWeight? weight) =>
+    weight?.toString().split('.').last;
+
+FontWeight? fontWeightFromJson(String? json) {
+  if (json == null) return null;
+  return FontWeight.values.firstWhere(
+    (e) => e.toString() == 'FontWeight.$json',
+    orElse: () => json == 'bold' ? FontWeight.bold : FontWeight.normal,
+  );
+}
+
 String generateV4() {
   final math.Random random = math.Random.secure();
   final List<int> bytes = List.generate(16, (_) => random.nextInt(256));

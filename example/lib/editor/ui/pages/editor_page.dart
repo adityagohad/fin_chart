@@ -1,21 +1,20 @@
 import 'dart:convert';
 
-import 'package:example/editor/ui/chart_demo.dart';
+import 'package:example/editor/ui/pages/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
-import 'package:example/editor/models/add_data.task.dart';
-import 'package:example/editor/models/add_layer.task.dart';
-import 'package:example/editor/models/add_prompt.task.dart';
-import 'package:example/editor/models/add_region.task.dart';
-import 'package:example/editor/models/enums/task_type.dart';
-import 'package:example/editor/models/recipe.dart';
-import 'package:example/editor/models/task.dart';
-import 'package:example/editor/models/wait.task.dart';
+import 'package:fin_chart/models/tasks/add_data.task.dart';
+import 'package:fin_chart/models/tasks/add_indicator.task.dart';
+import 'package:fin_chart/models/tasks/add_layer.task.dart';
+import 'package:fin_chart/models/tasks/add_prompt.task.dart';
+import 'package:fin_chart/models/enums/task_type.dart';
+import 'package:fin_chart/models/recipe.dart';
+import 'package:fin_chart/models/tasks/task.dart';
+import 'package:fin_chart/models/tasks/wait.task.dart';
 import 'package:example/editor/ui/widget/blinking_text.dart';
 import 'package:example/editor/ui/widget/indicator_type_dropdown.dart';
 import 'package:example/editor/ui/widget/layer_type_dropdown.dart';
 import 'package:example/editor/ui/widget/task_list_widget.dart';
 import 'package:fin_chart/chart.dart';
-import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/bollinger_bands.dart';
@@ -31,17 +30,17 @@ import 'package:fin_chart/models/layers/horizontal_band.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/label.dart';
 import 'package:fin_chart/models/layers/layer.dart';
+import 'package:fin_chart/models/layers/parallel_channel.dart';
 import 'package:fin_chart/models/layers/rect_area.dart';
 import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/models/layers/vertical_line.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class EditorPage extends StatefulWidget {
-  const EditorPage({super.key});
+  final String? recipeStr;
+  const EditorPage({super.key, this.recipeStr});
 
   @override
   State<EditorPage> createState() => _EditorPageState();
@@ -61,6 +60,8 @@ class _EditorPageState extends State<EditorPage> {
   TaskType? _currentTaskType;
 
   bool _isRecording = false;
+
+  Recipe? recipe;
 
   AppBar _buildAppBar() {
     return AppBar(
@@ -96,13 +97,16 @@ class _EditorPageState extends State<EditorPage> {
         ),
         IconButton(
             onPressed: () {
-              //log(jsonEncode(Recipe(data: candleData, tasks: tasks).toJson()));
               Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ChartDemo(
-                        recipeDataJson: jsonEncode(
-                            Recipe(data: candleData, tasks: tasks).toJson())),
+                        recipeDataJson: jsonEncode(Recipe(
+                                data: candleData,
+                                chartSettings:
+                                    _chartKey.currentState!.getChartSettings(),
+                                tasks: tasks)
+                            .toJson())),
                   ));
             },
             iconSize: 42,
@@ -111,8 +115,12 @@ class _EditorPageState extends State<EditorPage> {
         IconButton(
           onPressed: () {
             Clipboard.setData(ClipboardData(
-                    text: jsonEncode(
-                        Recipe(data: candleData, tasks: tasks).toJson())))
+                    text: jsonEncode(Recipe(
+                            data: candleData,
+                            chartSettings:
+                                _chartKey.currentState!.getChartSettings(),
+                            tasks: tasks)
+                        .toJson())))
                 .then((_) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -130,7 +138,42 @@ class _EditorPageState extends State<EditorPage> {
   @override
   void initState() {
     //candleData.addAll(data.map((data) => ICandle.fromJson(data)).toList());
+    if (widget.recipeStr != null) {
+      recipe = Recipe.fromJson(jsonDecode(widget.recipeStr!));
+      populateRecipe(recipe!);
+    }
     super.initState();
+  }
+
+  populateRecipe(Recipe recipe) async {
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+      candleData.addAll(recipe.data);
+      _chartKey.currentState?.addData(candleData);
+      tasks.addAll(recipe.tasks);
+      for (Task task in tasks) {
+        switch (task.taskType) {
+          case TaskType.addPrompt:
+          case TaskType.waitTask:
+            break;
+          case TaskType.addData:
+            VerticalLine layer = VerticalLine.fromTool(
+                pos: (task as AddDataTask).tillPoint.toDouble());
+            layer.isLocked = true;
+            _chartKey.currentState?.addLayerAtRegion(
+                recipe.chartSettings.mainPlotRegionId, layer);
+            break;
+          case TaskType.addIndicator:
+            _chartKey.currentState
+                ?.addIndicator((task as AddIndicatorTask).indicator);
+            break;
+          case TaskType.addLayer:
+            AddLayerTask t = task as AddLayerTask;
+            _chartKey.currentState?.addLayerAtRegion(t.regionId, t.layer);
+            break;
+        }
+      }
+    });
   }
 
   @override
@@ -149,25 +192,40 @@ class _EditorPageState extends State<EditorPage> {
                       ? Colors.red.withAlpha(50)
                       : Colors.white.withAlpha(100),
                 ),
-                child: Chart(
-                    key: _chartKey,
-                    candles: candleData,
-                    dataFit: DataFit.adaptiveWidth,
-                    yAxisSettings:
-                        const YAxisSettings(yAxisPos: YAxisPos.right),
-                    xAxisSettings:
-                        const XAxisSettings(xAxisPos: XAxisPos.bottom),
-                    onLayerSelect: _onLayerSelect,
-                    onRegionSelect: _onRegionSelect,
-                    onIndicatorSelect: (indicator) {
-                      setState(() {
-                        if (_currentTaskType == TaskType.addIndicator) {
-                          tasks.add(AddIndicatorTask(indicator: indicator));
-                          _currentTaskType = null;
-                        }
-                      });
-                    },
-                    onInteraction: _onInteraction),
+                child: widget.recipeStr == null
+                    ? Chart(
+                        key: _chartKey,
+                        candles: candleData,
+                        // dataFit: DataFit.fixedWidth,
+                        // yAxisSettings:
+                        //     const YAxisSettings(yAxisPos: YAxisPos.left),
+                        // xAxisSettings:
+                        //     const XAxisSettings(xAxisPos: XAxisPos.bottom),
+                        onLayerSelect: _onLayerSelect,
+                        onRegionSelect: _onRegionSelect,
+                        onIndicatorSelect: (indicator) {
+                          setState(() {
+                            if (_currentTaskType == TaskType.addIndicator) {
+                              tasks.add(AddIndicatorTask(indicator: indicator));
+                              _currentTaskType = null;
+                            }
+                          });
+                        },
+                        onInteraction: _onInteraction)
+                    : Chart.from(
+                        key: _chartKey,
+                        recipe: recipe!,
+                        onLayerSelect: _onLayerSelect,
+                        onRegionSelect: _onRegionSelect,
+                        onIndicatorSelect: (indicator) {
+                          setState(() {
+                            if (_currentTaskType == TaskType.addIndicator) {
+                              tasks.add(AddIndicatorTask(indicator: indicator));
+                              _currentTaskType = null;
+                            }
+                          });
+                        },
+                        onInteraction: _onInteraction),
               )),
           Expanded(flex: 1, child: _buildToolBox()),
         ],
@@ -197,7 +255,7 @@ class _EditorPageState extends State<EditorPage> {
         case LayerType.label:
           layer = Label.fromTool(
               pos: drawPoints.first,
-              label: "Text is long\nand has line breaks",
+              label: "Text",
               textStyle: const TextStyle(
                   color: Colors.black,
                   fontSize: 16,
@@ -225,7 +283,7 @@ class _EditorPageState extends State<EditorPage> {
             layer = RectArea.fromTool(
                 topLeft: drawPoints.first,
                 bottomRight: drawPoints.last,
-                startPoint: startingPoint);
+                dragStartPos: startingPoint);
           } else {
             layer = null;
           }
@@ -267,6 +325,17 @@ class _EditorPageState extends State<EditorPage> {
         case null:
           layer = null;
           break;
+        case LayerType.parallelChannel:
+          if (drawPoints.length >= 2) {
+            layer = ParallelChannel.fromTool(
+                topLeft: drawPoints.first,
+                bottomRight: drawPoints.last,
+                dragPoint: startingPoint);
+          } else {
+            layer = null;
+          }
+
+          break;
       }
       setState(() {
         if (layer != null) {
@@ -282,7 +351,7 @@ class _EditorPageState extends State<EditorPage> {
               yMinValue: selectedRegion!.yMinValue,
               yMaxValue: selectedRegion!.yMaxValue);
           _chartKey.currentState?.addLayerUsingTool(layer);
-          if (_isRecording) {
+          if (_isRecording && layer.type != LayerType.verticalLine) {
             setState(() {
               tasks.add(
                   AddLayerTask(regionId: selectedRegion!.id, layer: layer!));

@@ -1,4 +1,4 @@
-import 'package:example/editor/ui/editor_page.dart';
+import 'package:example/home.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       initialRoute: "/",
-      routes: {"/": (context) => const EditorPage()},
+      routes: {"/": (context) => const Home()},
     );
   }
 }

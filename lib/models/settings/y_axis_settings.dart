@@ -10,7 +10,7 @@ class YAxisSettings extends AxisSettings {
       {super.axisTextStyle,
       super.axisColor,
       super.strokeWidth,
-      this.yAxisPos = YAxisPos.left});
+      this.yAxisPos = YAxisPos.right});
 
   @override
   Map<String, dynamic> toJson() {
@@ -26,7 +26,7 @@ class YAxisSettings extends AxisSettings {
       axisColor: colorFromJson(json['axisColor']),
       yAxisPos: YAxisPos.values.firstWhere(
         (pos) => pos.name == json['yAxisPos'],
-        orElse: () => YAxisPos.left,
+        orElse: () => YAxisPos.right,
       ),
     );
   }

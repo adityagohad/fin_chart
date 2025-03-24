@@ -150,7 +150,7 @@ class BollingerBands extends Indicator {
 
     // print(candles.length);
 
-    // _calculateBollingerBands();
+    _calculateBollingerBands();
 
     // For DisplayMode.main, we don't need to set yMinValue and yMaxValue
     // as the indicator will use the values from the main chart
