@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:example/editor/ui/pages/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/models/indicators/atr.dart';
+import 'package:fin_chart/models/indicators/mfi.dart';
+import 'package:fin_chart/models/indicators/adx.dart';
 import 'package:fin_chart/models/tasks/add_data.task.dart';
 import 'package:fin_chart/models/tasks/add_indicator.task.dart';
 import 'package:fin_chart/models/tasks/add_layer.task.dart';
@@ -735,6 +737,12 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case IndicatorType.atr:
         indicator = Atr();
+        break;
+      case IndicatorType.mfi:
+        indicator = Mfi();
+        break;
+      case IndicatorType.adx:
+        indicator = Adx();
         break;
     }
     _chartKey.currentState?.addIndicator(indicator);
