@@ -21,6 +21,8 @@ class _AdxSettingsDialogState extends State<AdxSettingsDialog> {
   late Color adxLineColor;
   late Color diPlusColor;
   late Color diMinusColor;
+  late bool showDiPlus;
+  late bool showDiMinus;
 
   @override
   void initState() {
@@ -29,6 +31,8 @@ class _AdxSettingsDialogState extends State<AdxSettingsDialog> {
     adxLineColor = widget.indicator.adxLineColor;
     diPlusColor = widget.indicator.diPlusColor;
     diMinusColor = widget.indicator.diMinusColor;
+    showDiPlus = widget.indicator.showDiPlus;
+    showDiMinus = widget.indicator.showDiMinus;
   }
 
   @override
@@ -65,27 +69,63 @@ class _AdxSettingsDialogState extends State<AdxSettingsDialog> {
               },
             ),
             const SizedBox(height: 16),
-            const Text('+DI Line Color'),
-            const SizedBox(height: 8),
-            ColorPickerWidget(
-              selectedColor: diPlusColor,
-              onColorSelected: (color) {
-                setState(() {
-                  diPlusColor = color;
-                });
-              },
+
+            // +DI Controls with visibility toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('+DMI Line'),
+                Switch(
+                  value: showDiPlus,
+                  onChanged: (value) {
+                    setState(() {
+                      showDiPlus = value;
+                    });
+                  },
+                ),
+              ],
             ),
+            // Only show color picker if +DI is visible
+            if (showDiPlus) ...[
+              const SizedBox(height: 8),
+              ColorPickerWidget(
+                selectedColor: diPlusColor,
+                onColorSelected: (color) {
+                  setState(() {
+                    diPlusColor = color;
+                  });
+                },
+              ),
+            ],
             const SizedBox(height: 16),
-            const Text('-DI Line Color'),
-            const SizedBox(height: 8),
-            ColorPickerWidget(
-              selectedColor: diMinusColor,
-              onColorSelected: (color) {
-                setState(() {
-                  diMinusColor = color;
-                });
-              },
+
+            // -DI Controls with visibility toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('-DMI Line'),
+                Switch(
+                  value: showDiMinus,
+                  onChanged: (value) {
+                    setState(() {
+                      showDiMinus = value;
+                    });
+                  },
+                ),
+              ],
             ),
+            // Only show color picker if -DI is visible
+            if (showDiMinus) ...[
+              const SizedBox(height: 8),
+              ColorPickerWidget(
+                selectedColor: diMinusColor,
+                onColorSelected: (color) {
+                  setState(() {
+                    diMinusColor = color;
+                  });
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -102,6 +142,8 @@ class _AdxSettingsDialogState extends State<AdxSettingsDialog> {
             widget.indicator.adxLineColor = adxLineColor;
             widget.indicator.diPlusColor = diPlusColor;
             widget.indicator.diMinusColor = diMinusColor;
+            widget.indicator.showDiPlus = showDiPlus;
+            widget.indicator.showDiMinus = showDiMinus;
             widget.onUpdate(widget.indicator);
             Navigator.of(context).pop();
           },

@@ -10,6 +10,8 @@ class Adx extends Indicator {
   Color adxLineColor = Colors.blue;
   Color diPlusColor = Colors.green;
   Color diMinusColor = Colors.red;
+  bool showDiPlus = false;
+  bool showDiMinus = false;
 
   final List<double> adxValues = [];
   final List<double> diPlusValues = [];
@@ -21,13 +23,13 @@ class Adx extends Indicator {
     Color? adxLineColor,
     Color? diPlusColor,
     Color? diMinusColor,
+    this.showDiPlus = false,
+    this.showDiMinus = false,
   }) : super(
             id: generateV4(),
             type: IndicatorType.adx,
             displayMode: DisplayMode.panel) {
-    if (adxLineColor != null) this.adxLineColor = adxLineColor;
-    if (diPlusColor != null) this.diPlusColor = diPlusColor;
-    if (diMinusColor != null) this.diMinusColor = diMinusColor;
+    // ... rest of constructor remains the same
   }
 
   Adx._({
@@ -35,9 +37,11 @@ class Adx extends Indicator {
     required super.type,
     required super.displayMode,
     this.period = 14,
-    this.adxLineColor = Colors.blue,
+    this.adxLineColor = Colors.purple,
     this.diPlusColor = Colors.green,
     this.diMinusColor = Colors.red,
+    this.showDiPlus = false,
+    this.showDiMinus = false,
   });
 
   @override
@@ -46,17 +50,21 @@ class Adx extends Indicator {
 
     // Draw ADX line
     _drawLine(canvas, adxValues, adxLineColor);
-    
-    // Draw +DI line
-    _drawLine(canvas, diPlusValues, diPlusColor);
-    
-    // Draw -DI line
-    _drawLine(canvas, diMinusValues, diMinusColor);
-    
-    // Draw level lines (20, 40, 60)
-    _drawLevelLine(canvas, 20, Colors.grey.withOpacity(0.5));
-    _drawLevelLine(canvas, 40, Colors.grey.withOpacity(0.5));
-    _drawLevelLine(canvas, 60, Colors.grey.withOpacity(0.5));
+
+    // Draw +DI line only if visible
+    if (showDiPlus) {
+      _drawLine(canvas, diPlusValues, diPlusColor);
+    }
+
+    // Draw -DI line only if visible
+    if (showDiMinus) {
+      _drawLine(canvas, diMinusValues, diMinusColor);
+    }
+
+    // Draw level lines (20, 40, 60) - these might still be useful as reference
+    _drawLevelLine(canvas, 20, Colors.grey.withAlpha((0.5 * 255).toInt()));
+    _drawLevelLine(canvas, 40, Colors.grey.withAlpha((0.5 * 255).toInt()));
+    _drawLevelLine(canvas, 60, Colors.grey.withAlpha((0.5 * 255).toInt()));
   }
 
   void _drawLevelLine(Canvas canvas, double level, Color color) {
@@ -286,31 +294,35 @@ class Adx extends Indicator {
     });
   }
 
-  @override
-  Map<String, dynamic> toJson() {
-    Map<String, dynamic> json = super.toJson();
-    json['period'] = period;
-    json['adxLineColor'] = colorToJson(adxLineColor);
-    json['diPlusColor'] = colorToJson(diPlusColor);
-    json['diMinusColor'] = colorToJson(diMinusColor);
-    return json;
-  }
+@override
+Map<String, dynamic> toJson() {
+  Map<String, dynamic> json = super.toJson();
+  json['period'] = period;
+  json['adxLineColor'] = colorToJson(adxLineColor);
+  json['diPlusColor'] = colorToJson(diPlusColor);
+  json['diMinusColor'] = colorToJson(diMinusColor);
+  json['showDiPlus'] = showDiPlus;
+  json['showDiMinus'] = showDiMinus;
+  return json;
+}
 
-  factory Adx.fromJson(Map<String, dynamic> json) {
-    return Adx._(
-      id: json['id'],
-      type: IndicatorType.adx,
-      displayMode: DisplayMode.panel,
-      period: json['period'] ?? 14,
-      adxLineColor: json['adxLineColor'] != null
-          ? colorFromJson(json['adxLineColor'])
-          : Colors.blue,
-      diPlusColor: json['diPlusColor'] != null
-          ? colorFromJson(json['diPlusColor'])
-          : Colors.green,
-      diMinusColor: json['diMinusColor'] != null
-          ? colorFromJson(json['diMinusColor'])
-          : Colors.red,
-    );
-  }
+factory Adx.fromJson(Map<String, dynamic> json) {
+  return Adx._(
+    id: json['id'],
+    type: IndicatorType.adx,
+    displayMode: DisplayMode.panel,
+    period: json['period'] ?? 14,
+    adxLineColor: json['adxLineColor'] != null
+        ? colorFromJson(json['adxLineColor'])
+        : Colors.purple,
+    diPlusColor: json['diPlusColor'] != null
+        ? colorFromJson(json['diPlusColor'])
+        : Colors.green,
+    diMinusColor: json['diMinusColor'] != null
+        ? colorFromJson(json['diMinusColor'])
+        : Colors.red,
+    showDiPlus: json['showDiPlus'] ?? true,
+    showDiMinus: json['showDiMinus'] ?? true,
+  );
+}
 }
