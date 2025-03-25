@@ -14,3 +14,4 @@ export 'package:fin_chart/models/indicators/sma.dart';
 export 'package:fin_chart/models/indicators/ema.dart';
 export 'package:fin_chart/models/indicators/bollinger_bands.dart';
 export 'package:fin_chart/models/layers/parallel_channel.dart';
+export 'package:fin_chart/models/indicators/adx.dart';
