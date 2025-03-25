@@ -148,4 +148,16 @@ mixin RegionProp {
 
     return expandedRect.contains(point);
   }
+
+  bool isPointInsideArea(Offset topLeft, Offset topRight, Offset bottomRight,
+      Offset bottomLeft, Offset point) {
+    final channelPath = Path();
+    channelPath.moveTo(toX(topLeft.dx), toY(topLeft.dy));
+    channelPath.lineTo(toX(topRight.dx), toY(topRight.dy));
+    channelPath.lineTo(toX(bottomRight.dx), toY(bottomRight.dy));
+    channelPath.lineTo(toX(bottomLeft.dx), toY(bottomLeft.dy));
+    channelPath.close();
+
+    return channelPath.contains(point);
+  }
 }

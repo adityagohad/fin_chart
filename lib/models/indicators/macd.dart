@@ -1,67 +1,61 @@
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/macd_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-class MACDPlotRegion extends PlotRegion {
-  List<ICandle> candles;
-  late List<double> macdValues;
-  late List<double> signalValues;
-  late List<double> histogramValues;
+class Macd extends Indicator {
+  Color macdLineColor = Colors.blue;
+  Color signalLineColor = Colors.red;
+  Color posHistogramColor = Colors.green;
+  Color negHistogramColor = Colors.red;
 
-  final int fastPeriod; // typically 12
-  final int slowPeriod; // typically 26
-  final int signalPeriod; // typically 9
+  int fastPeriod = 12;
+  int slowPeriod = 26;
+  int signalPeriod = 9;
 
-  MACDPlotRegion({
-    required this.candles,
+  final List<double> macdValues = [];
+  final List<double> signalValues = [];
+  final List<double> histogramValues = [];
+  final List<ICandle> candles = [];
+
+  Macd({
     this.fastPeriod = 12,
     this.slowPeriod = 26,
     this.signalPeriod = 9,
-    super.type = PlotRegionType.indicator,
-    required super.yAxisSettings,
+    Color macdLineColor = Colors.blue,
+    Color signalLineColor = Colors.red,
+    Color posHistogramColor = Colors.green,
+    Color negHistogramColor = Colors.red,
+  }) : super(
+            id: generateV4(),
+            type: IndicatorType.macd,
+            displayMode: DisplayMode.panel);
+
+  Macd._({
     required super.id,
-  }) {
-    macdValues = [];
-    signalValues = [];
-    histogramValues = [];
-  }
+    required super.type,
+    required super.displayMode,
+    this.fastPeriod = 12,
+    this.slowPeriod = 26,
+    this.signalPeriod = 9,
+    this.macdLineColor = Colors.blue,
+    this.signalLineColor = Colors.red,
+    this.posHistogramColor = Colors.green,
+    this.negHistogramColor = Colors.red,
+  });
 
   @override
-  void drawBaseLayer(Canvas canvas) {
+  drawIndicator({required Canvas canvas}) {
     if (candles.isEmpty || macdValues.isEmpty) return;
 
-    final Paint macdPaint = Paint()
-      ..color = Colors.blue
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    final Paint signalPaint = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    final Paint posHistogramPaint = Paint()
-      ..color = Colors.green
-      ..strokeWidth = 1
-      ..style = PaintingStyle.fill;
-
-    final Paint negHistogramPaint = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 1
-      ..style = PaintingStyle.fill;
-
     // Draw MACD and signal lines
-    _drawLine(canvas, macdValues, macdPaint);
-    _drawLine(canvas, signalValues, signalPaint);
+    _drawLine(canvas, macdValues, macdLineColor);
+    _drawLine(canvas, signalValues, signalLineColor);
 
     // Draw histogram
-    _drawHistogram(
-        canvas, histogramValues, posHistogramPaint, negHistogramPaint);
+    _drawHistogram(canvas, histogramValues);
 
     // Draw the zero line
     canvas.drawLine(
@@ -74,8 +68,13 @@ class MACDPlotRegion extends PlotRegion {
     );
   }
 
-  void _drawLine(Canvas canvas, List<double> values, Paint paint) {
+  void _drawLine(Canvas canvas, List<double> values, Color color) {
     if (values.isEmpty) return;
+
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
 
     final path = Path();
 
@@ -95,8 +94,7 @@ class MACDPlotRegion extends PlotRegion {
     canvas.drawPath(path, paint);
   }
 
-  void _drawHistogram(
-      Canvas canvas, List<double> values, Paint posPaint, Paint negPaint) {
+  void _drawHistogram(Canvas canvas, List<double> values) {
     if (values.isEmpty) return;
 
     final histWidth = xStepWidth * 0.4;
@@ -116,27 +114,19 @@ class MACDPlotRegion extends PlotRegion {
       canvas.drawRect(
           Rect.fromPoints(
               Offset(x - histWidth, zero), Offset(x + histWidth, y)),
-          values[i] > 0 ? posPaint : negPaint);
+          Paint()
+            ..color = values[i] > 0 ? posHistogramColor : negHistogramColor
+            ..style = PaintingStyle.fill);
     }
   }
 
   @override
-  void updateData(List<ICandle> data) {
+  updateData(List<ICandle> data) {
     if (data.isEmpty) return;
 
-    // If our candles list is empty, initialize it
-    if (candles.isEmpty) {
-      candles.addAll(data);
-    } else {
-      // Find where to start adding new data
-      int existingCount = candles.length;
+    candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
 
-      // Only add candles that come after our existing ones
-      if (existingCount < data.length) {
-        candles.addAll(data.sublist(existingCount));
-      }
-    }
-
+    // Calculate indicators and find min/max for y-axis values
     _calculateIndicators();
 
     // Determine min and max values for y-axis
@@ -157,8 +147,14 @@ class MACDPlotRegion extends PlotRegion {
 
     // Add a bit of padding
     double range = maxValue - minValue;
-    minValue -= range * 0.1;
-    maxValue += range * 0.1;
+    if (range > 0) {
+      minValue -= range * 0.1;
+      maxValue += range * 0.1;
+    } else {
+      // Provide default values if range is zero
+      minValue = -1;
+      maxValue = 1;
+    }
 
     // Ensure zero is included in the range
     if (minValue > 0) minValue = 0;
@@ -168,21 +164,19 @@ class MACDPlotRegion extends PlotRegion {
     yMaxValue = maxValue;
 
     yValues = generateNiceAxisValues(yMinValue, yMaxValue);
-
     yMinValue = yValues.first;
     yMaxValue = yValues.last;
-
     yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+        yValues.map((v) => v.toString()).toList(),
+        const TextStyle(color: Colors.black, fontSize: 12));
   }
 
   void _calculateIndicators() {
-    if (candles.isEmpty) {
-      macdValues = [];
-      signalValues = [];
-      histogramValues = [];
-      return;
-    }
+    macdValues.clear();
+    signalValues.clear();
+    histogramValues.clear();
+
+    if (candles.isEmpty) return;
 
     // Calculate EMAs
     List<double> prices = candles.map((c) => c.close).toList();
@@ -190,16 +184,19 @@ class MACDPlotRegion extends PlotRegion {
     List<double> slowEMA = _calculateEMA(prices, slowPeriod);
 
     // Calculate MACD values
-    macdValues = List.filled(prices.length, 0);
+    macdValues.clear();
+    macdValues.addAll(List.filled(prices.length, 0));
     for (int i = slowPeriod - 1; i < prices.length; i++) {
       macdValues[i] = fastEMA[i] - slowEMA[i];
     }
 
     // Calculate signal line (EMA of MACD)
-    signalValues = _calculateEMA(macdValues, signalPeriod);
+    signalValues.clear();
+    signalValues.addAll(_calculateEMA(macdValues, signalPeriod));
 
     // Calculate histogram
-    histogramValues = List.filled(prices.length, 0);
+    histogramValues.clear();
+    histogramValues.addAll(List.filled(prices.length, 0));
     // Only calculate histogram where we have valid signal values
     int validStartIndex = slowPeriod + signalPeriod - 2;
     for (int i = validStartIndex; i < macdValues.length; i++) {
@@ -208,77 +205,78 @@ class MACDPlotRegion extends PlotRegion {
   }
 
   List<double> _calculateEMA(List<double> prices, int period) {
-    List<double> ema = List.filled(prices.length, 0);
+    List<double> emaValues = List.filled(prices.length, 0);
 
     // Initialize SMA for first EMA value
     if (prices.length >= period) {
+      // Same logic as before but use emaValues instead
       double sum = 0;
       for (int i = 0; i < period; i++) {
         sum += prices[i];
       }
-      ema[period - 1] = sum / period;
+      emaValues[period - 1] = sum / period;
 
       // Calculate multiplier: (2 / (period + 1))
       double multiplier = 2 / (period + 1);
 
       // Calculate EMA values
       for (int i = period; i < prices.length; i++) {
-        ema[i] = (prices[i] - ema[i - 1]) * multiplier + ema[i - 1];
+        emaValues[i] =
+            (prices[i] - emaValues[i - 1]) * multiplier + emaValues[i - 1];
       }
     }
 
-    return ema;
+    return emaValues;
   }
 
-  MACDPlotRegion.fromJson(Map<String, dynamic> json)
-      : candles = [],
-        fastPeriod = json['fastPeriod'] ?? 12,
-        slowPeriod = json['slowPeriod'] ?? 26,
-        signalPeriod = json['signalPeriod'] ?? 9,
-        super(
-          id: json['id'],
-          type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
-              orElse: () => PlotRegionType.indicator),
-          yAxisSettings: YAxisSettings(
-            yAxisPos: YAxisPos.values.firstWhere(
-                (pos) => pos.name == json['yAxisSettings']['yAxisPos'],
-                orElse: () => YAxisPos.right),
-            axisColor: colorFromJson(json['yAxisSettings']['axisColor']),
-            strokeWidth: json['yAxisSettings']['strokeWidth'] ?? 1.0,
-            axisTextStyle: TextStyle(
-              color: colorFromJson(json['yAxisSettings']['textStyle']['color']),
-              fontSize: json['yAxisSettings']['textStyle']['fontSize'] ?? 12.0,
-              fontWeight:
-                  json['yAxisSettings']['textStyle']['fontWeight'] == 'bold'
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-            ),
-          ),
-        ) {
-    macdValues = [];
-    signalValues = [];
-    histogramValues = [];
-
-    yMinValue = json['yMinValue'];
-    yMaxValue = json['yMaxValue'];
-
-    if (json['layers'] != null) {
-      for (var layerJson in json['layers']) {
-        Layer? layer = PlotRegion.layerFromJson(layerJson);
-        if (layer != null) {
-          layers.add(layer);
-        }
-      }
-    }
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => MacdSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override
   Map<String, dynamic> toJson() {
-    var json = super.toJson();
-    json['variety'] = 'MACD';
+    Map<String, dynamic> json = super.toJson();
     json['fastPeriod'] = fastPeriod;
     json['slowPeriod'] = slowPeriod;
     json['signalPeriod'] = signalPeriod;
+    json['macdLineColor'] = colorToJson(macdLineColor);
+    json['signalLineColor'] = colorToJson(signalLineColor);
+    json['posHistogramColor'] = colorToJson(posHistogramColor);
+    json['negHistogramColor'] = colorToJson(negHistogramColor);
     return json;
+  }
+
+  factory Macd.fromJson(Map<String, dynamic> json) {
+    return Macd._(
+      id: json['id'],
+      type: IndicatorType.macd,
+      displayMode: DisplayMode.panel,
+      fastPeriod: json['fastPeriod'] ?? 12,
+      slowPeriod: json['slowPeriod'] ?? 26,
+      signalPeriod: json['signalPeriod'] ?? 9,
+      macdLineColor: json['macdLineColor'] != null
+          ? colorFromJson(json['macdLineColor'])
+          : Colors.blue,
+      signalLineColor: json['signalLineColor'] != null
+          ? colorFromJson(json['signalLineColor'])
+          : Colors.red,
+      posHistogramColor: json['posHistogramColor'] != null
+          ? colorFromJson(json['posHistogramColor'])
+          : Colors.green,
+      negHistogramColor: json['negHistogramColor'] != null
+          ? colorFromJson(json['negHistogramColor'])
+          : Colors.red,
+    );
   }
 }

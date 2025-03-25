@@ -120,7 +120,8 @@ Color colorFromJson(String? hexString) {
   }
 }
 
-String colorToJson(Color color) {
+String? colorToJson(Color? color) {
+  if (color == null) return null;
   final hexAlpha = (color.a * 255).round().toRadixString(16).padLeft(2, '0');
   final hexRed = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
   final hexGreen = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
@@ -133,6 +134,17 @@ Offset offsetFromJson(Map<String, dynamic> json) {
   return Offset(
     (json['dx'] as num).toDouble(),
     (json['dy'] as num).toDouble(),
+  );
+}
+
+String? fontWeightToJson(FontWeight? weight) =>
+    weight?.toString().split('.').last;
+
+FontWeight? fontWeightFromJson(String? json) {
+  if (json == null) return null;
+  return FontWeight.values.firstWhere(
+    (e) => e.toString() == 'FontWeight.$json',
+    orElse: () => json == 'bold' ? FontWeight.bold : FontWeight.normal,
   );
 }
 

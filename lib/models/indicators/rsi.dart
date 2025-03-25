@@ -1,29 +1,36 @@
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/rsi_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 
-class RsiPlotRegion extends PlotRegion {
-  List<ICandle> candles;
-  Color lineColor = Colors.blue;
-  int period = 14;
-  final int rsiMaPeriod = 9;
-  final Color rsiMaColor = Colors.orange;
-  final List<double> rsiMaValues = [];
+class Rsi extends Indicator {
+  int rsiMaPeriod = 14;
+  int rsiPeriod = 14;
+  Color rsiColor = Colors.blue;
+  Color rsiMaColor = Colors.orange;
 
+  final List<double> rsiMaValues = [];
   final List<double> rsiValues = [];
-  RsiPlotRegion(
-      {required this.candles,
-      super.type = PlotRegionType.indicator,
-      required super.yAxisSettings,
-      required super.id});
+  final List<ICandle> candles = [];
+
+  Rsi()
+      : super(
+            id: generateV4(),
+            type: IndicatorType.rsi,
+            displayMode: DisplayMode.panel);
+
+  Rsi._({
+    required super.id,
+    this.rsiPeriod = 14,
+    this.rsiMaPeriod = 9,
+    this.rsiColor = Colors.blue,
+    this.rsiMaColor = Colors.orange,
+  }) : super(type: IndicatorType.rsi, displayMode: DisplayMode.panel);
 
   @override
-  void drawBaseLayer(Canvas canvas) {
-    if (rsiValues.isEmpty || candles.isEmpty) return;
+  drawIndicator({required Canvas canvas}) {
+    if (rsiValues.isEmpty) return;
 
     final path = Path();
 
@@ -48,7 +55,7 @@ class RsiPlotRegion extends PlotRegion {
     canvas.drawPath(
       path,
       Paint()
-        ..color = lineColor
+        ..color = rsiColor
         ..strokeWidth = 2
         ..style = PaintingStyle.stroke,
     );
@@ -220,12 +227,19 @@ class RsiPlotRegion extends PlotRegion {
   }
 
   @override
-  void updateData(List<ICandle> data) {
+  updateData(List<ICandle> data) {
     candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
 
     rsiValues.clear();
 
-    if (candles.length <= period) {
+    if (data.length <= rsiPeriod) {
+      yMaxValue = 100;
+      yMinValue = 0;
+
+      yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
       return;
     }
 
@@ -233,15 +247,15 @@ class RsiPlotRegion extends PlotRegion {
     List<double> losses = [];
 
     // Calculate initial gains and losses
-    for (int i = 1; i <= period; i++) {
-      double change = candles[i].close - candles[i - 1].close;
+    for (int i = 1; i <= rsiPeriod; i++) {
+      double change = data[i].close - data[i - 1].close;
       gains.add(change > 0 ? change : 0);
       losses.add(change < 0 ? -change : 0);
     }
 
     // Calculate first RSI value
-    double avgGain = gains.reduce((a, b) => a + b) / period;
-    double avgLoss = losses.reduce((a, b) => a + b) / period;
+    double avgGain = gains.reduce((a, b) => a + b) / rsiPeriod;
+    double avgLoss = losses.reduce((a, b) => a + b) / rsiPeriod;
 
     // Add first RSI value
     if (avgLoss == 0) {
@@ -252,14 +266,14 @@ class RsiPlotRegion extends PlotRegion {
     }
 
     // Calculate remaining RSI values
-    for (int i = period + 1; i < candles.length; i++) {
-      double change = candles[i].close - candles[i - 1].close;
+    for (int i = rsiPeriod + 1; i < data.length; i++) {
+      double change = data[i].close - data[i - 1].close;
       double currentGain = change > 0 ? change : 0;
       double currentLoss = change < 0 ? -change : 0;
 
       // Smooth averages
-      avgGain = ((avgGain * (period - 1)) + currentGain) / period;
-      avgLoss = ((avgLoss * (period - 1)) + currentLoss) / period;
+      avgGain = ((avgGain * (rsiPeriod - 1)) + currentGain) / rsiPeriod;
+      avgLoss = ((avgLoss * (rsiPeriod - 1)) + currentLoss) / rsiPeriod;
 
       if (avgLoss == 0) {
         rsiValues.add(100);
@@ -295,53 +309,46 @@ class RsiPlotRegion extends PlotRegion {
     yMinValue = yValues.first;
     yMaxValue = yValues.last;
 
-    yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+    // yLabelSize = getLargetRnderBoxSizeForList(
+    //     yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
   }
 
-  RsiPlotRegion.fromJson(Map<String, dynamic> json)
-      : candles = [],
-        lineColor = colorFromJson(json['lineColor'] ?? '#FF0000FF'),
-        period = json['period'] ?? 14,
-        super(
-          id: json['id'],
-          type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
-              orElse: () => PlotRegionType.indicator),
-          yAxisSettings: YAxisSettings(
-            yAxisPos: YAxisPos.values.firstWhere(
-                (pos) => pos.name == json['yAxisSettings']['yAxisPos'],
-                orElse: () => YAxisPos.right),
-            axisColor: colorFromJson(json['yAxisSettings']['axisColor']),
-            strokeWidth: json['yAxisSettings']['strokeWidth'] ?? 1.0,
-            axisTextStyle: TextStyle(
-              color: colorFromJson(json['yAxisSettings']['textStyle']['color']),
-              fontSize: json['yAxisSettings']['textStyle']['fontSize'] ?? 12.0,
-              fontWeight:
-                  json['yAxisSettings']['textStyle']['fontWeight'] == 'bold'
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-            ),
-          ),
-        ) {
-    yMinValue = json['yMinValue'];
-    yMaxValue = json['yMaxValue'];
-
-    if (json['layers'] != null) {
-      for (var layerJson in json['layers']) {
-        Layer? layer = PlotRegion.layerFromJson(layerJson);
-        if (layer != null) {
-          layers.add(layer);
-        }
-      }
-    }
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => RsiSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override
   Map<String, dynamic> toJson() {
-    var json = super.toJson();
-    json['variety'] = 'RSI';
-    json['lineColor'] = colorToJson(lineColor);
-    json['period'] = period;
+    Map<String, dynamic> json = super.toJson();
+    json['rsiPeriod'] = rsiPeriod;
+    json['rsiMaPeriod'] = rsiMaPeriod;
+    json['rsiColor'] = colorToJson(rsiColor);
+    json['rsiMaColor'] = colorToJson(rsiMaColor);
     return json;
+  }
+
+  factory Rsi.fromJson(Map<String, dynamic> json) {
+    return Rsi._(
+      id: json['id'],
+      rsiPeriod: json['rsiPeriod'] ?? 14,
+      rsiMaPeriod: json['rsiMaPeriod'] ?? 9,
+      rsiColor: json['rsiColor'] != null
+          ? colorFromJson(json['rsiColor'])
+          : Colors.blue,
+      rsiMaColor: json['rsiMaColor'] != null
+          ? colorFromJson(json['rsiMaColor'])
+          : Colors.orange,
+    );
   }
 }

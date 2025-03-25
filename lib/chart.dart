@@ -1,16 +1,15 @@
 import 'package:fin_chart/chart_painter.dart';
+import 'package:fin_chart/fin_chart.dart';
+import 'package:fin_chart/models/chart_settings.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
-import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/region/dummy_plot_region.dart';
-import 'package:fin_chart/models/region/macd_plot_region.dart';
+import 'package:fin_chart/models/recipe.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
+import 'package:fin_chart/models/region/panel_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/region/rsi_plot_region.dart';
-import 'package:fin_chart/models/region/stochastic_plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -22,18 +21,46 @@ class Chart extends StatefulWidget {
   final YAxisSettings? yAxisSettings;
   final XAxisSettings? xAxisSettings;
   final List<ICandle> candles;
-  final List<PlotRegion> regions;
-  final Function(Offset, Offset) onInteraction;
+  final Function(Offset, Offset)? onInteraction;
+  final Function(PlotRegion region, Layer layer)? onLayerSelect;
+  final Function(PlotRegion region)? onRegionSelect;
+  final Function(Indicator indicator)? onIndicatorSelect;
+  final Recipe? recipe;
 
   const Chart(
       {super.key,
+      required this.candles,
       this.padding = const EdgeInsets.all(8),
       this.dataFit = DataFit.adaptiveWidth,
-      required this.candles,
-      required this.regions,
-      required this.onInteraction,
+      this.onInteraction,
+      this.onLayerSelect,
+      this.onRegionSelect,
+      this.onIndicatorSelect,
       this.yAxisSettings = const YAxisSettings(),
-      this.xAxisSettings = const XAxisSettings()});
+      this.xAxisSettings = const XAxisSettings(),
+      this.recipe});
+
+  factory Chart.from(
+      {required GlobalKey key,
+      required Recipe recipe,
+      Function(Offset, Offset)? onInteraction,
+      Function(PlotRegion region, Layer layer)? onLayerSelect,
+      final Function(PlotRegion region)? onRegionSelect,
+      final Function(Indicator indicator)? onIndicatorSelect}) {
+    return Chart(
+      key: key,
+      candles: recipe.data,
+      padding: const EdgeInsets.all(8),
+      dataFit: recipe.chartSettings.dataFit,
+      onInteraction: onInteraction,
+      onLayerSelect: onLayerSelect,
+      onRegionSelect: onRegionSelect,
+      onIndicatorSelect: onIndicatorSelect,
+      yAxisSettings: recipe.chartSettings.yAxisSettings,
+      xAxisSettings: recipe.chartSettings.xAxisSettings,
+      recipe: recipe,
+    );
+  }
 
   @override
   State<Chart> createState() => ChartState();
@@ -73,15 +100,43 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   List<ICandle> currentData = [];
   List<PlotRegion> selectedRegionForResize = [];
   PlotRegion? selectedRegion;
+  Indicator? selectedIndicator;
 
-  bool isInit = false;
+  bool isInit = true;
+
+  Offset layerToolBoxOffset = Offset.zero;
 
   @override
   void initState() {
-    currentData.addAll(widget.candles);
-    regions.addAll(widget.regions);
-    xStepWidth = candleWidth;
+    super.initState();
+    if (widget.recipe != null) {
+      _initializeFromFactory();
+    } else {
+      _initializeDefault();
+    }
+    _initializeControllers();
+  }
 
+  void _initializeDefault() {
+    currentData.addAll(widget.candles);
+    regions.add(MainPlotRegion(
+      candles: currentData,
+      yAxisSettings: widget.yAxisSettings!,
+    ));
+  }
+
+  void _initializeFromFactory() {
+    Recipe recipe = widget.recipe!;
+
+    regions.add(MainPlotRegion(
+      id: recipe.chartSettings.mainPlotRegionId,
+      candles: currentData,
+      yAxisSettings: widget.yAxisSettings!,
+    ));
+  }
+
+  void _initializeControllers() {
+    xStepWidth = candleWidth * 2;
     _swipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -98,8 +153,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       parent: _controller,
       curve: Curves.bounceOut,
     );
-
-    super.initState();
   }
 
   @override
@@ -109,38 +162,84 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void addRegion(PlotRegion region) {
+  void addIndicator(Indicator indicator) {
     setState(() {
-      double addRegionWeight = 1 / (regions.length + 1);
-      double multiplier = 1 - addRegionWeight;
+      if (indicator.displayMode == DisplayMode.panel) {
+        PanelPlotRegion region = PanelPlotRegion(
+            indicator: indicator, yAxisSettings: widget.yAxisSettings!);
 
-      _updateRegionBounds(multiplier);
+        double addRegionWeight = 1 / (regions.length + 1);
+        double multiplier = 1 - addRegionWeight;
 
-      region.updateData(currentData);
-      region.updateRegionProp(
-          leftPos: leftPos,
-          topPos: topPos + (bottomPos - topPos) * multiplier,
-          rightPos: rightPos,
-          bottomPos: bottomPos,
-          xStepWidth: xStepWidth,
-          xOffset: xOffset,
-          yMinValue: region.yMinValue,
-          yMaxValue: region.yMaxValue);
+        _updateRegionBounds(multiplier);
 
-      regions.add(region);
+        region.updateData(currentData);
+
+        region.updateRegionProp(
+            leftPos: leftPos,
+            topPos: topPos + (bottomPos - topPos) * multiplier,
+            rightPos: rightPos,
+            bottomPos: bottomPos,
+            xStepWidth: xStepWidth,
+            xOffset: xOffset,
+            yMinValue: indicator.yMinValue,
+            yMaxValue: indicator.yMaxValue);
+
+        regions.add(region);
+      } else if (indicator.displayMode == DisplayMode.main) {
+        for (PlotRegion region in regions) {
+          if (region is MainPlotRegion) {
+            indicator.updateData(currentData);
+            region.indicators.add(indicator);
+          }
+        }
+      }
+    });
+  }
+
+  void removeIndicator(Indicator indicator) {
+    setState(() {
+      if (indicator.displayMode == DisplayMode.panel) {
+        regions.removeWhere((region) =>
+            region is PanelPlotRegion && (region).indicator == indicator);
+
+        double multiplier = 1 +
+            ((indicator.bottomPos - indicator.topPos) /
+                (indicator.topPos - topPos + bottomPos - indicator.bottomPos));
+        _updateRegionBounds(multiplier);
+      } else if (indicator.displayMode == DisplayMode.main) {
+        for (PlotRegion region in regions) {
+          if (region is MainPlotRegion) {
+            region.indicators.removeWhere((i) => i == indicator);
+          }
+        }
+      }
+      selectedIndicator = null;
     });
   }
 
   void updateLayerGettingAddedState(LayerType layerType) {
     setState(() {
       isLayerGettingAdded = true;
+      selectedLayer?.isSelected = false;
+      selectedLayer = null;
     });
   }
 
-  void addLayer(Layer layer) {
+  void addLayerUsingTool(Layer layer) {
     setState(() {
       selectedLayer = layer;
       selectedRegion?.addLayer(layer);
+      isLayerGettingAdded = false;
+    });
+  }
+
+  void addLayerAtRegion(String regionId, Layer layer) {
+    setState(() {
+      regions
+          .firstWhere((region) => region.id == regionId,
+              orElse: () => regions[0])
+          .addLayer(layer);
       isLayerGettingAdded = false;
     });
   }
@@ -154,12 +253,23 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
+  void removeLayerById(String layerId) {
+    setState(() {
+      for (PlotRegion region in regions) {
+        region.layers.removeWhere((layer) => layer.id == layerId);
+      }
+      selectedLayer = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: widget.padding,
         child: LayoutBuilder(builder: (context, constraints) {
-          _recalculate(constraints, regions);
+          if (constraints.maxHeight != 0) {
+            _recalculate(constraints);
+          }
           return Stack(
             children: [
               SizedBox(
@@ -190,20 +300,66 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                   ),
                 ),
               ),
+              ...regions.map((region) => region.renderIndicatorToolTip(
+                  selectedIndicator: selectedIndicator,
+                  onClick: (indicator) {
+                    widget.onIndicatorSelect?.call(indicator);
+                    setState(() {
+                      selectedIndicator = indicator;
+                    });
+                  },
+                  onSettings: () {
+                    selectedIndicator?.showIndicatorSettings(
+                        context: context,
+                        onUpdate: (indicator) {
+                          setState(() {
+                            selectedIndicator = indicator;
+                          });
+                        });
+                  },
+                  onDelete: () {
+                    removeIndicator(selectedIndicator!);
+                  })),
               selectedLayer == null
                   ? Container()
                   : Positioned(
-                      top: 8,
-                      right: 8,
-                      child: IconButton(
-                          icon: const Icon(Icons.settings, color: Colors.blue),
-                          onPressed: () {
-                            selectedLayer?.showSettingsDialog(context, (layer) {
-                              setState(() {
-                                selectedLayer = layer;
-                              });
-                            });
-                          }),
+                      left: layerToolBoxOffset.dx,
+                      top: layerToolBoxOffset.dy,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          setState(() {
+                            layerToolBoxOffset += details.delta;
+                          });
+                        },
+                        child: selectedLayer?.layerToolTip(
+                                child: Text(selectedLayer?.type.name ?? ""),
+                                onSettings: () {
+                                  selectedLayer?.showSettingsDialog(context,
+                                      (layer) {
+                                    setState(() {
+                                      selectedLayer = layer;
+                                    });
+                                  });
+                                },
+                                onLockUpdate: () {
+                                  setState(() {
+                                    if (selectedLayer!.isLocked) {
+                                      selectedLayer?.isLocked = false;
+                                    } else {
+                                      selectedLayer?.isLocked = true;
+                                      selectedLayer?.isSelected = false;
+                                      selectedLayer = null;
+                                    }
+                                  });
+                                },
+                                onDelete: () {
+                                  setState(() {
+                                    removeLayerById(selectedLayer!.id);
+                                    selectedLayer == null;
+                                  });
+                                }) ??
+                            Container(),
+                      ),
                     ),
             ],
           );
@@ -246,6 +402,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       double height = totalHeight *
           (regions[i].bottomPos - regions[i].topPos) /
           (bottomPos - topPos);
+
       regions[i].updateRegionProp(
           leftPos: leftPos,
           topPos: tempTopPos,
@@ -259,7 +416,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     }
   }
 
-  _recalculate(BoxConstraints constraints, List<PlotRegion> regions) {
+  _recalculate(BoxConstraints constraints) {
     for (PlotRegion region in regions) {
       if (region.yLabelSize.width > yLabelWidth) {
         yLabelWidth = region.yLabelSize.width;
@@ -286,13 +443,17 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
 
-    if (regions.isEmpty) {
-      regions.add(MainPlotRegion(
-        id: generateV4(),
-        candles: [],
-        yAxisSettings: widget.yAxisSettings!,
-      ));
+    switch (widget.dataFit) {
+      case DataFit.fixedWidth:
+        xStepWidth =
+            ((rightPos - leftPos) / currentData.length) * horizontalScale;
+        break;
+      case DataFit.adaptiveWidth:
+        xStepWidth = candleWidth * 2 * horizontalScale;
+        break;
+    }
 
+    if (isInit) {
       regions[0].updateRegionProp(
           leftPos: leftPos,
           topPos: topPos,
@@ -303,6 +464,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           yMinValue: regions[0].yMinValue,
           yMaxValue: regions[0].yMaxValue);
     }
+
+    isInit = false;
 
     _updateRegionBounds(1);
   }
@@ -322,30 +485,52 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       horizontalScale = 1;
       previousHorizontalScale = 1;
-      xStepWidth = candleWidth;
+      //xStepWidth = candleWidth * 2;
       xOffset = 0;
       _isAnimating = false;
       _swipeVelocity = 0;
+      layerToolBoxOffset = Offset.zero;
     });
   }
 
   _onTapDown(TapDownDetails details) {
     setState(() {
-      if (isLayerGettingAdded) {
-        _handleTapDownWhenLayerToAdd(details);
-      } else {
-        selectedLayer = null;
-        for (PlotRegion region in regions) {
-          if (selectedRegionForResize.length < 2) {
-            if (region.isRegionReadyForResize(details.localPosition) != null) {
-              selectedRegionForResize.add(region);
-            }
+      selectedIndicator = null;
+      for (PlotRegion region in regions) {
+        if (selectedRegionForResize.length < 2) {
+          if (region.isRegionReadyForResize(details.localPosition) != null) {
+            selectedRegionForResize.add(region);
           }
-          for (Layer layer in region.layers) {
-            if (selectedLayer == null) {
-              selectedLayer = layer.onTapDown(details: details);
-            } else {
-              layer.onTapDown(details: details);
+        }
+      }
+
+      if (selectedRegionForResize.length == 2) {
+        selectedLayer?.isSelected = false;
+        selectedLayer = null;
+        return;
+      }
+
+      selectedLayer = null;
+      selectedRegion = null;
+      for (PlotRegion region in regions) {
+        selectedRegion ??= region.regionSelect(details.localPosition);
+
+        if (selectedRegion != null) {
+          widget.onRegionSelect?.call(selectedRegion!);
+          if (isLayerGettingAdded) {
+            widget.onInteraction?.call(
+                selectedRegion!.getRealCoordinates(details.localPosition),
+                details.localPosition);
+          } else {
+            for (Layer layer in region.layers) {
+              if (selectedLayer == null) {
+                selectedLayer = layer.onTapDown(details: details);
+                if (selectedLayer != null && selectedRegion != null) {
+                  widget.onLayerSelect?.call(selectedRegion!, selectedLayer!);
+                }
+              } else {
+                layer.isSelected = false;
+              }
             }
           }
         }
@@ -375,7 +560,9 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     setState(() {
       if (details.pointerCount == 1) {
         if (isLayerGettingAdded && selectedRegion != null) {
-          _handleDragWhenLayerToAdd(details);
+          widget.onInteraction?.call(
+              selectedRegion!.getRealCoordinates(details.localFocalPoint),
+              details.localFocalPoint);
         } else if (selectedLayer == null) {
           if (selectedRegionForResize.length == 2) {
             selectedRegionForResize[0].updateRegionProp(
@@ -410,7 +597,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       }
       if (details.pointerCount == 2) {
         final newScale =
-            (previousHorizontalScale * details.scale).clamp(0.5, 5.0);
+            (previousHorizontalScale * details.scale).clamp(0.0, 150.0);
         if (lastFocalPoint != null) {
           final focalPointRatio = lastFocalPoint!.dx / constraints.maxWidth;
           final scaleDiff = newScale - horizontalScale;
@@ -428,96 +615,13 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
-  _handleTapDownWhenLayerToAdd(TapDownDetails details) {
-    for (PlotRegion region in regions) {
-      selectedRegion = region.regionSelect(details.localPosition);
-      if (selectedRegion != null) {
-        widget.onInteraction(
-            selectedRegion!.getRealCoordinates(details.localPosition),
-            details.localPosition);
-        break;
-      }
-    }
-  }
-
-  _handleDragWhenLayerToAdd(ScaleUpdateDetails details) {
-    widget.onInteraction(
-        selectedRegion!.getRealCoordinates(details.localFocalPoint),
-        details.localFocalPoint);
-  }
-
   /// Convert chart state to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'yAxisSettings': {
-        'yAxisPos': widget.yAxisSettings!.yAxisPos.name,
-        'axisColor': colorToJson(widget.yAxisSettings!.axisColor),
-        'strokeWidth': widget.yAxisSettings!.strokeWidth,
-        'textStyle': {
-          'color': colorToJson(
-              widget.yAxisSettings!.axisTextStyle.color ?? Colors.black),
-          'fontSize': widget.yAxisSettings!.axisTextStyle.fontSize,
-          'fontWeight':
-              widget.yAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold
-                  ? 'bold'
-                  : 'normal',
-        },
-      },
-      'xAxisSettings': {
-        'xAxisPos': widget.xAxisSettings!.xAxisPos.name,
-        'axisColor': colorToJson(widget.xAxisSettings!.axisColor),
-        'strokeWidth': widget.xAxisSettings!.strokeWidth,
-        'textStyle': {
-          'color': colorToJson(
-              widget.xAxisSettings!.axisTextStyle.color ?? Colors.black),
-          'fontSize': widget.xAxisSettings!.axisTextStyle.fontSize,
-          'fontWeight':
-              widget.xAxisSettings!.axisTextStyle.fontWeight == FontWeight.bold
-                  ? 'bold'
-                  : 'normal',
-        },
-      },
-      'regions': regions.map((region) => region.toJson()).toList(),
-      'dataFit': widget.dataFit.name,
-    };
-  }
-
-  /// Create regions from JSON data
-  void loadFromJson(Map<String, dynamic> json) {
-    setState(() {
-      if (json['regions'] != null) {
-        regions.clear();
-
-        for (var regionJson in json['regions']) {
-          String? type = regionJson['type'];
-          if (type != null) {
-            PlotRegion? region;
-
-            switch (type) {
-              case 'data':
-                region = MainPlotRegion.fromJson(regionJson);
-                break;
-              case 'indicator':
-                // Determine which indicator type based on properties
-                if (regionJson.containsKey('period') &&
-                    !regionJson.containsKey('fastPeriod')) {
-                  region = RsiPlotRegion.fromJson(regionJson);
-                } else if (regionJson.containsKey('fastPeriod')) {
-                  region = MACDPlotRegion.fromJson(regionJson);
-                } else if (regionJson.containsKey('kPeriod')) {
-                  region = StochasticPlotRegion.fromJson(regionJson);
-                } else {
-                  region = DummyPlotRegion.fromJson(regionJson);
-                }
-                break;
-            }
-
-            if (region != null) {
-              regions.add(region);
-            }
-          }
-        }
-      }
-    });
+  ChartSettings getChartSettings() {
+    return ChartSettings(
+        dataFit: widget.dataFit,
+        yAxisSettings: widget.yAxisSettings!,
+        xAxisSettings: widget.xAxisSettings!,
+        mainPlotRegionId:
+            regions.firstWhere((region) => region is MainPlotRegion).id);
   }
 }

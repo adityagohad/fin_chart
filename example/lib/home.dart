@@ -1,28 +1,7 @@
-import 'package:example/dialog/add_data_dialog.dart';
-import 'package:example/widget/layer_type_dropdown.dart';
-import 'package:fin_chart/chart.dart';
-import 'package:fin_chart/models/enums/layer_type.dart';
-import 'package:fin_chart/models/layers/circular_area.dart';
-import 'package:fin_chart/models/layers/horizontal_band.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
-import 'package:fin_chart/models/layers/label.dart';
-import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/layers/rect_area.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
-import 'package:fin_chart/models/region/dummy_plot_region.dart';
-import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/region/rsi_plot_region.dart';
-import 'package:fin_chart/models/settings/x_axis_settings.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
-import 'package:fin_chart/ui/region_dialog.dart';
-import 'package:fin_chart/utils/calculations.dart';
+import 'dart:convert';
+
+import 'package:example/editor/ui/pages/editor_page.dart';
 import 'package:flutter/material.dart';
-import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/region/macd_plot_region.dart';
-import 'package:fin_chart/models/region/stochastic_plot_region.dart';
-import 'package:fin_chart/models/enums/plot_region_type.dart';
-import 'package:fin_chart/models/region/main_plot_region.dart';
-import 'package:fin_chart/models/layers/arrow.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -32,228 +11,110 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final GlobalKey<ChartState> _chartKey = GlobalKey();
-  List<ICandle> candleData = [];
-  List<PlotRegion> regions = [
-    // PlotRegion(
-    //     type: PlotRegionType.indicator,
-    //     yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
-    //     yMinValue: -100,
-    //     yMaxValue: 100,
-    //     layers: [
-    //       LineData(candles: []),
-    //       HorizontalLine(value: 3500),
-    //     ])
-  ];
-  LayerType? _selectedType;
-  // LayerType? layerToAdd;
-  List<Offset> drawPoints = [];
-  Offset startingPoint = Offset.zero;
+  final TextEditingController _textController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  // Function to clear the text field
+  void _clearTextField() {
+    setState(() {
+      _textController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("Finance Charts"),
-      ),
-      body: SafeArea(
-          child: Column(
-        children: [
-          Flexible(
-              flex: 1,
-              child: Container(
-                  // padding: EdgeInsets.all(10),
-                  // child: Container(
-                  //   padding: EdgeInsets.all(10),
-                  //   width: double.infinity,
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey,
-                  //     borderRadius: BorderRadius.all(Radius.circular(10)),
-                  //   ),
-                  //   child: Text("hey my instruction goes here"),
-                  // ),
-                  )),
-          Flexible(
-            flex: 9,
-            child: Chart(
-              key: _chartKey,
-              yAxisSettings: const YAxisSettings(yAxisPos: YAxisPos.right),
-              xAxisSettings: const XAxisSettings(xAxisPos: XAxisPos.bottom),
-              candles: candleData,
-              regions: regions,
-              onInteraction: (p0, p1) {
-                if (_selectedType != null) {
-                  drawPoints.add(p0);
-                  startingPoint = p1;
-                  Layer? layer;
-                  switch (_selectedType) {
-                    case LayerType.label:
-                      layer = Label.fromTool(
-                          pos: drawPoints.first,
-                          label: "Text is long\nand has line breaks",
-                          textStyle: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold));
-                      break;
-                    case LayerType.trendLine:
-                      if (drawPoints.length >= 2) {
-                        layer = TrendLine.fromTool(
-                            from: drawPoints.first,
-                            to: drawPoints.last,
-                            startPoint: startingPoint);
-                      } else {
-                        layer = null;
-                      }
-                      break;
-                    case LayerType.horizontalLine:
-                      layer =
-                          HorizontalLine.fromTool(value: drawPoints.first.dy);
-                      break;
-                    case LayerType.horizontalBand:
-                      layer = HorizontalBand.fromTool(
-                          value: drawPoints.first.dy, allowedError: 70);
-                      break;
-                    case LayerType.rectArea:
-                      layer = RectArea.fromTool(
-                          topLeft: drawPoints.first,
-                          bottomRight: drawPoints.last,
-                          startPoint: startingPoint);
-                      break;
-                    case LayerType.circularArea:
-                      layer = CircularArea.fromTool(point: drawPoints.first);
-                      break;
-                    case LayerType.arrow:
-                      layer = Arrow.fromTool(
-                          from: drawPoints.first,
-                          to: drawPoints.last,
-                          startPoint: startingPoint);
-                      break;
-                    case null:
-                      layer = null;
-                      break;
-                  }
-                  setState(() {
-                    if (layer != null) {
-                      _selectedType = null;
-                      drawPoints.clear();
-                      _chartKey.currentState?.addLayer(layer);
-                    }
-                  });
-                }
-              },
+        appBar: AppBar(),
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.topRight,
+                    children: [
+                      TextField(
+                        controller: _textController,
+                        maxLines: 10,
+                        decoration: const InputDecoration(
+                          hintText: "Enter your text here...",
+                          contentPadding: EdgeInsets.only(
+                              right: 40.0, left: 12.0, top: 12.0, bottom: 12.0),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: _clearTextField,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Button to go to editor with input text
+                MaterialButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => EditorPage(
+                            recipeStr: _textController.text.isNotEmpty
+                                ? _textController.text
+                                : null)));
+                  },
+                  color: Theme.of(context)
+                      .buttonTheme
+                      .colorScheme
+                      ?.primaryContainer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 12.0),
+                  elevation: 2.0,
+                  child: const Text(
+                    "Go to Editor with Input Text",
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+                MaterialButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const EditorPage()));
+                  },
+                  color: Theme.of(context)
+                      .buttonTheme
+                      .colorScheme
+                      ?.primaryContainer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 12.0),
+                  elevation: 2.0,
+                  child: const Text(
+                    "Go to Editor",
+                  ),
+                ),
+                const SizedBox(
+                  height: 40,
+                ),
+              ],
             ),
           ),
-          Flexible(
-              flex: 1,
-              child: SingleChildScrollView(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    // ElevatedButton(
-                    //     onPressed: _showAddDataDialog,
-                    //     child: const Text("Action")),
-                    ElevatedButton(
-                        onPressed: _showAddDataDialog,
-                        // onPressed: () {
-                        //   _chartKey.currentState?.addLayerFromJson();
-                        // },
-                        child: const Text("Add Data")),
-                    ElevatedButton(
-                      onPressed: () {
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return RegionDialog(
-                                onSubmit: (type, variety, yMin, yMax) {
-                                  if (type == PlotRegionType.indicator) {
-                                    if (variety == 'RSI') {
-                                      _chartKey.currentState
-                                          ?.addRegion(RsiPlotRegion(
-                                        id: generateV4(),
-                                        type: type,
-                                        yAxisSettings: const YAxisSettings(
-                                            yAxisPos: YAxisPos.right),
-                                        candles: [],
-                                      ));
-                                    } else if (variety == 'MACD') {
-                                      // Add MACD region with custom min/max values
-                                      _chartKey.currentState
-                                          ?.addRegion(MACDPlotRegion(
-                                        id: generateV4(),
-                                        candles: [],
-                                        type: type,
-                                        yAxisSettings: const YAxisSettings(
-                                            yAxisPos: YAxisPos.right),
-                                      ));
-                                    } else if (variety == 'Stochastic') {
-                                      // Add Stochastic region with fixed 0-100 bounds
-                                      _chartKey.currentState
-                                          ?.addRegion(StochasticPlotRegion(
-                                        id: generateV4(),
-                                        candles: [],
-                                        type: type,
-                                        yAxisSettings: const YAxisSettings(
-                                            yAxisPos: YAxisPos.right),
-                                      ));
-                                    }
-                                  } else if (type == PlotRegionType.data) {
-                                    if (variety == 'Candle') {
-                                      _chartKey.currentState
-                                          ?.addRegion(MainPlotRegion(
-                                        id: generateV4(),
-                                        candles: [],
-                                        type: type,
-                                        yAxisSettings: const YAxisSettings(
-                                            yAxisPos: YAxisPos.right),
-                                      ));
-                                    } else if (variety == 'Line') {
-                                      // Add line chart region
-                                      _chartKey.currentState
-                                          ?.addRegion(DummyPlotRegion(
-                                        id: generateV4(),
-                                        candles: [],
-                                        type: type,
-                                        yAxisSettings: const YAxisSettings(
-                                            yAxisPos: YAxisPos.right),
-                                      ));
-                                    }
-                                  }
-                                },
-                              );
-                            });
-                      },
-                      child: const Text("Add Region"),
-                    ),
-                    LayerTypeDropdown(
-                        selectedType: _selectedType,
-                        onChanged: (layerType) {
-                          setState(() {
-                            _selectedType = layerType;
-                            _chartKey.currentState
-                                ?.updateLayerGettingAddedState(layerType);
-                          });
-                        })
-                  ],
-                ),
-              ))
-        ],
-      )),
-    );
-  }
-
-  void _showAddDataDialog() {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AddDataDialog(onDataUpdate: (data) {
-            // setState(() {
-            //   // Update the local candleData list
-            //   candleData.addAll(data);
-            // });
-            // Then update the chart
-            _chartKey.currentState?.addData(data);
-          });
-        });
+        ));
   }
 }

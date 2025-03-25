@@ -1,22 +1,13 @@
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:fin_chart/models/settings/y_axis_settings.dart';
-import 'package:fin_chart/models/layers/arrow.dart';
-import 'package:fin_chart/models/layers/circular_area.dart';
-import 'package:fin_chart/models/layers/horizontal_band.dart';
-import 'package:fin_chart/models/layers/horizontal_line.dart';
-import 'package:fin_chart/models/layers/label.dart';
-import 'package:fin_chart/models/layers/rect_area.dart';
-import 'package:fin_chart/models/layers/trend_line.dart';
 import 'package:fin_chart/utils/calculations.dart';
-import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
 abstract class PlotRegion with RegionProp {
   final String id;
-  final PlotRegionType type;
   final YAxisSettings yAxisSettings;
   final List<Layer> layers;
   late Size yLabelSize;
@@ -25,7 +16,6 @@ abstract class PlotRegion with RegionProp {
 
   PlotRegion(
       {required this.id,
-      required this.type,
       required this.yAxisSettings,
       List<Layer>? layers,
       double yMinValue = 0,
@@ -42,18 +32,26 @@ abstract class PlotRegion with RegionProp {
 
   PlotRegion? isRegionReadyForResize(Offset selectedPoint) {
     if (isPointOnLine(selectedPoint, Offset(leftPos, bottomPos),
-            Offset(rightPos, bottomPos)) ||
+            Offset(rightPos, bottomPos), tolerance: 3) ||
         isPointOnLine(
-            selectedPoint, Offset(leftPos, topPos), Offset(rightPos, topPos))) {
+            selectedPoint, Offset(leftPos, topPos), Offset(rightPos, topPos),
+            tolerance: 3)) {
       return this;
     } else {
       return null;
     }
   }
 
+  Widget renderIndicatorToolTip(
+      {required Indicator? selectedIndicator,
+      required Function(Indicator)? onClick,
+      required Function()? onSettings,
+      required Function()? onDelete});
+
   PlotRegion? regionSelect(Offset selectedPoint) {
     if (isPointNearRectFromDiagonalVertices(
-        selectedPoint, Offset(leftPos, topPos), Offset(rightPos, bottomPos))) {
+        selectedPoint, Offset(leftPos, topPos), Offset(rightPos, bottomPos),
+        tolerance: 0)) {
       isSelected = true;
       return this;
     } else {
@@ -89,113 +87,12 @@ abstract class PlotRegion with RegionProp {
     }
   }
 
-  void drawYAxis(Canvas canvas) {
-    double valuseDiff = yValues.last - yValues.first;
-    double posDiff = bottomPos - topPos;
-
-    for (double value in yValues) {
-      double pos = bottomPos - (value - yValues.first) * posDiff / valuseDiff;
-
-      if (!(value == yValues.first || value == yValues.last)) {
-        canvas.drawLine(Offset(leftPos, pos), (Offset(rightPos, pos)), Paint());
-        final TextPainter text = TextPainter(
-          text: TextSpan(
-            text: value.toStringAsFixed(2),
-            style: yAxisSettings.axisTextStyle,
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-
-        if (yAxisSettings.yAxisPos == YAxisPos.left) {
-          text.paint(
-              canvas,
-              Offset(leftPos - (text.width + yLabelPadding / 2),
-                  pos - text.height / 2));
-        }
-        if (yAxisSettings.yAxisPos == YAxisPos.right) {
-          text.paint(canvas,
-              Offset(rightPos + yLabelPadding / 2, pos - text.height / 2));
-        }
-      }
-    }
-
-    if (yAxisSettings.yAxisPos == YAxisPos.left) {
-      canvas.drawLine(
-          Offset(leftPos, topPos),
-          Offset(leftPos, bottomPos),
-          Paint()
-            ..color = yAxisSettings.axisColor
-            ..strokeWidth = yAxisSettings.strokeWidth);
-    }
-    if (yAxisSettings.yAxisPos == YAxisPos.right) {
-      canvas.drawLine(
-          Offset(rightPos, topPos),
-          Offset(rightPos, bottomPos),
-          Paint()
-            ..color = yAxisSettings.axisColor
-            ..strokeWidth = yAxisSettings.strokeWidth);
-    }
-  }
+  void drawYAxis(Canvas canvas);
 
   void drawLayers(Canvas canvas) {
     for (final layer in layers) {
       layer.drawLayer(canvas: canvas);
     }
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type.name,
-      'yAxisSettings': {
-        'yAxisPos': yAxisSettings.yAxisPos.name,
-        'axisColor': colorToJson(yAxisSettings.axisColor),
-        'strokeWidth': yAxisSettings.strokeWidth,
-        'textStyle': {
-          'color':
-              colorToJson(yAxisSettings.axisTextStyle.color ?? Colors.black),
-          'fontSize': yAxisSettings.axisTextStyle.fontSize,
-          'fontWeight':
-              yAxisSettings.axisTextStyle.fontWeight == FontWeight.bold
-                  ? 'bold'
-                  : 'normal',
-        },
-      },
-      'yMinValue': yMinValue,
-      'yMaxValue': yMaxValue,
-      'layers': layers.map((layer) => layer.toJson()).toList(),
-    };
-  }
-
-  static Layer? layerFromJson(Map<String, dynamic> json) {
-    String? layerType = json['type'];
-    if (layerType == null) return null;
-
-    switch (layerType) {
-      case 'trendLine':
-        return TrendLine.fromJson(data: json);
-      case 'horizontalLine':
-        return HorizontalLine.fromJson(data: json);
-      case 'horizontalBand':
-        return HorizontalBand.fromJson(data: json);
-      case 'label':
-        return Label.fromJson(data: json);
-      case 'circularArea':
-        return CircularArea.fromJson(data: json);
-      case 'rectArea':
-        return RectArea.fromJson(data: json);
-      case 'arrow':
-        return Arrow.fromJson(data: json);
-      default:
-        return null;
-    }
-  }
-
-  /// Create region from JSON representation
-  static PlotRegion fromJson(Map<String, dynamic> json) {
-    // This will be implemented in subclasses
-    throw UnimplementedError(
-        'PlotRegion.fromJson must be implemented by subclasses');
   }
 
   void drawBaseLayer(Canvas canvas);

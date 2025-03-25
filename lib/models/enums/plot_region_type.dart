@@ -1,1 +1,0 @@
-enum PlotRegionType { data, indicator}

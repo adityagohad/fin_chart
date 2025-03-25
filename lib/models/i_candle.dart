@@ -1,15 +1,15 @@
 import 'package:fin_chart/models/enums/candle_state.dart';
 
 class ICandle {
-  final String id;
-  final DateTime date;
-  final double open;
-  final double high;
-  final double low;
-  final double close;
-  final double volume;
-  final String? promptText; // Additional text to display to the user
-  CandleState state;
+  late String id;
+  late DateTime date;
+  late double open;
+  late double high;
+  late double low;
+  late double close;
+  late double volume;
+  late String? promptText; // Additional text to display to the user
+  late CandleState state;
 
   ICandle({
     required this.id,
@@ -22,6 +22,18 @@ class ICandle {
     this.promptText,
     this.state = CandleState.natural,
   });
+
+  ICandle.fromJson(Map<String, dynamic> candle) {
+    id = candle['id'];
+    date = DateTime.parse(candle['date']);
+    open = candle['open'];
+    high = candle['high'];
+    low = candle['low'];
+    close = candle['close'];
+    volume = candle['volume'];
+    promptText = candle['promptText'];
+    state = (candle['state'] as String).toCandleState();
+  }
 
   Map<String, dynamic> toJson() {
     return {

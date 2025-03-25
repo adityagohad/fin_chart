@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/trend_line_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -10,38 +11,50 @@ class TrendLine extends Layer {
   double strokeWidth = 2;
   double endPointRadius = 5;
 
-  bool isSelected = false;
   late Offset startPoint;
   Offset? tempFrom;
   Offset? tempTo;
 
+  TrendLine._(
+      {required super.id,
+      required super.type,
+      required super.isLocked,
+      required this.from,
+      required this.to,
+      required this.color,
+      required this.strokeWidth,
+      required this.endPointRadius});
+
   TrendLine.fromTool(
       {required this.from, required this.to, required this.startPoint})
-      : super.fromTool(id: generateV4()) {
+      : super.fromTool(id: generateV4(), type: LayerType.trendLine) {
     isSelected = true;
     tempTo = to;
   }
 
-  TrendLine.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
-    from = offsetFromJson(data['from']);
-    to = offsetFromJson(data['to']);
-    strokeWidth = data['strokeWidth'] ?? 2;
-    endPointRadius = data['endPointRadius'] ?? 5;
-    color = colorFromJson(data['color']);
+  factory TrendLine.fromJson({required Map<String, dynamic> json}) {
+    return TrendLine._(
+        id: json['id'],
+        type: (json['type'] as String).toLayerType() ?? LayerType.trendLine,
+        from: offsetFromJson(json['from']),
+        to: offsetFromJson(json['to']),
+        color: colorFromJson(json['color']),
+        strokeWidth: json['strokeWidth'] ?? 2.0,
+        endPointRadius: json['endPointRadius'] ?? 5.0,
+        isLocked: json['isLocked'] ?? false);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': 'trendLine',
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'from': {'dx': from.dx, 'dy': from.dy},
       'to': {'dx': to.dx, 'dy': to.dy},
       'strokeWidth': strokeWidth,
       'endPointRadius': endPointRadius,
       'color': colorToJson(color)
-    };
+    });
+    return json;
   }
 
   @override
@@ -120,6 +133,7 @@ class TrendLine extends Layer {
 
   @override
   void onScaleUpdate({required ScaleUpdateDetails details}) {
+    if (isLocked) return;
     Offset displacement =
         displacementOffset(startPoint, details.localFocalPoint);
 

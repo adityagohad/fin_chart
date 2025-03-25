@@ -1,41 +1,40 @@
-import 'package:fin_chart/models/enums/plot_region_type.dart';
 import 'package:fin_chart/models/i_candle.dart';
-import 'package:fin_chart/models/layers/layer.dart';
-import 'package:fin_chart/models/region/plot_region.dart';
-import 'package:fin_chart/models/settings/y_axis_settings.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/ui/indicator_settings/stochastic_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-class StochasticPlotRegion extends PlotRegion {
-  List<ICandle> candles;
-  final int kPeriod; // Look-back period, typically 14
-  final int dPeriod; // Smoothing period, typically 3
+class Stochastic extends Indicator {
+  int kPeriod = 14;
+  int dPeriod = 3;
+  Color kLineColor = Colors.blue;
+  Color dLineColor = Colors.red;
 
-  // Calculated values
-  late List<double> kValues; // %K line (fast stochastic)
-  late List<double> dValues; // %D line (slow stochastic)
+  final List<double> kValues = [];
+  final List<double> dValues = [];
+  final List<ICandle> candles = [];
 
-  // Customizable colors
-  final Color kLineColor;
-  final Color dLineColor;
-
-  StochasticPlotRegion({
-    required this.candles,
+  Stochastic({
     this.kPeriod = 14,
     this.dPeriod = 3,
     this.kLineColor = Colors.blue,
     this.dLineColor = Colors.red,
-    super.type = PlotRegionType.indicator,
-    required super.yAxisSettings,
+  }) : super(
+            id: generateV4(),
+            type: IndicatorType.stochastic,
+            displayMode: DisplayMode.panel);
+
+  Stochastic._({
     required super.id,
-  }) {
-    kValues = [];
-    dValues = [];
-  }
+    this.kPeriod = 14,
+    this.dPeriod = 3,
+    this.kLineColor = Colors.blue,
+    this.dLineColor = Colors.red,
+  }) : super(type: IndicatorType.stochastic, displayMode: DisplayMode.panel);
 
   @override
-  void drawBaseLayer(Canvas canvas) {
+  drawIndicator({required Canvas canvas}) {
     if (candles.isEmpty || kValues.isEmpty) return;
 
     // Drawing %K line
@@ -99,7 +98,7 @@ class StochasticPlotRegion extends PlotRegion {
   }
 
   @override
-  void updateData(List<ICandle> data) {
+  updateData(List<ICandle> data) {
     if (data.isEmpty) return;
 
     // If our candles list is empty, initialize it
@@ -115,31 +114,31 @@ class StochasticPlotRegion extends PlotRegion {
       }
     }
 
-    _calculateStochastic();
-
-    // Set fixed bounds for Stochastic (0-100)
+    // Set fixed bounds for Stochastic (0-100) - MOVED ABOVE
     yMinValue = 0;
     yMaxValue = 100;
 
     yValues = generateNiceAxisValues(yMinValue, yMaxValue);
-
     yMinValue = yValues.first;
     yMaxValue = yValues.last;
-
     yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+        yValues.map((v) => v.toString()).toList(),
+        const TextStyle(color: Colors.black, fontSize: 12));
+
+    // Calculate after setting the y-axis values
+    _calculateStochastic();
   }
 
   void _calculateStochastic() {
-    kValues = [];
-    dValues = [];
+    kValues.clear();
+    dValues.clear();
 
     if (candles.length <= kPeriod) {
       return; // Not enough data
     }
 
     // Calculate %K values
-    kValues = List.filled(candles.length, 0);
+    List<double> tempKValues = List.filled(candles.length, 0);
 
     for (int i = kPeriod - 1; i < candles.length; i++) {
       // Get highest high and lowest low over the look-back period
@@ -155,75 +154,65 @@ class StochasticPlotRegion extends PlotRegion {
       double range = highestHigh - lowestLow;
 
       if (range > 0) {
-        kValues[i] = ((candles[i].close - lowestLow) / range) * 100;
+        tempKValues[i] = ((candles[i].close - lowestLow) / range) * 100;
       } else {
         // If range is zero, set to 50 (middle)
-        kValues[i] = 50;
+        tempKValues[i] = 50;
       }
     }
 
+    kValues.addAll(tempKValues);
+
     // Calculate %D (simple moving average of %K)
-    dValues = List.filled(candles.length, 0);
+    List<double> tempDValues = List.filled(candles.length, 0);
 
     for (int i = kPeriod + dPeriod - 2; i < candles.length; i++) {
       double sum = 0;
       for (int j = i - (dPeriod - 1); j <= i; j++) {
         sum += kValues[j];
       }
-      dValues[i] = sum / dPeriod;
+      tempDValues[i] = sum / dPeriod;
     }
+
+    dValues.addAll(tempDValues);
   }
 
-  StochasticPlotRegion.fromJson(Map<String, dynamic> json)
-      : candles = [],
-        kPeriod = json['kPeriod'] ?? 14,
-        dPeriod = json['dPeriod'] ?? 3,
-        kLineColor = colorFromJson(json['kLineColor'] ?? '#FF0000FF'),
-        dLineColor = colorFromJson(json['dLineColor'] ?? '#FF0000FF'),
-        super(
-          id: json['id'],
-          type: PlotRegionType.values.firstWhere((t) => t.name == json['type'],
-              orElse: () => PlotRegionType.indicator),
-          yAxisSettings: YAxisSettings(
-            yAxisPos: YAxisPos.values.firstWhere(
-                (pos) => pos.name == json['yAxisSettings']['yAxisPos'],
-                orElse: () => YAxisPos.right),
-            axisColor: colorFromJson(json['yAxisSettings']['axisColor']),
-            strokeWidth: json['yAxisSettings']['strokeWidth'] ?? 1.0,
-            axisTextStyle: TextStyle(
-              color: colorFromJson(json['yAxisSettings']['textStyle']['color']),
-              fontSize: json['yAxisSettings']['textStyle']['fontSize'] ?? 12.0,
-              fontWeight:
-                  json['yAxisSettings']['textStyle']['fontWeight'] == 'bold'
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-            ),
-          ),
-        ) {
-    kValues = [];
-    dValues = [];
-
-    yMinValue = json['yMinValue'];
-    yMaxValue = json['yMaxValue'];
-
-    if (json['layers'] != null) {
-      for (var layerJson in json['layers']) {
-        Layer? layer = PlotRegion.layerFromJson(layerJson);
-        if (layer != null) {
-          layers.add(layer);
-        }
-      }
-    }
+  @override
+  showIndicatorSettings(
+      {required BuildContext context,
+      required Function(Indicator p1) onUpdate}) {
+    showDialog(
+      context: context,
+      builder: (context) => StochasticSettingsDialog(
+        indicator: this,
+        onUpdate: onUpdate,
+      ),
+    ).then((value) {
+      updateData(candles);
+    });
   }
 
   @override
   Map<String, dynamic> toJson() {
-    var json = super.toJson();
-    json['variety'] = 'Stochastic';
+    Map<String, dynamic> json = super.toJson();
     json['kPeriod'] = kPeriod;
     json['dPeriod'] = dPeriod;
     json['kLineColor'] = colorToJson(kLineColor);
     json['dLineColor'] = colorToJson(dLineColor);
     return json;
+  }
+
+  factory Stochastic.fromJson(Map<String, dynamic> json) {
+    return Stochastic._(
+      id: json['id'] ?? generateV4(),
+      kPeriod: json['kPeriod'] ?? 14,
+      dPeriod: json['dPeriod'] ?? 3,
+      kLineColor: json['kLineColor'] != null
+          ? colorFromJson(json['kLineColor'])
+          : Colors.blue,
+      dLineColor: json['dLineColor'] != null
+          ? colorFromJson(json['dLineColor'])
+          : Colors.red,
+    );
   }
 }

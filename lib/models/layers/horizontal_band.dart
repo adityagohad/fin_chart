@@ -1,3 +1,4 @@
+import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/ui/layer_settings/horizontal_band_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
@@ -8,25 +9,37 @@ class HorizontalBand extends Layer {
   late double allowedError;
   Color color = Colors.amber;
 
-  HorizontalBand.fromTool({required this.value, this.allowedError = 40})
-      : super.fromTool(id: generateV4());
+  HorizontalBand._(
+      {required super.id,
+      required super.type,
+      required this.value,
+      required this.allowedError,
+      required this.color,
+      required super.isLocked});
 
-  HorizontalBand.fromJson({required Map<String, dynamic> data})
-      : super.fromJson(id: data['id']) {
-    value = data['value'];
-    allowedError = data['allowedError'] ?? 40.0;
-    color = colorFromJson(data['color']);
+  HorizontalBand.fromTool({required this.value, this.allowedError = 40})
+      : super.fromTool(id: generateV4(), type: LayerType.horizontalBand);
+
+  factory HorizontalBand.fromJson({required Map<String, dynamic> json}) {
+    return HorizontalBand._(
+        id: json['id'],
+        type:
+            (json['type'] as String).toLayerType() ?? LayerType.horizontalBand,
+        value: json['value'] ?? 0.0,
+        allowedError: json['allowedError'] ?? 40.0,
+        color: colorFromJson(json['color']),
+        isLocked: json['isLocked'] ?? false);
   }
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      'id': super.id,
-      'type': 'horizontalBand',
+    Map<String, dynamic> json = super.toJson();
+    json.addAll({
       'value': value,
       'allowedError': allowedError,
       'color': colorToJson(color)
-    };
+    });
+    return json;
   }
 
   @override

@@ -1,3 +1,5 @@
+const String packageVersion = '1.0.0';
+
 const double candleWidth = 10;
 const double yLabelPadding = 10;
 const double xLabelPadding = 10;
