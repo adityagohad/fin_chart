@@ -3,7 +3,7 @@ import 'package:fin_chart/models/indicators/mfi.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 
-enum IndicatorType { rsi, macd, sma, ema, bollingerBand, stochastic, mfi}
+enum IndicatorType { rsi, macd, sma, ema, bollingerBand, stochastic, mfi, adx}
 
 enum DisplayMode { main, panel }
 
@@ -94,6 +94,8 @@ abstract class Indicator with RegionProp {
         return Stochastic.fromJson(json);
       case IndicatorType.mfi:
         return Mfi.fromJson(json);
+      case IndicatorType.adx:
+        return Adx.fromJson(json);
     }
   }
 
