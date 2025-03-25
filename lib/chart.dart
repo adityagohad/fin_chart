@@ -106,6 +106,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   Offset layerToolBoxOffset = Offset.zero;
 
+  bool isUserInteracting = false;
+
   @override
   void initState() {
     super.initState();
@@ -250,7 +252,30 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       for (int i = 0; i < regions.length; i++) {
         regions[i].updateData(currentData);
       }
+      if (!isUserInteracting) {
+        xOffset = _getMaxLeftOffset();
+      }
     });
+  }
+
+  Future<bool> addDataWithAnimation(
+      List<ICandle> newData, Duration durationPerCandle) async {
+    for (ICandle iCandle in newData) {
+      setState(() {
+        currentData.add(iCandle);
+        for (int i = 0; i < regions.length; i++) {
+          regions[i].updateData(currentData);
+        }
+      });
+      await Future.delayed(durationPerCandle).then((value) {
+        if (!isUserInteracting) {
+          setState(() {
+            xOffset = _getMaxLeftOffset();
+          });
+        }
+      });
+    }
+    return true;
   }
 
   void removeLayerById(String layerId) {
@@ -277,6 +302,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                 height: constraints.maxHeight,
                 child: GestureDetector(
                   onTapDown: _onTapDown,
+                  onTapUp: _onTapUp,
                   onDoubleTap: _onDoubleTap,
                   onScaleStart: _onScaleStart,
                   onScaleEnd: _onScaleEnd,
@@ -495,6 +521,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   _onTapDown(TapDownDetails details) {
     setState(() {
+      isUserInteracting = true;
       selectedIndicator = null;
       for (PlotRegion region in regions) {
         if (selectedRegionForResize.length < 2) {
@@ -535,6 +562,12 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           }
         }
       }
+    });
+  }
+
+  _onTapUp(TapUpDetails details) {
+    setState(() {
+      isUserInteracting = false;
     });
   }
 
@@ -615,7 +648,6 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
-  /// Convert chart state to JSON
   ChartSettings getChartSettings() {
     return ChartSettings(
         dataFit: widget.dataFit,
