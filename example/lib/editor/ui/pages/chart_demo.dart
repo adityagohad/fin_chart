@@ -51,7 +51,7 @@ class _ChartDemoState extends State<ChartDemo> {
         _chartKey.currentState
             ?.addDataWithAnimation(
                 recipe.data.sublist(task.fromPoint, task.tillPoint),
-                const Duration(milliseconds: 300))
+                const Duration(milliseconds: 50))
             .then((value) {
           if (value) {
             onTaskFinish();
