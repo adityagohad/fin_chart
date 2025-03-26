@@ -1,5 +1,4 @@
 import 'package:fin_chart/fin_chart.dart';
-import 'package:fin_chart/models/indicators/mfi.dart';
 import 'package:fin_chart/models/region/region_prop.dart';
 import 'package:flutter/material.dart';
 

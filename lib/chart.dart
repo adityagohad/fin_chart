@@ -3,6 +3,7 @@ import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/chart_settings.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
+import 'package:fin_chart/models/fundamental/fundamental_event.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/recipe.dart';
@@ -26,19 +27,22 @@ class Chart extends StatefulWidget {
   final Function(PlotRegion region)? onRegionSelect;
   final Function(Indicator indicator)? onIndicatorSelect;
   final Recipe? recipe;
+  final List<FundamentalEvent> fundamentalEvents;
 
-  const Chart(
-      {super.key,
-      required this.candles,
-      this.padding = const EdgeInsets.all(8),
-      this.dataFit = DataFit.adaptiveWidth,
-      this.onInteraction,
-      this.onLayerSelect,
-      this.onRegionSelect,
-      this.onIndicatorSelect,
-      this.yAxisSettings = const YAxisSettings(),
-      this.xAxisSettings = const XAxisSettings(),
-      this.recipe});
+  const Chart({
+    super.key,
+    required this.candles,
+    this.padding = const EdgeInsets.all(8),
+    this.dataFit = DataFit.adaptiveWidth,
+    this.onInteraction,
+    this.onLayerSelect,
+    this.onRegionSelect,
+    this.onIndicatorSelect,
+    this.yAxisSettings = const YAxisSettings(),
+    this.xAxisSettings = const XAxisSettings(),
+    this.recipe,
+    this.fundamentalEvents = const [],
+  });
 
   factory Chart.from(
       {required GlobalKey key,
@@ -106,6 +110,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   Offset layerToolBoxOffset = Offset.zero;
 
+  FundamentalEvent? selectedEvent;
+
   @override
   void initState() {
     super.initState();
@@ -122,6 +128,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     regions.add(MainPlotRegion(
       candles: currentData,
       yAxisSettings: widget.yAxisSettings!,
+      fundamentalEvents: widget.fundamentalEvents,
     ));
   }
 
@@ -132,6 +139,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       id: recipe.chartSettings.mainPlotRegionId,
       candles: currentData,
       yAxisSettings: widget.yAxisSettings!,
+      fundamentalEvents: widget.fundamentalEvents,
     ));
   }
 
@@ -295,7 +303,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                         bottomPos: bottomPos,
                         data: currentData,
                         selectedLayer: selectedLayer,
-                        animationValue: _animation.value),
+                        animationValue: _animation.value,),
                     size: Size(constraints.maxWidth, constraints.maxHeight),
                   ),
                 ),
@@ -495,7 +503,16 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
   _onTapDown(TapDownDetails details) {
     setState(() {
+      // Handle fundamental events through the main plot region
+      for (PlotRegion region in regions) {
+        if (region is MainPlotRegion) {
+          region.handleEventTap(details.localPosition);
+        }
+      }
+
+      selectedEvent = null;
       selectedIndicator = null;
+
       for (PlotRegion region in regions) {
         if (selectedRegionForResize.length < 2) {
           if (region.isRegionReadyForResize(details.localPosition) != null) {
