@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 class AddEventDialog extends StatefulWidget {
   final Function(FundamentalEvent) onEventAdded;
 
-  const AddEventDialog({Key? key, required this.onEventAdded}) : super(key: key);
+  const AddEventDialog({super.key, required this.onEventAdded});
 
   @override
   State<AddEventDialog> createState() => _AddEventDialogState();
@@ -29,7 +29,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
   
   // Dividend event controllers
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _currencyController = TextEditingController(text: 'USD');
+  // final TextEditingController _currencyController = TextEditingController(text: 'USD');
   
   // Stock split event controller
   final TextEditingController _ratioController = TextEditingController();
@@ -43,7 +43,7 @@ class _AddEventDialogState extends State<AddEventDialog> {
     _revenueActualController.dispose();
     _revenueEstimateController.dispose();
     _amountController.dispose();
-    _currencyController.dispose();
+    // _currencyController.dispose();
     _ratioController.dispose();
     super.dispose();
   }
@@ -103,10 +103,10 @@ class _AddEventDialogState extends State<AddEventDialog> {
             return null;
           },
         ),
-        TextFormField(
-          controller: _currencyController,
-          decoration: const InputDecoration(labelText: 'Currency'),
-        ),
+        // TextFormField(
+        //   controller: _currencyController,
+        //   decoration: const InputDecoration(labelText: 'Currency'),
+        // ),
 
         // Ex-Dividend Date
         InkWell(
@@ -280,8 +280,10 @@ class _AddEventDialogState extends State<AddEventDialog> {
                   id: id,
                   date: _selectedDate,
                   title: "Dividend",
+                  exDividendDate: _exDividendDate,
+                  paymentDate: _paymentDate,
                   amount: double.parse(_amountController.text),
-                  currency: _currencyController.text,
+                  // currency: _currencyController.text,
                 );
               } else {
                 event = StockSplitEvent(
