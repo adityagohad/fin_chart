@@ -177,14 +177,14 @@ class Adx extends Indicator {
     for (int i = 1; i < candles.length; i++) {
       // True Range calculation
       double highLow = candles[i].high - candles[i].low;
-      double highPrevClose = (candles[i].high - candles[i-1].close).abs();
-      double lowPrevClose = (candles[i].low - candles[i-1].close).abs();
+      double highPrevClose = (candles[i].high - candles[i - 1].close).abs();
+      double lowPrevClose = (candles[i].low - candles[i - 1].close).abs();
       double tr = math.max(highLow, math.max(highPrevClose, lowPrevClose));
       trValues.add(tr);
 
       // +DM and -DM calculation
-      double upMove = candles[i].high - candles[i-1].high;
-      double downMove = candles[i-1].low - candles[i].low;
+      double upMove = candles[i].high - candles[i - 1].high;
+      double downMove = candles[i - 1].low - candles[i].low;
 
       double dmPlus = 0;
       double dmMinus = 0;
@@ -272,7 +272,8 @@ class Adx extends Indicator {
       // Calculate rest using Wilder's smoothing method
       for (int i = period; i < values.length; i++) {
         smoothed.add(
-            ((smoothed[smoothed.length - 1] * (period - 1)) + values[i]) / period);
+            ((smoothed[smoothed.length - 1] * (period - 1)) + values[i]) /
+                period);
       }
     }
 
@@ -281,48 +282,45 @@ class Adx extends Indicator {
 
   @override
   showIndicatorSettings(
-      {required BuildContext context,
-      required Function(Indicator) onUpdate}) {
+      {required BuildContext context, required Function(Indicator) onUpdate}) {
     showDialog(
       context: context,
       builder: (context) => AdxSettingsDialog(
         indicator: this,
         onUpdate: onUpdate,
       ),
-    ).then((value) {
-      updateData(candles);
-    });
+    );
   }
 
-@override
-Map<String, dynamic> toJson() {
-  Map<String, dynamic> json = super.toJson();
-  json['period'] = period;
-  json['adxLineColor'] = colorToJson(adxLineColor);
-  json['diPlusColor'] = colorToJson(diPlusColor);
-  json['diMinusColor'] = colorToJson(diMinusColor);
-  json['showDiPlus'] = showDiPlus;
-  json['showDiMinus'] = showDiMinus;
-  return json;
-}
+  @override
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> json = super.toJson();
+    json['period'] = period;
+    json['adxLineColor'] = colorToJson(adxLineColor);
+    json['diPlusColor'] = colorToJson(diPlusColor);
+    json['diMinusColor'] = colorToJson(diMinusColor);
+    json['showDiPlus'] = showDiPlus;
+    json['showDiMinus'] = showDiMinus;
+    return json;
+  }
 
-factory Adx.fromJson(Map<String, dynamic> json) {
-  return Adx._(
-    id: json['id'],
-    type: IndicatorType.adx,
-    displayMode: DisplayMode.panel,
-    period: json['period'] ?? 14,
-    adxLineColor: json['adxLineColor'] != null
-        ? colorFromJson(json['adxLineColor'])
-        : Colors.purple,
-    diPlusColor: json['diPlusColor'] != null
-        ? colorFromJson(json['diPlusColor'])
-        : Colors.green,
-    diMinusColor: json['diMinusColor'] != null
-        ? colorFromJson(json['diMinusColor'])
-        : Colors.red,
-    showDiPlus: json['showDiPlus'] ?? true,
-    showDiMinus: json['showDiMinus'] ?? true,
-  );
-}
+  factory Adx.fromJson(Map<String, dynamic> json) {
+    return Adx._(
+      id: json['id'],
+      type: IndicatorType.adx,
+      displayMode: DisplayMode.panel,
+      period: json['period'] ?? 14,
+      adxLineColor: json['adxLineColor'] != null
+          ? colorFromJson(json['adxLineColor'])
+          : Colors.purple,
+      diPlusColor: json['diPlusColor'] != null
+          ? colorFromJson(json['diPlusColor'])
+          : Colors.green,
+      diMinusColor: json['diMinusColor'] != null
+          ? colorFromJson(json['diMinusColor'])
+          : Colors.red,
+      showDiPlus: json['showDiPlus'] ?? true,
+      showDiMinus: json['showDiMinus'] ?? true,
+    );
+  }
 }

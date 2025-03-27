@@ -10,6 +10,7 @@ import 'package:fin_chart/models/region/main_plot_region.dart';
 import 'package:fin_chart/models/region/panel_plot_region.dart';
 import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
+import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -122,19 +123,30 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   void _initializeDefault() {
     currentData.addAll(widget.candles);
     regions.add(MainPlotRegion(
-      candles: currentData,
-      yAxisSettings: widget.yAxisSettings!,
-    ));
+        candles: currentData, yAxisSettings: widget.yAxisSettings!));
   }
 
   void _initializeFromFactory() {
     Recipe recipe = widget.recipe!;
 
+    (double, double) range = findMinMaxWithPercentage(recipe.data);
+    yMinValue = range.$1;
+    yMaxValue = range.$2;
+
+    List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+
+    yMinValue = yValues.first;
+    yMaxValue = yValues.last;
+
+    print(yMinValue);
+    print(yMaxValue);
+
     regions.add(MainPlotRegion(
-      id: recipe.chartSettings.mainPlotRegionId,
-      candles: currentData,
-      yAxisSettings: widget.yAxisSettings!,
-    ));
+        id: recipe.chartSettings.mainPlotRegionId,
+        candles: currentData,
+        yAxisSettings: widget.yAxisSettings!,
+        yMinValue: yMinValue,
+        yMaxValue: yMaxValue));
   }
 
   void _initializeControllers() {
@@ -191,8 +203,8 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
       } else if (indicator.displayMode == DisplayMode.main) {
         for (PlotRegion region in regions) {
           if (region is MainPlotRegion) {
-            indicator.updateData(currentData);
             region.indicators.add(indicator);
+            region.updateData(currentData);
           }
         }
       }
@@ -340,6 +352,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                         onUpdate: (indicator) {
                           setState(() {
                             selectedIndicator = indicator;
+                            region.updateData(currentData);
                           });
                         });
                   },

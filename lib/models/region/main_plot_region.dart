@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fin_chart/models/enums/candle_state.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
@@ -11,17 +13,22 @@ class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
   final List<Indicator> indicators = [];
 
-  MainPlotRegion(
-      {String? id, required this.candles, required super.yAxisSettings})
-      : super(id: id ?? generateV4()) {
+  MainPlotRegion({
+    String? id,
+    required this.candles,
+    required super.yAxisSettings,
+    super.yMinValue,
+    super.yMaxValue,
+  }) : super(id: id ?? generateV4()) {
     (double, double) range = findMinMaxWithPercentage(candles);
+
     yMinValue = range.$1;
     yMaxValue = range.$2;
 
     yValues = generateNiceAxisValues(yMinValue, yMaxValue);
 
-    yMinValue = yValues.first;
-    yMaxValue = yValues.last;
+    yMinValue = min(yValues.first, super.yMinValue);
+    yMaxValue = max(yValues.last, super.yMaxValue);
 
     yLabelSize = getLargetRnderBoxSizeForList(
         yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
@@ -66,10 +73,35 @@ class MainPlotRegion extends PlotRegion {
     yMinValue = range.$1;
     yMaxValue = range.$2;
 
+    print(yMinValue);
+    print(yMaxValue);
+
+    print(super.yMinValue);
+    print(super.yMaxValue);
+
+    yMinValue = min(yMaxValue, super.yMinValue);
+    yMaxValue = max(yMinValue, super.yMaxValue);
+
+    print(yMinValue);
+    print(yMaxValue);
+
     yValues = generateNiceAxisValues(yMinValue, yMaxValue);
 
-    yMinValue = yValues.first;
-    yMaxValue = yValues.last;
+    print(yValues);
+    print("============================================");
+
+    yMinValue = min(yValues.first, super.yMinValue);
+    yMaxValue = max(yValues.last, super.yMaxValue);
+
+    // if (yValues.first < super.yMinValue || yValues.last > super.yMaxValue) {
+    //   //yValues = generateNiceAxisValues(super.yMinValue, super.yMaxValue);
+    //   print("============================================");
+
+    //   print(yMinValue);
+    //   print(yMaxValue);
+
+    //   print("============================================");
+    // }
 
     yLabelSize = getLargetRnderBoxSizeForList(
         yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
