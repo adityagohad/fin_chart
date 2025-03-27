@@ -63,6 +63,7 @@ class Chart extends StatefulWidget {
       yAxisSettings: recipe.chartSettings.yAxisSettings,
       xAxisSettings: recipe.chartSettings.xAxisSettings,
       recipe: recipe,
+      fundamentalEvents: recipe.fundamentalEvents, 
     );
   }
 
@@ -111,6 +112,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   Offset layerToolBoxOffset = Offset.zero;
 
   FundamentalEvent? selectedEvent;
+  List<FundamentalEvent> fundamentalEvents = [];
 
   @override
   void initState() {
@@ -252,11 +254,30 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     });
   }
 
-  void addData(List<ICandle> newData) {
+  void addData(List<ICandle> newData, {List<FundamentalEvent>? newEvents}) {
     setState(() {
       currentData.addAll(newData);
+      if (newEvents != null && newEvents.isNotEmpty) {
+        fundamentalEvents.addAll(newEvents);
+      }
       for (int i = 0; i < regions.length; i++) {
         regions[i].updateData(currentData);
+        if (regions[i] is MainPlotRegion &&
+            newEvents != null &&
+            newEvents.isNotEmpty) {
+          (regions[i] as MainPlotRegion).updateFundamentalEvents(newEvents);
+        }
+      }
+    });
+  }
+
+  void addFundamentalEvents(List<FundamentalEvent> newEvents) {
+    setState(() {
+      fundamentalEvents.addAll(newEvents);
+      for (int i = 0; i < regions.length; i++) {
+        if (regions[i] is MainPlotRegion) {
+          (regions[i] as MainPlotRegion).updateFundamentalEvents(newEvents);
+        }
       }
     });
   }

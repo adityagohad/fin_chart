@@ -206,12 +206,19 @@ class MainPlotRegion extends PlotRegion {
   void drawFundamentalEvents(Canvas canvas) {
     if (fundamentalEvents.isEmpty) return;
 
-    // Loop through events directly instead of grouping
+    // Loop through events
     for (final event in fundamentalEvents) {
       // Find the index of the candle closest to event date
       int index = _findCandleIndexForDate(event.date);
 
+      // Skip events that don't have a corresponding candle or fall outside visible range
+      if (index < 0) continue;
+
+      // Calculate x position
       final xPos = leftPos + xOffset + xStepWidth / 2 + index * xStepWidth;
+
+      // Skip if outside visible area
+      if (xPos < leftPos || xPos > rightPos) continue;
       final yPos = bottomPos - 20; // Position below x-axis
 
       // Set position for later tooltip reference
@@ -302,5 +309,14 @@ int _findCandleIndexForDate(DateTime date) {
         event.isSelected = false;
       }
     }
+  }
+
+  void updateFundamentalEvents(List<FundamentalEvent> newEvents) {
+    print('newEvents: $newEvents');
+    fundamentalEvents.addAll(newEvents);
+  }
+
+  void addEvents(List<FundamentalEvent> events) {
+    fundamentalEvents.addAll(events);
   }
 }

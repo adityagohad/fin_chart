@@ -113,6 +113,7 @@ class _EditorPageState extends State<EditorPage> {
                       data: candleData,
                       chartSettings: _chartKey.currentState!.getChartSettings(),
                       tasks: tasks,
+                      fundamentalEvents: fundamentalEvents, 
                     ).toJson())),
                   ));
             },
