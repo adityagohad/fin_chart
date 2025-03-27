@@ -63,7 +63,7 @@ class EarningsEvent extends FundamentalEvent {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
 
   String _formatCurrency(double value) {
@@ -118,15 +118,10 @@ class EarningsEvent extends FundamentalEvent {
 
     // Calculate EPS surprise if both actual and estimate are available
     if (epsActual != null && epsEstimate != null) {
-      final epsSurprise = ((epsActual! - epsEstimate!) / epsEstimate! * 100);
+      final epsSurprise = (epsActual! - epsEstimate!);
+      final epsSurprisePer = (epsSurprise / epsEstimate! * 100);
       textSpans.add(TextSpan(
-        text: 'Surprise: ${epsSurprise.toStringAsFixed(2)}%\n\n',
-        style: const TextStyle(color: Colors.black, fontSize: 11),
-      ));
-    } else if (epsSurprise != null) {
-      // Use provided surprise if calculation isn't possible
-      textSpans.add(TextSpan(
-        text: 'Surprise: ${epsSurprise!.toStringAsFixed(2)}%\n\n',
+        text: 'Surprise: $epsSurprise (${epsSurprisePer.toStringAsFixed(2)}%)\n\n',
         style: const TextStyle(color: Colors.black, fontSize: 11),
       ));
     } else {
@@ -157,16 +152,10 @@ class EarningsEvent extends FundamentalEvent {
 
       // Calculate revenue surprise if both actual and estimate are available
       if (revenueActual != null && revenueEstimate != null) {
-        final revenueSurprise =
-            ((revenueActual! - revenueEstimate!) / revenueEstimate! * 100);
+        final revenueSurprise = (revenueActual! - revenueEstimate!);
+        final revenueSurprisePer = (revenueSurprise / revenueEstimate! * 100);
         textSpans.add(TextSpan(
-          text: 'Surprise: ${revenueSurprise.toStringAsFixed(2)}%\n',
-          style: const TextStyle(color: Colors.black, fontSize: 11),
-        ));
-      } else if (revenueSurprise != null) {
-        // Use provided surprise if calculation isn't possible
-        textSpans.add(TextSpan(
-          text: 'Surprise: ${revenueSurprise!.toStringAsFixed(2)}%\n',
+          text: 'Surprise: ${_formatCurrency(revenueSurprise)} (${revenueSurprisePer.toStringAsFixed(2)}%)\n',
           style: const TextStyle(color: Colors.black, fontSize: 11),
         ));
       }

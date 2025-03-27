@@ -42,9 +42,9 @@ class StockSplitEvent extends FundamentalEvent {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
-
+  
   @override
   void drawTooltip(Canvas canvas) {
     if (!isSelected || position == null) return;
