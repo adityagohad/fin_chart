@@ -730,16 +730,29 @@ class _EditorPageState extends State<EditorPage> {
     showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AddEventDialog(onEventAdded: (event) {
-            setState(() {
-              fundamentalEvents.add(event);
-              for (PlotRegion region in _chartKey.currentState?.regions ?? []) {
-                if (region is MainPlotRegion) {
-                  region.fundamentalEvents.add(event);
+          // Get all valid dates from candles in the main region
+          List<DateTime> validDates = [];
+          for (PlotRegion region in _chartKey.currentState?.regions ?? []) {
+            if (region is MainPlotRegion) {
+              validDates = region.candles.map((candle) => candle.date).toList();
+              break;
+            }
+          }
+
+          return AddEventDialog(
+            onEventAdded: (event) {
+              setState(() {
+                fundamentalEvents.add(event);
+                for (PlotRegion region
+                    in _chartKey.currentState?.regions ?? []) {
+                  if (region is MainPlotRegion) {
+                    region.fundamentalEvents.add(event);
+                  }
                 }
-              }
-            });
-          });
+              });
+            },
+            validDates: validDates,
+          );
         });
   }
 

@@ -302,7 +302,7 @@ int _findCandleIndexForDate(DateTime date) {
     selectedEvent = null;
     for (var event in fundamentalEvents) {
       if (event.position != null &&
-          (event.position! - tapPosition).distance < 10) {
+          (event.position! - tapPosition).distance < 20) {
         event.isSelected = true;
         selectedEvent = event;
       } else {
@@ -312,11 +312,6 @@ int _findCandleIndexForDate(DateTime date) {
   }
 
   void updateFundamentalEvents(List<FundamentalEvent> newEvents) {
-    print('newEvents: $newEvents');
     fundamentalEvents.addAll(newEvents);
-  }
-
-  void addEvents(List<FundamentalEvent> events) {
-    fundamentalEvents.addAll(events);
   }
 }

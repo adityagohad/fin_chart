@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 
 class AddEventDialog extends StatefulWidget {
   final Function(FundamentalEvent) onEventAdded;
+  final List<DateTime> validDates;
 
-  const AddEventDialog({super.key, required this.onEventAdded});
+  const AddEventDialog(
+      {super.key, required this.onEventAdded, required this.validDates});
 
   @override
   State<AddEventDialog> createState() => _AddEventDialogState();
@@ -51,15 +53,38 @@ class _AddEventDialogState extends State<AddEventDialog> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _findClosestValidDate(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      selectableDayPredicate: (DateTime date) {
+        // Check if this date exists in validDates (comparing just the date part)
+        return widget.validDates.any((validDate) =>
+            date.year == validDate.year &&
+            date.month == validDate.month &&
+            date.day == validDate.day);
+      },
     );
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
       });
     }
+  }
+
+  // Helper method to find closest valid date to current selection
+  DateTime _findClosestValidDate() {
+    if (widget.validDates.isEmpty) return DateTime.now();
+
+    if (widget.validDates.any((date) =>
+        date.year == _selectedDate.year &&
+        date.month == _selectedDate.month &&
+        date.day == _selectedDate.day)) {
+      return _selectedDate;
+    }
+
+    // If current selection is invalid, use the most recent date
+    return widget.validDates.last;
   }
 
   Widget _buildEarningsForm() {
