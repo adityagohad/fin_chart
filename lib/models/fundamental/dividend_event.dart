@@ -60,6 +60,7 @@ class DividendEvent extends FundamentalEvent {
   @override
   void drawTooltip(Canvas canvas) {
     if (!isSelected || position == null) return;
+    drawSelectionLine(canvas, topPos, bottomPos);
 
     List<TextSpan> textSpans = [];
 
@@ -81,7 +82,7 @@ class DividendEvent extends FundamentalEvent {
 
     if (exDividendDate != null) {
       textSpans.add(TextSpan(
-        text: 'Ex-Dividend Date: ${_formatDate(exDividendDate!)}\n',
+        text: 'Ex-date: ${_formatDate(exDividendDate!)}\n',
         style: const TextStyle(color: Colors.black, fontSize: 11),
       ));
     }
@@ -152,7 +153,7 @@ class DividendEvent extends FundamentalEvent {
 
 // Draw pointer
     final path = Path()
-      ..moveTo(position!.dx, position!.dy - 5)
+      ..moveTo(position!.dx, position!.dy - 12)
       ..lineTo(position!.dx - 5, rect.bottom)
       ..lineTo(position!.dx + 5, rect.bottom)
       ..close();

@@ -236,7 +236,7 @@ class MainPlotRegion extends PlotRegion {
         text: event.iconText,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 12, // Increased size
+          fontSize: 15, // Increased size
           fontWeight: FontWeight.bold,
         ),
       );
@@ -254,14 +254,16 @@ class MainPlotRegion extends PlotRegion {
         ),
       );
 
-      // If selected, draw tooltip
+      // If selected, draw tooltip and vertical line
       if (event.isSelected) {
+        event.topPos = topPos; // Add this line
+        event.bottomPos = bottomPos; // Add this line
         _drawEventTooltip(canvas, event);
       }
     }
   }
 
-int _findCandleIndexForDate(DateTime date) {
+  int _findCandleIndexForDate(DateTime date) {
     // Find the closest candle to the event date
     for (int i = 0; i < candles.length; i++) {
       final candle = candles[i];
@@ -279,24 +281,6 @@ int _findCandleIndexForDate(DateTime date) {
   void _drawEventTooltip(Canvas canvas, FundamentalEvent event) {
     event.drawTooltip(canvas);
   }
-
-// // Helper method to format date
-//   String _formatDate(DateTime date) {
-//     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-//   }
-
-// // Helper method to format currency
-//   String _formatCurrency(double value) {
-//     if (value >= 1000000000) {
-//       return '\$${(value / 1000000000).toStringAsFixed(2)}B';
-//     } else if (value >= 1000000) {
-//       return '\$${(value / 1000000).toStringAsFixed(2)}M';
-//     } else if (value >= 1000) {
-//       return '\$${(value / 1000).toStringAsFixed(2)}K';
-//     } else {
-//       return '\$${value.toStringAsFixed(2)}';
-//     }
-//   }
 
   void handleEventTap(Offset tapPosition) {
     selectedEvent = null;

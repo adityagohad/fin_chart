@@ -67,25 +67,26 @@ class EarningsEvent extends FundamentalEvent {
   }
 
   String _formatCurrency(double value) {
-    if (value >= 1000000000) {
-      return '\$${(value / 1000000000).toStringAsFixed(2)}B';
-    } else if (value >= 1000000) {
-      return '\$${(value / 1000000).toStringAsFixed(2)}M';
+    if (value >= 10000000) {
+      return '₹${(value / 10000000).toStringAsFixed(2)}Cr';
+    } else if (value >= 100000) {
+      return '₹${(value / 100000).toStringAsFixed(2)}L';
     } else if (value >= 1000) {
-      return '\$${(value / 1000).toStringAsFixed(2)}K';
+      return '₹${(value / 1000).toStringAsFixed(2)}K';
     } else {
-      return '\$${value.toStringAsFixed(2)}';
+      return '₹${value.toStringAsFixed(2)}';
     }
   }
 
   @override
   void drawTooltip(Canvas canvas) {
     if (!isSelected || position == null) return;
+    drawSelectionLine(canvas, topPos, bottomPos);
 
     List<TextSpan> textSpans = [];
 
     textSpans.add(const TextSpan(
-      text: 'Earnings Report\n',
+      text: 'Earnings and Revenue\n',
       style: TextStyle(
           fontWeight: FontWeight.bold, color: Colors.black, fontSize: 12),
     ));
@@ -223,7 +224,7 @@ class EarningsEvent extends FundamentalEvent {
 
 // Draw pointer
     final path = Path()
-      ..moveTo(position!.dx, position!.dy - 5)
+      ..moveTo(position!.dx, position!.dy - 12)
       ..lineTo(position!.dx - 5, rect.bottom)
       ..lineTo(position!.dx + 5, rect.bottom)
       ..close();

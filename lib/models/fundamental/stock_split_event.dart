@@ -48,6 +48,7 @@ class StockSplitEvent extends FundamentalEvent {
   @override
   void drawTooltip(Canvas canvas) {
     if (!isSelected || position == null) return;
+    drawSelectionLine(canvas, topPos, bottomPos);
 
     List<TextSpan> textSpans = [];
 
@@ -125,7 +126,7 @@ class StockSplitEvent extends FundamentalEvent {
 
 // Draw pointer
     final path = Path()
-      ..moveTo(position!.dx, position!.dy - 5)
+      ..moveTo(position!.dx, position!.dy - 12)
       ..lineTo(position!.dx - 5, rect.bottom)
       ..lineTo(position!.dx + 5, rect.bottom)
       ..close();
