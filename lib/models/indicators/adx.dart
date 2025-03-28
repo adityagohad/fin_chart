@@ -48,7 +48,12 @@ class Adx extends Indicator {
 
   @override
   drawIndicator({required Canvas canvas}) {
+    // Check that we have enough data for valid ADX values
     if (candles.isEmpty || adxValues.isEmpty) return;
+
+    // Define starting index for valid values
+    int startIndex = period * 2 - 1; // ADX needs 2*period bars
+    if (startIndex >= adxValues.length || startIndex >= candles.length) return;
 
     // Draw ADX line
     _drawLine(canvas, adxValues, adxLineColor);
@@ -68,7 +73,7 @@ class Adx extends Indicator {
     _drawLevelLine(canvas, 40, Colors.grey.withAlpha((0.5 * 255).toInt()));
     _drawLevelLine(canvas, 60, Colors.grey.withAlpha((0.5 * 255).toInt()));
   }
-
+  
   void _drawLevelLine(Canvas canvas, double level, Color color) {
     canvas.drawLine(
       Offset(leftPos, toY(level)),
@@ -100,11 +105,32 @@ class Adx extends Indicator {
       path.lineTo(toX(i.toDouble()), toY(values[i]));
     }
 
+    // If we have more candles than calculated values, extend the last value
+    if (candles.length > values.length) {
+      double lastValue = values.last;
+      double endX = toX((candles.length - 1).toDouble());
+      path.lineTo(endX, toY(lastValue));
+    }
+
     canvas.drawPath(path, paint);
   }
 
   @override
   calculateYValueRange(List<ICandle> data) {
+
+    // Check for minimum required data first
+    if (data.length < period * 2) {
+      // Set default range for insufficient data
+      yMinValue = 0;
+      yMaxValue = 100;
+      yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
+      yLabelSize = getLargetRnderBoxSizeForList(
+          yValues.map((v) => v.toString()).toList(),
+          const TextStyle(color: Colors.black, fontSize: 12));
+      return;
+    }
     // Recalculate ADX values if necessary
     if (adxValues.isEmpty || diPlusValues.isEmpty || diMinusValues.isEmpty) {
       // If we have candles data but no ADX values, calculate them first
@@ -204,6 +230,11 @@ class Adx extends Indicator {
       return; // Not enough data
     }
 
+    // Initialize arrays with zeros - use exact candle length
+    adxValues.addAll(List.filled(candles.length, 0));
+    diPlusValues.addAll(List.filled(candles.length, 0));
+    diMinusValues.addAll(List.filled(candles.length, 0));
+
     // Calculate True Range (TR), +DM, -DM
     List<double> trValues = [];
     List<double> plusDM = [];
@@ -248,55 +279,37 @@ class Adx extends Indicator {
     List<double> smoothedMinusDM = _calculateSmoothedValues(minusDM);
 
     // Calculate +DI and -DI
-    List<double> diPlus = [];
-    List<double> diMinus = [];
-
     for (int i = 0; i < smoothedTR.length; i++) {
+      int actualIndex =
+          i + period - 1; // Map the smoothed index to original index
       if (smoothedTR[i] > 0) {
-        diPlus.add((smoothedPlusDM[i] / smoothedTR[i]) * 100);
-        diMinus.add((smoothedMinusDM[i] / smoothedTR[i]) * 100);
-      } else {
-        diPlus.add(0);
-        diMinus.add(0);
+        diPlusValues[actualIndex] = (smoothedPlusDM[i] / smoothedTR[i]) * 100;
+        diMinusValues[actualIndex] = (smoothedMinusDM[i] / smoothedTR[i]) * 100;
       }
     }
-
-    diPlusValues.addAll(diPlus);
-    diMinusValues.addAll(diMinus);
 
     // Calculate DX (Directional Index)
-    List<double> dx = [];
-    for (int i = 0; i < diPlus.length; i++) {
-      double sum = diPlus[i] + diMinus[i];
+    List<double> dx = List.filled(candles.length, 0);
+    for (int i = period - 1; i < candles.length; i++) {
+      double sum = diPlusValues[i] + diMinusValues[i];
       if (sum > 0) {
-        dx.add(((diPlus[i] - diMinus[i]).abs() / sum) * 100);
-      } else {
-        dx.add(0);
+        dx[i] = ((diPlusValues[i] - diMinusValues[i]).abs() / sum) * 100;
       }
     }
 
-    // Calculate ADX (Average of DX)
-    List<double> adx = [];
-    // Fill with zeros for the first (period-1) values
-    for (int i = 0; i < period - 1; i++) {
-      adx.add(0);
-    }
-
-    // First ADX value is simple average of first 'period' DX values
-    if (dx.length >= period) {
+    // First ADX value (at index period*2-1) is average of period DX values
+    if (candles.length >= period * 2) {
       double sum = 0;
-      for (int i = 0; i < period; i++) {
+      for (int i = period; i < period * 2; i++) {
         sum += dx[i];
       }
-      adx.add(sum / period);
+      adxValues[period * 2 - 1] = sum / period;
 
-      // Calculate rest of ADX values using smoothing
-      for (int i = period; i < dx.length; i++) {
-        adx.add(((adx[adx.length - 1] * (period - 1)) + dx[i]) / period);
+      // Calculate subsequent ADX values using Wilder's smoothing
+      for (int i = period * 2; i < candles.length; i++) {
+        adxValues[i] = (adxValues[i - 1] * (period - 1) + dx[i]) / period;
       }
     }
-
-    adxValues.addAll(adx);
   }
 
   List<double> _calculateSmoothedValues(List<double> values) {
