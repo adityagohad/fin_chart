@@ -78,6 +78,9 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.waitTask:
         setState(() {});
         break;
+      case TaskType.addMcq:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
     // if (currentTask.actionType == ActionType.empty) {
     //   onTaskFinish();

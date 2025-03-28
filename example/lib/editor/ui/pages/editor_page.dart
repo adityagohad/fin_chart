@@ -2,12 +2,14 @@ import 'dart:convert';
 
 import 'package:example/editor/ui/pages/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
+import 'package:fin_chart/models/enums/mcq_arrangment_type.dart';
 import 'package:fin_chart/models/indicators/atr.dart';
 import 'package:fin_chart/models/indicators/mfi.dart';
 import 'package:fin_chart/models/indicators/adx.dart';
 import 'package:fin_chart/models/tasks/add_data.task.dart';
 import 'package:fin_chart/models/tasks/add_indicator.task.dart';
 import 'package:fin_chart/models/tasks/add_layer.task.dart';
+import 'package:fin_chart/models/tasks/add_mcq.task.dart';
 import 'package:fin_chart/models/tasks/add_prompt.task.dart';
 import 'package:fin_chart/models/enums/task_type.dart';
 import 'package:fin_chart/models/recipe.dart';
@@ -159,6 +161,7 @@ class _EditorPageState extends State<EditorPage> {
         switch (task.taskType) {
           case TaskType.addPrompt:
           case TaskType.waitTask:
+          case TaskType.addMcq:
             break;
           case TaskType.addData:
             VerticalLine layer = VerticalLine.fromTool(
@@ -395,6 +398,9 @@ class _EditorPageState extends State<EditorPage> {
         case TaskType.waitTask:
           waitTaskPrompt();
           break;
+        case TaskType.addMcq:
+          mcqPrompt();
+          break;
       }
       if (pos >= 0 && pos <= tasks.length) {
         insertPosition = pos;
@@ -420,6 +426,9 @@ class _EditorPageState extends State<EditorPage> {
       case TaskType.waitTask:
         editWaitTask(task as WaitTask);
         break;
+      case TaskType.addMcq:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
@@ -498,6 +507,17 @@ class _EditorPageState extends State<EditorPage> {
         if (data != null) {
           task.btnText = data.btnText;
         }
+      });
+    });
+  }
+
+  void mcqPrompt() async {
+    await showMcqTaskDialog(context: context).then((data) {
+      setState(() {
+        if (data != null) {
+          tasks.insert(insertPosition, data);
+        }
+        _currentTaskType = null;
       });
     });
   }
@@ -666,6 +686,267 @@ class _EditorPageState extends State<EditorPage> {
               child: const Text('OK'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Future<AddMcqTask?> showMcqTaskDialog({
+    required BuildContext context,
+    AddMcqTask? initialTask,
+  }) async {
+    // Initialize state based on initialTask or defaults
+    bool isMultiSelect = initialTask?.isMultiSelect ?? false;
+    MCQArrangementType arrangementType =
+        initialTask?.arrangementType ?? MCQArrangementType.grid1x2;
+    List<String> options =
+        initialTask?.options != null && initialTask!.options.isNotEmpty
+            ? List<String>.from(initialTask.options)
+            : ['', ''];
+
+    // Convert correctOptionIndices to selectedOptions boolean array
+    List<bool> selectedOptions =
+        List.generate(options.length, (index) => false);
+    if (initialTask != null) {
+      for (String index in initialTask.correctOptionIndices) {
+        int idx = int.tryParse(index) ?? -1;
+        if (idx >= 0 && idx < selectedOptions.length) {
+          selectedOptions[idx] = true;
+        }
+      }
+    }
+
+    return showDialog<AddMcqTask>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: 500,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: isMultiSelect,
+                          onChanged: (value) {
+                            setState(() {
+                              isMultiSelect = value ?? false;
+
+                              // If switching to single select and multiple options are selected,
+                              // keep only the first selected option
+                              if (!isMultiSelect &&
+                                  selectedOptions.where((so) => so).length >
+                                      1) {
+                                int firstSelectedIndex =
+                                    selectedOptions.indexOf(true);
+                                for (int i = 0;
+                                    i < selectedOptions.length;
+                                    i++) {
+                                  selectedOptions[i] =
+                                      (i == firstSelectedIndex);
+                                }
+                              }
+                            });
+                          },
+                        ),
+                        const Text('Allow multiple selections'),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Arrangement type dropdown
+                    Row(
+                      children: [
+                        const Text('Arrangement: '),
+                        const SizedBox(width: 16),
+                        DropdownButton<MCQArrangementType>(
+                          value: arrangementType,
+                          onChanged: (MCQArrangementType? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                arrangementType = newValue;
+                              });
+                            }
+                          },
+                          items: MCQArrangementType.values
+                              .map((MCQArrangementType type) {
+                            return DropdownMenuItem<MCQArrangementType>(
+                              value: type,
+                              child: Text(type.name),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Text(
+                      'Options',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // List of options
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (context, index) {
+                          final TextEditingController optionController =
+                              TextEditingController(text: options[index]);
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                // Checkbox for correct option
+                                Checkbox(
+                                  value: selectedOptions[index],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (isMultiSelect) {
+                                        selectedOptions[index] = value ?? false;
+                                      } else {
+                                        // For single select, uncheck all others
+                                        for (int i = 0;
+                                            i < selectedOptions.length;
+                                            i++) {
+                                          selectedOptions[i] =
+                                              i == index && (value ?? false);
+                                        }
+                                      }
+                                    });
+                                  },
+                                ),
+
+                                // Option text field
+                                Expanded(
+                                  child: TextField(
+                                    controller: optionController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Option ${index + 1}',
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                    onChanged: (value) {
+                                      options[index] = value;
+                                    },
+                                  ),
+                                ),
+
+                                // Remove option button
+                                if (options.length > 2)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () {
+                                      setState(() {
+                                        options.removeAt(index);
+                                        selectedOptions.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Add option button
+                    TextButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Option'),
+                      onPressed: () {
+                        setState(() {
+                          options.add('');
+                          selectedOptions.add(false);
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Action buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          child: const Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Returns null
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Validate
+                            if (!selectedOptions.contains(true)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please select at least one correct option')),
+                              );
+                              return;
+                            }
+
+                            if (options
+                                .any((option) => option.trim().isEmpty)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text('Please fill in all options')),
+                              );
+                              return;
+                            }
+
+                            // Create list of correct option indices
+                            List<String> correctOptionIndices = [];
+                            for (int i = 0; i < selectedOptions.length; i++) {
+                              if (selectedOptions[i]) {
+                                correctOptionIndices.add(i.toString());
+                              }
+                            }
+
+                            // Create the task (preserve original id if editing)
+                            final task = initialTask != null
+                                ? AddMcqTask(
+                                    isMultiSelect: isMultiSelect,
+                                    arrangementType: arrangementType,
+                                    options: options,
+                                    correctOptionIndices: correctOptionIndices,
+                                  )
+                                : AddMcqTask(
+                                    isMultiSelect: isMultiSelect,
+                                    arrangementType: arrangementType,
+                                    options: options,
+                                    correctOptionIndices: correctOptionIndices,
+                                  );
+
+                            Navigator.of(context).pop(task);
+                          },
+                          child:
+                              Text(initialTask != null ? 'Update' : 'Create'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
