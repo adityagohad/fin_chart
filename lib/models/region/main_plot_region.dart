@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fin_chart/models/enums/candle_state.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
@@ -11,20 +13,33 @@ class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
   final List<Indicator> indicators = [];
 
-  MainPlotRegion(
-      {String? id, required this.candles, required super.yAxisSettings})
-      : super(id: id ?? generateV4()) {
-    (double, double) range = findMinMaxWithPercentage(candles);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
+  MainPlotRegion({
+    String? id,
+    required this.candles,
+    required super.yAxisSettings,
+    super.yMinValue,
+    super.yMaxValue,
+  }) : super(id: id ?? generateV4()) {
+    if (candles.isNotEmpty) {
+      (double, double) range = findMinMaxWithPercentage(candles);
 
-    yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+      if (yMinValue == 0 && yMaxValue == 1) {
+        yMinValue = range.$1;
+        yMaxValue = range.$2;
+      } else {
+        yMinValue = min(range.$1, yMinValue);
+        yMaxValue = max(range.$2, yMaxValue);
+      }
 
-    yMinValue = yValues.first;
-    yMaxValue = yValues.last;
+      yValues = generateNiceAxisValues(yMinValue, yMaxValue);
 
-    yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
+
+      yLabelSize = getLargetRnderBoxSizeForList(
+          yValues.map((v) => v.toString()).toList(),
+          yAxisSettings.axisTextStyle);
+    }
   }
 
   @override
@@ -63,8 +78,14 @@ class MainPlotRegion extends PlotRegion {
   void updateData(List<ICandle> data) {
     candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
     (double, double) range = findMinMaxWithPercentage(candles);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
+
+    if (yMinValue == 0 && yMaxValue == 1) {
+      yMinValue = range.$1;
+      yMaxValue = range.$2;
+    } else {
+      yMinValue = min(range.$1, yMinValue);
+      yMaxValue = max(range.$2, yMaxValue);
+    }
 
     yValues = generateNiceAxisValues(yMinValue, yMaxValue);
 
