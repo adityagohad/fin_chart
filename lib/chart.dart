@@ -130,16 +130,11 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     Recipe recipe = widget.recipe!;
 
     (double, double) range = findMinMaxWithPercentage(recipe.data);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
 
-    List<double> yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+    List<double> yValues = generateNiceAxisValues(range.$1, range.$2);
 
     yMinValue = yValues.first;
     yMaxValue = yValues.last;
-
-    print(yMinValue);
-    print(yMaxValue);
 
     regions.add(MainPlotRegion(
         id: recipe.chartSettings.mainPlotRegionId,
@@ -338,27 +333,27 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              if (widget.recipe == null)
-                ...regions.map((region) => region.renderIndicatorToolTip(
-                    selectedIndicator: selectedIndicator,
-                    onClick: (indicator) {
-                      widget.onIndicatorSelect?.call(indicator);
-                      setState(() {
-                        selectedIndicator = indicator;
-                      });
-                    },
-                    onSettings: () {
-                      selectedIndicator?.showIndicatorSettings(
-                          context: context,
-                          onUpdate: (indicator) {
-                            setState(() {
-                              selectedIndicator = indicator;
-                            });
+              ...regions.map((region) => region.renderIndicatorToolTip(
+                  selectedIndicator:
+                      widget.recipe != null ? null : selectedIndicator,
+                  onClick: (indicator) {
+                    widget.onIndicatorSelect?.call(indicator);
+                    setState(() {
+                      selectedIndicator = indicator;
+                    });
+                  },
+                  onSettings: () {
+                    selectedIndicator?.showIndicatorSettings(
+                        context: context,
+                        onUpdate: (indicator) {
+                          setState(() {
+                            selectedIndicator = indicator;
                           });
-                    },
-                    onDelete: () {
-                      removeIndicator(selectedIndicator!);
-                    })),
+                        });
+                  },
+                  onDelete: () {
+                    removeIndicator(selectedIndicator!);
+                  })),
               if (widget.recipe == null)
                 selectedLayer == null
                     ? Container()
@@ -428,10 +423,10 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
     double lastCandlePosition =
         xStepWidth / 2 + (currentData.length - 1) * xStepWidth;
 
-    if (lastCandlePosition < (rightPos - leftPos) / 2) {
+    if (lastCandlePosition < (rightPos - leftPos) * 0.8) {
       return 0;
     } else {
-      return -lastCandlePosition + (rightPos - leftPos) / 2;
+      return -lastCandlePosition + (rightPos - leftPos) * 0.8;
     }
   }
 
@@ -588,6 +583,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   _onScaleStart(ScaleStartDetails details) {
     setState(() {
       _isAnimating = false;
+      isUserInteracting = true;
       if (details.pointerCount == 2) {
         previousHorizontalScale = horizontalScale;
         lastFocalPoint = details.focalPoint;
@@ -598,6 +594,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
   _onScaleEnd(ScaleEndDetails details) {
     setState(() {
       lastFocalPoint = null;
+      isUserInteracting = false;
       _handleSwipeEnd(details);
       selectedRegionForResize.clear();
     });

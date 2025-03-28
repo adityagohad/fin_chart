@@ -20,18 +20,26 @@ class MainPlotRegion extends PlotRegion {
     super.yMinValue,
     super.yMaxValue,
   }) : super(id: id ?? generateV4()) {
-    (double, double) range = findMinMaxWithPercentage(candles);
+    if (candles.isNotEmpty) {
+      (double, double) range = findMinMaxWithPercentage(candles);
 
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
+      if (yMinValue == 0 && yMaxValue == 1) {
+        yMinValue = range.$1;
+        yMaxValue = range.$2;
+      } else {
+        yMinValue = min(range.$1, yMinValue);
+        yMaxValue = max(range.$2, yMaxValue);
+      }
 
-    yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+      yValues = generateNiceAxisValues(yMinValue, yMaxValue);
 
-    yMinValue = min(yValues.first, super.yMinValue);
-    yMaxValue = max(yValues.last, super.yMaxValue);
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
 
-    yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+      yLabelSize = getLargetRnderBoxSizeForList(
+          yValues.map((v) => v.toString()).toList(),
+          yAxisSettings.axisTextStyle);
+    }
   }
 
   @override
@@ -70,38 +78,19 @@ class MainPlotRegion extends PlotRegion {
   void updateData(List<ICandle> data) {
     candles.addAll(data.sublist(candles.isEmpty ? 0 : candles.length));
     (double, double) range = findMinMaxWithPercentage(candles);
-    yMinValue = range.$1;
-    yMaxValue = range.$2;
 
-    print(yMinValue);
-    print(yMaxValue);
-
-    print(super.yMinValue);
-    print(super.yMaxValue);
-
-    yMinValue = min(yMaxValue, super.yMinValue);
-    yMaxValue = max(yMinValue, super.yMaxValue);
-
-    print(yMinValue);
-    print(yMaxValue);
+    if (yMinValue == 0 && yMaxValue == 1) {
+      yMinValue = range.$1;
+      yMaxValue = range.$2;
+    } else {
+      yMinValue = min(range.$1, yMinValue);
+      yMaxValue = max(range.$2, yMaxValue);
+    }
 
     yValues = generateNiceAxisValues(yMinValue, yMaxValue);
 
-    print(yValues);
-    print("============================================");
-
-    yMinValue = min(yValues.first, super.yMinValue);
-    yMaxValue = max(yValues.last, super.yMaxValue);
-
-    // if (yValues.first < super.yMinValue || yValues.last > super.yMaxValue) {
-    //   //yValues = generateNiceAxisValues(super.yMinValue, super.yMaxValue);
-    //   print("============================================");
-
-    //   print(yMinValue);
-    //   print(yMaxValue);
-
-    //   print("============================================");
-    // }
+    yMinValue = yValues.first;
+    yMaxValue = yValues.last;
 
     yLabelSize = getLargetRnderBoxSizeForList(
         yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
