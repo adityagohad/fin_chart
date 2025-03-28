@@ -1,8 +1,10 @@
+import 'package:fin_chart/data/candle_data_json.dart';
 import 'package:fin_chart/models/i_candle.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/ui/indicator_settings/atr_settings_dialog.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class Atr extends Indicator {
   int period;
@@ -28,8 +30,72 @@ class Atr extends Indicator {
   });
 
   @override
+  calculateYValueRange(List<ICandle> data) {
+    // Check for minimum required data first
+    if (data.length < period + 1) {
+      // Set default range for insufficient data
+      yMinValue = 0;
+      yMaxValue = 1;
+      yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+      yMinValue = yValues.first;
+      yMaxValue = yValues.last;
+      yLabelSize = getLargetRnderBoxSizeForList(
+          yValues.map((v) => v.toString()).toList(),
+          const TextStyle(color: Colors.black, fontSize: 12));
+      return;
+    }
+
+    // Recalculate ATR values if necessary
+    if (atrValues.isEmpty) {
+      // If we have candles data but no ATR values, calculate them first
+      if (candles.isNotEmpty) {
+        _calculateATR(data);
+      }
+      // If we have input data but no candles, update our candles list
+      else if (data.isNotEmpty) {
+        // candles.addAll(data);
+        _calculateATR(data);
+      }
+    }
+
+    // Find min and max values for y-axis
+    double minValue = double.infinity;
+    double maxValue = double.negativeInfinity;
+
+    for (int i = period - 1; i < atrValues.length; i++) {
+      minValue = math.min(minValue, atrValues[i]);
+      maxValue = math.max(maxValue, atrValues[i]);
+    }
+
+    // Add some padding
+    double range = maxValue - minValue;
+    minValue = math.max(0, minValue - range * 0.1); // Don't go below 0
+    maxValue += range * 0.1;
+
+    if (minValue == double.infinity) {
+      minValue = 0;
+    }
+
+    if (maxValue == double.negativeInfinity) {
+      maxValue = 1;
+    }
+
+    yMinValue = minValue;
+    yMaxValue = maxValue;
+
+    yValues = generateNiceAxisValues(yMinValue, yMaxValue);
+    yMinValue = yValues.first;
+    yMaxValue = yValues.last;
+    yLabelSize = getLargetRnderBoxSizeForList(
+        yValues.map((v) => v.toString()).toList(),
+        const TextStyle(color: Colors.black, fontSize: 12));
+  }
+
+  @override
   drawIndicator({required Canvas canvas}) {
-    if (candles.isEmpty || atrValues.isEmpty) return;
+    if (candles.isEmpty || atrValues.isEmpty || candles.length <= period) {
+      return;
+    }
 
     final paint = Paint()
       ..color = lineColor
@@ -40,7 +106,11 @@ class Atr extends Indicator {
     bool pathStarted = false;
 
     // Draw from the first valid ATR value (after period-1)
-    for (int i = period - 1; i < atrValues.length; i++) {
+    for (int i = period - 1;
+        i < math.min(atrValues.length, candles.length);
+        i++) {
+      if (atrValues[i] <= 0) continue; // Skip invalid values
+
       final x = toX(i.toDouble());
       final y = toY(atrValues[i]);
 
@@ -70,78 +140,62 @@ class Atr extends Indicator {
       }
     }
 
-    _calculateATR();
+    // Calculate ATR values by explicitly passing candles
+    _calculateATR(candles);
 
-    // Find min and max values for y-axis
-    double minValue = 0; // ATR is always positive
-    double maxValue = 0;
-
-    for (int i = period - 1; i < atrValues.length; i++) {
-      maxValue = maxValue > atrValues[i] ? maxValue : atrValues[i];
-    }
-
-    // Add some padding
-    maxValue *= 1.1;
-
-    yMinValue = minValue;
-    yMaxValue = maxValue;
-
-    yValues = generateNiceAxisValues(yMinValue, yMaxValue);
-    yMinValue = yValues.first;
-    yMaxValue = yValues.last;
-    yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(),
-        const TextStyle(color: Colors.black, fontSize: 12));
+    // Call calculateYValueRange instead of implementing the logic here
+    calculateYValueRange(data);
   }
 
-  @override
-  calculateYValueRange(List<ICandle> data) {}
-
-  void _calculateATR() {
+  void _calculateATR(List<ICandle> candles) {
     atrValues.clear();
 
     if (candles.length < period + 1) {
       return; // Need at least period+1 candles
     }
 
-    List<double> trueRanges = [];
+  // Initialize array with zeros - use exact candle length
+  atrValues.addAll(List.filled(data.length, 0));
 
-    // Calculate first true range
-    double tr = candles[0].high - candles[0].low;
-    trueRanges.add(tr);
+  // Calculate first true range
+  double tr = candles[0].high - candles[0].low;
 
-    // Calculate subsequent true ranges
-    for (int i = 1; i < candles.length; i++) {
-      double highLow = candles[i].high - candles[i].low;
-      double highPrevClose = (candles[i].high - candles[i - 1].close).abs();
-      double lowPrevClose = (candles[i].low - candles[i - 1].close).abs();
+  // Calculate subsequent true ranges
+  for (int i = 1; i < candles.length; i++) {
+    double highLow = candles[i].high - candles[i].low;
+    double highPrevClose = (candles[i].high - candles[i - 1].close).abs();
+    double lowPrevClose = (candles[i].low - candles[i - 1].close).abs();
 
-      tr = [highLow, highPrevClose, lowPrevClose]
-          .reduce((curr, next) => curr > next ? curr : next);
-      trueRanges.add(tr);
-    }
+    tr = [highLow, highPrevClose, lowPrevClose]
+        .reduce((curr, next) => curr > next ? curr : next);
 
-    // Calculate first ATR (simple average for first 'period' days)
-    double firstATR = 0;
-    for (int i = 0; i < period; i++) {
-      firstATR += trueRanges[i];
-    }
-    firstATR /= period;
-
-    // Add placeholders for values before the first valid ATR
-    for (int i = 0; i < period - 1; i++) {
-      atrValues.add(0);
-    }
-
-    // Add first valid ATR
-    atrValues.add(firstATR);
-
-    // Calculate subsequent ATRs using smoothing formula: ATR = (Prior ATR * (period-1) + Current TR) / period
-    for (int i = period; i < trueRanges.length; i++) {
-      double atr = (atrValues.last * (period - 1) + trueRanges[i]) / period;
-      atrValues.add(atr);
+    // Just calculate TR values here, don't store them in a separate list
+    
+    // For the first period-1 candles, ATR is 0
+    if (i >= period) {
+      // Calculate ATR using smoothing formula
+      atrValues[i] = (atrValues[i-1] * (period - 1) + tr) / period;
+    } else if (i == period - 1) {
+      // Calculate first ATR (simple average for first 'period' days)
+      double sum = 0;
+      for (int j = 0; j < period; j++) {
+        // Need to recalculate TR for previous days
+        double prevTR;
+        if (j == 0) {
+          prevTR = candles[j].high - candles[j].low;
+        } else {
+          double prevHighLow = candles[j].high - candles[j].low;
+          double prevHighPrevClose = (candles[j].high - candles[j-1].close).abs();
+          double prevLowPrevClose = (candles[j].low - candles[j-1].close).abs();
+          prevTR = [prevHighLow, prevHighPrevClose, prevLowPrevClose]
+              .reduce((curr, next) => curr > next ? curr : next);
+        }
+        sum += prevTR;
+      }
+      atrValues[i] = sum / period;
     }
   }
+}
 
   @override
   void showIndicatorSettings(
