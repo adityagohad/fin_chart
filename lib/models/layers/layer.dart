@@ -2,6 +2,7 @@ import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/arrow.dart';
 import 'package:fin_chart/models/layers/circular_area.dart';
+import 'package:fin_chart/models/layers/crosshair.dart';
 import 'package:fin_chart/models/layers/horizontal_line.dart';
 import 'package:fin_chart/models/layers/label.dart';
 import 'package:fin_chart/models/layers/rect_area.dart';
@@ -39,6 +40,8 @@ abstract class Layer with RegionProp {
         return VerticalLine.fromJson(json: json);
       case LayerType.parallelChannel:
         return ParallelChannel.fromJson(json: json);
+      case LayerType.crosshair:
+        return Crosshair.fromJson(json: json);
       default:
         throw UnimplementedError();
     }

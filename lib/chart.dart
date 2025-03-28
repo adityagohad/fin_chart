@@ -4,6 +4,7 @@ import 'package:fin_chart/models/chart_settings.dart';
 import 'package:fin_chart/models/enums/data_fit_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/models/layers/crosshair.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/recipe.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
@@ -280,6 +281,7 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
                   onDoubleTap: _onDoubleTap,
                   onScaleStart: _onScaleStart,
                   onScaleEnd: _onScaleEnd,
+                  onLongPress: _onLongPress,
                   onScaleUpdate: (details) =>
                       _onScaleUpdate(details, constraints),
                   child: CustomPaint(
@@ -414,6 +416,65 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
           yMaxValue: regions[i].yMaxValue);
       tempTopPos = tempTopPos + height;
     }
+  }
+
+  void _onLongPress() {
+    setState(() {
+      // Check if there's already a crosshair
+      Layer? existingCrosshair;
+      for (PlotRegion region in regions) {
+        for (Layer layer in region.layers) {
+          if (layer.type == LayerType.crosshair) {
+            existingCrosshair = layer;
+            break;
+          }
+        }
+        if (existingCrosshair != null) break;
+      }
+
+      if (existingCrosshair != null) {
+        // Remove existing crosshair
+        for (PlotRegion region in regions) {
+          region.layers
+              .removeWhere((layer) => layer.type == LayerType.crosshair);
+        }
+      } else {
+        // Use the main region for coordinates
+        final mainRegion = regions[0];
+
+        // Create crosshair at the center of the current visible area
+        final centerX = (rightPos - leftPos) / 2 + leftPos;
+        final centerY = (bottomPos - topPos) / 2 + topPos;
+
+        // Convert to data coordinates using the region's methods
+        final dataX = mainRegion.toXInverse(centerX);
+        final dataY = mainRegion.toYInverse(centerY);
+
+        final crosshair = Crosshair.fromTool(
+          position: Offset(dataX, dataY),
+        );
+        crosshair.yAxisPos = widget.yAxisSettings!.yAxisPos;
+        crosshair.xAxisPos = widget.xAxisSettings!.xAxisPos;
+
+        // Update the region properties
+        crosshair.updateRegionProp(
+          leftPos: leftPos,
+          topPos: topPos,
+          rightPos: rightPos,
+          bottomPos: bottomPos,
+          xStepWidth: xStepWidth,
+          xOffset: xOffset,
+          yMinValue: mainRegion.yMinValue,
+          yMaxValue: mainRegion.yMaxValue,
+        );
+
+        // Add to main region
+        mainRegion.addLayer(crosshair);
+
+        // Update data for candle snapping
+        crosshair.updateData(currentData);
+      }
+    });
   }
 
   _recalculate(BoxConstraints constraints) {

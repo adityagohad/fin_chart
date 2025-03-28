@@ -5,6 +5,7 @@ import 'package:example/dialog/add_data_dialog.dart';
 import 'package:fin_chart/models/indicators/atr.dart';
 import 'package:fin_chart/models/indicators/mfi.dart';
 import 'package:fin_chart/models/indicators/adx.dart';
+import 'package:fin_chart/models/layers/crosshair.dart';
 import 'package:fin_chart/models/tasks/add_data.task.dart';
 import 'package:fin_chart/models/tasks/add_indicator.task.dart';
 import 'package:fin_chart/models/tasks/add_layer.task.dart';
@@ -303,6 +304,33 @@ class _EditorPageState extends State<EditorPage> {
           } else {
             layer = null;
           }
+          break;
+        case LayerType.crosshair:
+          // Create a crosshair at the tapped position
+          final crosshair = Crosshair.fromTool(
+            position: Offset(tapDownPoint.dx, tapDownPoint.dy),
+          );
+          crosshair.updateRegionProp(
+            leftPos: selectedRegion!.leftPos,
+            topPos: selectedRegion!.topPos,
+            rightPos: selectedRegion!.rightPos,
+            bottomPos: selectedRegion!.bottomPos,
+            xStepWidth: selectedRegion!.xStepWidth,
+            xOffset: selectedRegion!.xOffset,
+            yMinValue: selectedRegion!.yMinValue,
+            yMaxValue: selectedRegion!.yMaxValue,
+          );
+          crosshair.updateData(candleData);
+          _chartKey.currentState?.addLayerUsingTool(crosshair);
+
+          if (_isRecording) {
+            setState(() {
+              tasks.add(
+                AddLayerTask(regionId: selectedRegion!.id, layer: crosshair),
+              );
+            });
+          }
+          _selectedLayerType = null;
           break;
         case LayerType.verticalLine:
           layer = VerticalLine.fromTool(pos: tapDownPoint.dx);
