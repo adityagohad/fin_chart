@@ -27,7 +27,7 @@ abstract class AxisSettings {
   static TextStyle textStyleFromJson(Map<String, dynamic> json) {
     return TextStyle(
       color: colorFromJson(json['color']),
-      fontSize: json['fontSize'].toDouble(),
+      fontSize: json['fontSize'],
       fontWeight: fontWeightFromJson(json['fontWeight']),
     );
   }
