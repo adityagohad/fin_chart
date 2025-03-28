@@ -94,6 +94,9 @@ class Atr extends Indicator {
         const TextStyle(color: Colors.black, fontSize: 12));
   }
 
+  @override
+  calculateYValueRange(List<ICandle> data) {}
+
   void _calculateATR() {
     atrValues.clear();
 

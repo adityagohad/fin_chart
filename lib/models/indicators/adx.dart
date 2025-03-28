@@ -109,13 +109,14 @@ class Adx extends Indicator {
     if (adxValues.isEmpty || diPlusValues.isEmpty || diMinusValues.isEmpty) {
       // If we have candles data but no ADX values, calculate them first
       if (candles.isNotEmpty) {
-        _calculateADX();
+        _calculateADX(data);
       }
       // If we have input data but no candles, update our candles list
       else if (data.isNotEmpty) {
-        candles.addAll(data);
-        _calculateADX();
+        //candles.addAll(data);
+        _calculateADX(data);
       }
+
       // If no data is available, we can't calculate the range
       else {
         return;
@@ -143,6 +144,17 @@ class Adx extends Indicator {
     double range = maxValue - minValue;
     minValue = max(0, minValue - range * 0.1); // Don't go below 0
     maxValue = maxValue + range * 0.1;
+
+    // print(maxValue);
+    // print(minValue);
+
+    if (minValue == double.infinity) {
+      minValue = 0;
+    }
+
+    if (maxValue == double.negativeInfinity) {
+      maxValue = 100;
+    }
 
     if (yMinValue == 0 && yMaxValue == 1) {
       yMinValue = minValue;
@@ -177,13 +189,13 @@ class Adx extends Indicator {
     }
 
     // Calculate ADX values
-    _calculateADX();
+    _calculateADX(candles);
 
     // Call calculateYValueRange instead of implementing the logic here
     calculateYValueRange(data);
   }
 
-  void _calculateADX() {
+  void _calculateADX(List<ICandle> candles) {
     adxValues.clear();
     diPlusValues.clear();
     diMinusValues.clear();

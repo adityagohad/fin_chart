@@ -182,6 +182,10 @@ class ChartState extends State<Chart> with TickerProviderStateMixin {
 
         _updateRegionBounds(multiplier);
 
+        if (widget.recipe != null) {
+          indicator.calculateYValueRange(widget.recipe!.data);
+        }
+
         region.updateData(currentData);
 
         region.updateRegionProp(
