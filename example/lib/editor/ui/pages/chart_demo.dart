@@ -141,4 +141,23 @@ class _ChartDemoState extends State<ChartDemo> {
       )),
     );
   }
+
+  Widget userActionContainer() {
+    switch (currentTask.taskType) {
+      case TaskType.addData:
+      case TaskType.addIndicator:
+      case TaskType.addLayer:
+      case TaskType.addPrompt:
+        return Container();
+      case TaskType.addMcq:
+        Task task = currentTask as AddMcqTask;
+        return Container();
+      case TaskType.waitTask:
+        return ElevatedButton(
+            onPressed: () {
+              onTaskFinish();
+            },
+            child: Text((currentTask as WaitTask).btnText));
+    }
+  }
 }
