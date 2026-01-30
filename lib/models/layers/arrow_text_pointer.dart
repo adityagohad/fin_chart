@@ -69,7 +69,7 @@ class ArrowTextPointer extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     final Offset tip = toCanvas(pos);
 
     // Calculate points for 2D arrow

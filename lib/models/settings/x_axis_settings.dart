@@ -6,11 +6,12 @@ enum XAxisPos { top, bottom }
 class XAxisSettings extends AxisSettings {
   final XAxisPos xAxisPos;
 
-  const XAxisSettings(
-      {super.axisTextStyle,
-      super.axisColor,
-      super.strokeWidth,
-      this.xAxisPos = XAxisPos.bottom});
+  const XAxisSettings({
+    super.axisTextStyle,
+    super.axisColor,
+    super.strokeWidth,
+    this.xAxisPos = XAxisPos.bottom,
+  });
 
   @override
   Map<String, dynamic> toJson() {
@@ -21,9 +22,12 @@ class XAxisSettings extends AxisSettings {
 
   factory XAxisSettings.fromJson(Map<String, dynamic> json) {
     return XAxisSettings(
-      axisTextStyle: AxisSettings.textStyleFromJson(json['axisTextStyle']),
+      axisTextStyle: json['axisTextStyle'] != null
+          ? AxisSettings.textStyleFromJson(json['axisTextStyle'])
+          : null,
       strokeWidth: json['strokeWidth'].toDouble(),
-      axisColor: colorFromJson(json['axisColor']),
+      axisColor:
+          json['axisColor'] != null ? colorFromJson(json['axisColor']) : null,
       xAxisPos: XAxisPos.values.firstWhere(
         (pos) => pos.name == json['xAxisPos'],
         orElse: () => XAxisPos.bottom,

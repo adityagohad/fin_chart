@@ -81,7 +81,7 @@ class ParallelChannel extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     final path = Path();
     path.moveTo(toX(topLeft.dx), toY(topLeft.dy));
     path.lineTo(toX(topRight.dx), toY(topRight.dy));

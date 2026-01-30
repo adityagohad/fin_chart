@@ -38,7 +38,7 @@ class VerticalLine extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     canvas.drawLine(
         Offset(toX(pos) + xStepWidth / 2, topPos),
         Offset(toX(pos) + xStepWidth / 2, bottomPos),

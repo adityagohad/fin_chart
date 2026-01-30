@@ -44,7 +44,7 @@ class HorizontalLine extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     canvas.drawLine(
         Offset(leftPos, toY(value)),
         Offset(rightPos, toY(value)),

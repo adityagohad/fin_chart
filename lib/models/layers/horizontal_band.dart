@@ -43,7 +43,7 @@ class HorizontalBand extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     canvas.drawRect(
         Rect.fromLTWH(leftPos, toY(value) - allowedError / 2,
             rightPos - leftPos, allowedError),

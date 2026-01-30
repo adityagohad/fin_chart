@@ -87,7 +87,7 @@ class RectArea extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     canvas.drawRect(
         Rect.fromPoints(toCanvas(topLeft), toCanvas(bottomRight)),
         Paint()

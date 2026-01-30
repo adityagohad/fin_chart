@@ -23,6 +23,7 @@ class MainPlotRegion extends PlotRegion {
     String? id,
     required this.candles,
     required super.yAxisSettings,
+    required super.theme,
     super.yMinValue,
     super.yMaxValue,
     this.chartType = ChartType.candlestick,
@@ -45,7 +46,7 @@ class MainPlotRegion extends PlotRegion {
 
       yLabelSize = getLargetRnderBoxSizeForList(
           yValues.map((v) => v.toString()).toList(),
-          yAxisSettings.axisTextStyle);
+          yAxisSettings.getEffectiveTextStyle(theme));
     }
   }
 
@@ -100,7 +101,8 @@ class MainPlotRegion extends PlotRegion {
     yMaxValue = yValues.last;
 
     yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+        yValues.map((v) => v.toString()).toList(),
+        yAxisSettings.getEffectiveTextStyle(theme));
 
     for (Indicator indicator in indicators) {
       indicator.updateData(data);
@@ -206,11 +208,18 @@ class MainPlotRegion extends PlotRegion {
       double pos = bottomPos - (value - yValues.first) * posDiff / valuseDiff;
 
       if (!(value == yValues.first || value == yValues.last)) {
-        canvas.drawLine(Offset(leftPos, pos), (Offset(rightPos, pos)), Paint());
+        canvas.drawLine(
+            Offset(leftPos, pos),
+            (Offset(rightPos, pos)),
+            Paint()
+              ..color = (theme.brightness == Brightness.light
+                      ? Colors.grey.shade300
+                      : Colors.grey.shade800)
+                  .withOpacity(0.5));
         final TextPainter text = TextPainter(
           text: TextSpan(
             text: value.toStringAsFixed(2),
-            style: yAxisSettings.axisTextStyle,
+            style: yAxisSettings.getEffectiveTextStyle(theme),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -233,7 +242,7 @@ class MainPlotRegion extends PlotRegion {
           Offset(leftPos, topPos),
           Offset(leftPos, bottomPos),
           Paint()
-            ..color = yAxisSettings.axisColor
+            ..color = yAxisSettings.getEffectiveAxisColor(theme)
             ..strokeWidth = yAxisSettings.strokeWidth);
     }
     if (yAxisSettings.yAxisPos == YAxisPos.right) {
@@ -241,7 +250,7 @@ class MainPlotRegion extends PlotRegion {
           Offset(rightPos, topPos),
           Offset(rightPos, bottomPos),
           Paint()
-            ..color = yAxisSettings.axisColor
+            ..color = yAxisSettings.getEffectiveAxisColor(theme)
             ..strokeWidth = yAxisSettings.strokeWidth);
     }
   }

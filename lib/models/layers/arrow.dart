@@ -1,6 +1,7 @@
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/utils/calculations.dart';
+import 'package:fin_chart/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fin_chart/ui/layer_settings/arrow_settings_dialog.dart';
 import 'dart:math' as math;
@@ -67,11 +68,16 @@ class Arrow extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    // Use theme color as default, but allow user customization
+    final effectiveColor = color == Colors.black || color == Colors.white
+        ? theme.customColors.chartArrowLayerColor
+        : color;
+
     Paint paint = Paint()
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
-      ..color = color;
+      ..color = effectiveColor;
 
     // Determine which points to use based on direction
     Offset startPoint = isArrowheadAtTo ? toCanvas(from) : toCanvas(to);
@@ -99,7 +105,7 @@ class Arrow extends Layer {
     }
 
     // Draw arrowhead
-    _drawArrowhead(canvas, paint, angle);
+    _drawArrowhead(canvas, paint, angle, effectiveColor);
 
     if (isSelected) {
       // Draw circles at endpoints
@@ -113,7 +119,7 @@ class Arrow extends Layer {
           toCanvas(from),
           endPointRadius,
           Paint()
-            ..color = color
+            ..color = effectiveColor
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeWidth);
 
@@ -127,13 +133,14 @@ class Arrow extends Layer {
           toCanvas(to),
           endPointRadius,
           Paint()
-            ..color = color
+            ..color = effectiveColor
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeWidth);
     }
   }
 
-  void _drawArrowhead(Canvas canvas, Paint linePaint, double angle) {
+  void _drawArrowhead(
+      Canvas canvas, Paint linePaint, double angle, Color effectiveColor) {
     // Determine which points to use based on direction
     Offset end = isArrowheadAtTo ? toCanvas(to) : toCanvas(from);
 
@@ -162,7 +169,7 @@ class Arrow extends Layer {
     canvas.drawPath(
       arrowPath,
       Paint()
-        ..color = color
+        ..color = effectiveColor
         ..style = PaintingStyle.fill,
     );
   }

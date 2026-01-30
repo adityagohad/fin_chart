@@ -44,7 +44,7 @@ class CircularArea extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     canvas.drawCircle(
         toCanvas(point),
         radius,

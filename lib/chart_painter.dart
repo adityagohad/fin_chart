@@ -4,6 +4,7 @@ import 'package:fin_chart/models/region/plot_region.dart';
 import 'package:fin_chart/models/settings/x_axis_settings.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/utils/theme.dart';
 import 'package:flutter/material.dart';
 
 class ChartPainter extends CustomPainter {
@@ -20,7 +21,7 @@ class ChartPainter extends CustomPainter {
   final Layer? selectedLayer;
   final double? animationValue;
   final double? eventSelectionPosition;
-  
+  final ThemeData theme;
 
   ChartPainter({
     super.repaint,
@@ -37,6 +38,7 @@ class ChartPainter extends CustomPainter {
     this.selectedLayer,
     this.animationValue,
     this.eventSelectionPosition,
+    required this.theme,
   });
 
   @override
@@ -86,7 +88,7 @@ class ChartPainter extends CustomPainter {
           Offset(leftPos, region.bottomPos),
           Offset(rightPos, region.bottomPos),
           Paint()
-            ..color = Colors.grey
+            ..color = theme.customColors.chartSeparatorColor
             ..strokeWidth = 3);
     }
     if (eventSelectionPosition != null) {
@@ -199,7 +201,7 @@ class ChartPainter extends CustomPainter {
     final sampleText = TextPainter(
       text: TextSpan(
         text: formatTime(candles[0].date),
-        style: xAxisSettings.axisTextStyle,
+        style: xAxisSettings.getEffectiveTextStyle(theme),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -227,7 +229,7 @@ class ChartPainter extends CustomPainter {
         final TextPainter text = TextPainter(
           text: TextSpan(
             text: formatTime(candle.date),
-            style: xAxisSettings.axisTextStyle,
+            style: xAxisSettings.getEffectiveTextStyle(theme),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -242,7 +244,7 @@ class ChartPainter extends CustomPainter {
           canvas.drawLine(
             Offset(xPos, bottomPos - 3),
             Offset(xPos, bottomPos + 3),
-            Paint()..color = xAxisSettings.axisColor,
+            Paint()..color = xAxisSettings.getEffectiveAxisColor(theme),
           );
 
           canvas.drawLine(
@@ -265,7 +267,7 @@ class ChartPainter extends CustomPainter {
           canvas.drawLine(
             Offset(xPos, topPos - 3),
             Offset(xPos, topPos + 3),
-            Paint()..color = xAxisSettings.axisColor,
+            Paint()..color = xAxisSettings.getEffectiveAxisColor(theme),
           );
         }
       } else {
@@ -274,7 +276,7 @@ class ChartPainter extends CustomPainter {
           canvas.drawLine(
             Offset(xPos, bottomPos - 2),
             Offset(xPos, bottomPos + 2),
-            Paint()..color = xAxisSettings.axisColor,
+            Paint()..color = xAxisSettings.getEffectiveAxisColor(theme),
           );
         }
 
@@ -282,7 +284,7 @@ class ChartPainter extends CustomPainter {
           canvas.drawLine(
             Offset(xPos, topPos - 2),
             Offset(xPos, topPos + 2),
-            Paint()..color = xAxisSettings.axisColor,
+            Paint()..color = xAxisSettings.getEffectiveAxisColor(theme),
           );
         }
       }
@@ -303,7 +305,7 @@ class ChartPainter extends CustomPainter {
         Offset(leftPos, bottomPos),
         Offset(rightPos, bottomPos),
         Paint()
-          ..color = xAxisSettings.axisColor
+          ..color = xAxisSettings.getEffectiveAxisColor(theme)
           ..strokeWidth = xAxisSettings.strokeWidth,
       );
     }
@@ -313,7 +315,7 @@ class ChartPainter extends CustomPainter {
         Offset(leftPos, topPos),
         Offset(rightPos, topPos),
         Paint()
-          ..color = xAxisSettings.axisColor
+          ..color = xAxisSettings.getEffectiveAxisColor(theme)
           ..strokeWidth = xAxisSettings.strokeWidth,
       );
     }

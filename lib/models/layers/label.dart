@@ -54,7 +54,7 @@ class Label extends Layer {
   }
 
   @override
-  void drawLayer({required Canvas canvas}) {
+  void drawLayer({required Canvas canvas, required ThemeData theme}) {
     final TextPainter text = TextPainter(
       text: TextSpan(
         text: label,
