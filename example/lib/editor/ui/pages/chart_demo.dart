@@ -60,10 +60,17 @@ class _ChartDemoState extends State<ChartDemo> {
       dd();
     }
     tabs.add({"type": "chart", "title": "Chart"});
-
-    chart =
-        Chart.from(key: _chartKey, recipe: recipe, onInteraction: (p0, p1) {});
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    chart = Chart.from(
+        key: _chartKey,
+        recipe: recipe,
+        onInteraction: (p0, p1) {},
+        theme: Theme.of(context));
   }
 
   void dd() async {
@@ -505,7 +512,8 @@ class _ChartDemoState extends State<ChartDemo> {
                       return Chart.from(
                           key: _chartKey,
                           recipe: recipe,
-                          onInteraction: (p0, p1) {});
+                          onInteraction: (p0, p1) {},
+                          theme: Theme.of(context));
                     case "option_chain":
                       final taskId = tab["taskId"]!;
                       final chooseTask = recipe.tasks
