@@ -339,6 +339,7 @@ class _EditorPageState extends State<EditorPage> {
                         onIndicatorSelect: _onIndicatorSelect,
                         onInteraction: _onInteraction,
                         chartType: _chartType,
+                        theme: Theme.of(context),
                         onScannerResultSelect: (result) {
                           setState(() {
                             _selectedScannerResult = result;
@@ -354,7 +355,8 @@ class _EditorPageState extends State<EditorPage> {
                         onLayerSelect: _onLayerSelect,
                         onRegionSelect: _onRegionSelect,
                         onIndicatorSelect: _onIndicatorSelect,
-                        onInteraction: _onInteraction),
+                        onInteraction: _onInteraction,
+                        theme: Theme.of(context)),
               )),
           Expanded(flex: 1, child: _buildToolBox()),
         ],

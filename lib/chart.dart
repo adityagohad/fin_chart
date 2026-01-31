@@ -31,6 +31,7 @@ class Chart extends StatefulWidget {
   final Recipe? recipe;
   final ChartType chartType;
   final Function(ScannerResult?)? onScannerResultSelect;
+  final ThemeData? theme;
 
   const Chart({
     super.key,
@@ -41,11 +42,12 @@ class Chart extends StatefulWidget {
     this.onLayerSelect,
     this.onRegionSelect,
     this.onIndicatorSelect,
-    this.yAxisSettings = const YAxisSettings(),
-    this.xAxisSettings = const XAxisSettings(),
+    this.yAxisSettings,
+    this.xAxisSettings,
     this.recipe,
     this.chartType = ChartType.candlestick,
     this.onScannerResultSelect,
+    this.theme,
   });
 
   factory Chart.from(
@@ -55,7 +57,21 @@ class Chart extends StatefulWidget {
       Function(PlotRegion region, Layer layer)? onLayerSelect,
       Function(ScannerResult?)? onScannerResultSelect,
       final Function(PlotRegion region)? onRegionSelect,
-      final Function(Indicator indicator)? onIndicatorSelect}) {
+      final Function(Indicator indicator)? onIndicatorSelect,
+      ThemeData? theme}) {
+    // Strip color/text style from axis settings to let theme handle them
+    final yAxisSettings = YAxisSettings(
+      yAxisPos: recipe.chartSettings.yAxisSettings.yAxisPos,
+      strokeWidth: recipe.chartSettings.yAxisSettings.strokeWidth,
+      // axisColor and axisTextStyle are intentionally null to use theme
+    );
+
+    final xAxisSettings = XAxisSettings(
+      xAxisPos: recipe.chartSettings.xAxisSettings.xAxisPos,
+      strokeWidth: recipe.chartSettings.xAxisSettings.strokeWidth,
+      // axisColor and axisTextStyle are intentionally null to use theme
+    );
+
     return Chart(
       key: key,
       candles: recipe.data,
@@ -65,11 +81,12 @@ class Chart extends StatefulWidget {
       onLayerSelect: onLayerSelect,
       onRegionSelect: onRegionSelect,
       onIndicatorSelect: onIndicatorSelect,
-      yAxisSettings: recipe.chartSettings.yAxisSettings,
-      xAxisSettings: recipe.chartSettings.xAxisSettings,
+      yAxisSettings: yAxisSettings,
+      xAxisSettings: xAxisSettings,
       recipe: recipe,
       chartType: recipe.chartSettings.chartType,
       onScannerResultSelect: onScannerResultSelect,
+      theme: theme,
     );
   }
 
@@ -116,6 +133,8 @@ class ChartState extends State<Chart>
 
   bool isInit = true;
 
+  late ThemeData currentTheme;
+
   Offset layerToolBoxOffset = Offset.zero;
 
   bool isUserInteracting = false;
@@ -133,12 +152,17 @@ class ChartState extends State<Chart>
   void initState() {
     super.initState();
     chartType = widget.chartType;
+    _initializeTheme();
     if (widget.recipe != null) {
       _initializeFromFactory();
     } else {
       _initializeDefault();
     }
     _initializeControllers();
+  }
+
+  void _initializeTheme() {
+    currentTheme = widget.theme ?? ThemeData.light();
   }
 
   void setChartType(ChartType type) {
@@ -157,8 +181,9 @@ class ChartState extends State<Chart>
     currentData.addAll(widget.candles);
     regions.add(MainPlotRegion(
       candles: currentData,
-      yAxisSettings: widget.yAxisSettings!,
+      yAxisSettings: widget.yAxisSettings ?? const YAxisSettings(),
       chartType: chartType,
+      theme: currentTheme,
       // fundamentalEvents: fundamentalEvents,
     ));
   }
@@ -177,10 +202,11 @@ class ChartState extends State<Chart>
     regions.add(MainPlotRegion(
         id: recipe.chartSettings.mainPlotRegionId,
         candles: currentData,
-        yAxisSettings: widget.yAxisSettings!,
+        yAxisSettings: widget.yAxisSettings ?? const YAxisSettings(),
         yMinValue: yMinValue,
         yMaxValue: yMaxValue,
-        chartType: chartType));
+        chartType: chartType,
+        theme: currentTheme));
 
     (regions[0] as MainPlotRegion)
         .updateFundamentalEvents(recipe.fundamentalEvents ?? []);
@@ -236,7 +262,9 @@ class ChartState extends State<Chart>
     setState(() {
       if (indicator.displayMode == DisplayMode.panel) {
         PanelPlotRegion region = PanelPlotRegion(
-            indicator: indicator, yAxisSettings: widget.yAxisSettings!);
+            indicator: indicator,
+            yAxisSettings: widget.yAxisSettings ?? const YAxisSettings(),
+            theme: currentTheme);
 
         double addRegionWeight = 1 / (regions.length + 1);
         double multiplier = 1 - addRegionWeight;
@@ -406,7 +434,8 @@ class ChartState extends State<Chart>
                   child: CustomPaint(
                     painter: ChartPainter(
                       regions: regions,
-                      xAxisSettings: widget.xAxisSettings!,
+                      xAxisSettings:
+                          widget.xAxisSettings ?? const XAxisSettings(),
                       xOffset: xOffset,
                       xStepWidth: xStepWidth,
                       dataLength: currentData.length,
@@ -418,6 +447,7 @@ class ChartState extends State<Chart>
                       selectedLayer: selectedLayer,
                       animationValue: _animation.value,
                       eventSelectionPosition: eventSelectionPosition,
+                      theme: currentTheme,
                     ),
                     size: Size(constraints.maxWidth, constraints.maxHeight),
                   ),
@@ -548,22 +578,27 @@ class ChartState extends State<Chart>
       }
     }
 
-    if (widget.yAxisSettings!.yAxisPos == YAxisPos.left) {
+    final effectiveYAxisSettings =
+        widget.yAxisSettings ?? const YAxisSettings();
+    final effectiveXAxisSettings =
+        widget.xAxisSettings ?? const XAxisSettings();
+
+    if (effectiveYAxisSettings.yAxisPos == YAxisPos.left) {
       leftPos = yLabelWidth + yLabelPadding;
       rightPos = constraints.maxWidth - yLabelPadding;
     }
 
-    if (widget.xAxisSettings!.xAxisPos == XAxisPos.top) {
+    if (effectiveXAxisSettings.xAxisPos == XAxisPos.top) {
       topPos = xLabelHeight + xLabelPadding;
       bottomPos = constraints.maxHeight - xLabelPadding;
     }
 
-    if (widget.yAxisSettings!.yAxisPos == YAxisPos.right) {
+    if (effectiveYAxisSettings.yAxisPos == YAxisPos.right) {
       leftPos = yLabelPadding;
       rightPos = constraints.maxWidth - (yLabelWidth + yLabelPadding);
     }
 
-    if (widget.xAxisSettings!.xAxisPos == XAxisPos.bottom) {
+    if (effectiveXAxisSettings.xAxisPos == XAxisPos.bottom) {
       topPos = xLabelPadding;
       bottomPos = constraints.maxHeight - (xLabelHeight + xLabelPadding);
     }
@@ -788,8 +823,8 @@ class ChartState extends State<Chart>
   ChartSettings getChartSettings() {
     return ChartSettings(
         dataFit: widget.dataFit,
-        yAxisSettings: widget.yAxisSettings!,
-        xAxisSettings: widget.xAxisSettings!,
+        yAxisSettings: widget.yAxisSettings ?? const YAxisSettings(),
+        xAxisSettings: widget.xAxisSettings ?? const XAxisSettings(),
         chartType: chartType,
         mainPlotRegionId:
             regions.firstWhere((region) => region is MainPlotRegion).id);

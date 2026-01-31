@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 abstract class PlotRegion with RegionProp {
   final String id;
   final YAxisSettings yAxisSettings;
+  final ThemeData theme;
   final List<Layer> layers;
   late Size yLabelSize;
   late List<double> yValues;
@@ -18,6 +19,7 @@ abstract class PlotRegion with RegionProp {
   PlotRegion(
       {required this.id,
       required this.yAxisSettings,
+      required this.theme,
       List<Layer>? layers,
       double yMinValue = 0,
       double yMaxValue = 1})
@@ -28,7 +30,8 @@ abstract class PlotRegion with RegionProp {
     this.yMinValue = yValues.first;
     this.yMaxValue = yValues.last;
     yLabelSize = getLargetRnderBoxSizeForList(
-        yValues.map((v) => v.toString()).toList(), yAxisSettings.axisTextStyle);
+        yValues.map((v) => v.toString()).toList(),
+        yAxisSettings.getEffectiveTextStyle(theme));
   }
 
   PlotRegion? isRegionReadyForResize(Offset selectedPoint) {
@@ -92,7 +95,7 @@ abstract class PlotRegion with RegionProp {
 
   void drawLayers(Canvas canvas) {
     for (final layer in layers) {
-      layer.drawLayer(canvas: canvas);
+      layer.drawLayer(canvas: canvas, theme: theme);
     }
   }
 

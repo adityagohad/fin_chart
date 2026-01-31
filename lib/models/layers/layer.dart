@@ -55,7 +55,7 @@ abstract class Layer with RegionProp {
     };
   }
 
-  void drawLayer({required Canvas canvas});
+  void drawLayer({required Canvas canvas, required ThemeData theme});
 
   void drawRightAxisValues({required Canvas canvas}) {}
 

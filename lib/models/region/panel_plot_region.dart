@@ -8,8 +8,11 @@ import 'package:flutter/material.dart';
 class PanelPlotRegion extends PlotRegion {
   final Indicator indicator;
 
-  PanelPlotRegion({required this.indicator, required super.yAxisSettings})
-      : super(id: indicator.id);
+  PanelPlotRegion({
+    required this.indicator,
+    required super.yAxisSettings,
+    required super.theme,
+  }) : super(id: indicator.id);
 
   @override
   void updateRegionProp(
@@ -64,11 +67,18 @@ class PanelPlotRegion extends PlotRegion {
 
       if (!(value == indicator.yValues.first ||
           value == indicator.yValues.last)) {
-        canvas.drawLine(Offset(leftPos, pos), (Offset(rightPos, pos)), Paint());
+        canvas.drawLine(
+            Offset(leftPos, pos),
+            (Offset(rightPos, pos)),
+            Paint()
+              ..color = (theme.brightness == Brightness.light
+                      ? Colors.grey.shade300
+                      : Colors.grey.shade800)
+                  .withOpacity(0.5));
         final TextPainter text = TextPainter(
           text: TextSpan(
             text: value.toStringAsFixed(2),
-            style: yAxisSettings.axisTextStyle,
+            style: yAxisSettings.getEffectiveTextStyle(theme),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -91,7 +101,7 @@ class PanelPlotRegion extends PlotRegion {
           Offset(leftPos, topPos),
           Offset(leftPos, bottomPos),
           Paint()
-            ..color = yAxisSettings.axisColor
+            ..color = yAxisSettings.getEffectiveAxisColor(theme)
             ..strokeWidth = yAxisSettings.strokeWidth);
     }
     if (yAxisSettings.yAxisPos == YAxisPos.right) {
@@ -99,7 +109,7 @@ class PanelPlotRegion extends PlotRegion {
           Offset(rightPos, topPos),
           Offset(rightPos, bottomPos),
           Paint()
-            ..color = yAxisSettings.axisColor
+            ..color = yAxisSettings.getEffectiveAxisColor(theme)
             ..strokeWidth = yAxisSettings.strokeWidth);
     }
   }

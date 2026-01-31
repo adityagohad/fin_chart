@@ -6,11 +6,12 @@ enum YAxisPos { left, right }
 class YAxisSettings extends AxisSettings {
   final YAxisPos yAxisPos;
 
-  const YAxisSettings(
-      {super.axisTextStyle,
-      super.axisColor,
-      super.strokeWidth,
-      this.yAxisPos = YAxisPos.right});
+  const YAxisSettings({
+    super.axisTextStyle,
+    super.axisColor,
+    super.strokeWidth,
+    this.yAxisPos = YAxisPos.right,
+  });
 
   @override
   Map<String, dynamic> toJson() {
@@ -21,9 +22,12 @@ class YAxisSettings extends AxisSettings {
 
   factory YAxisSettings.fromJson(Map<String, dynamic> json) {
     return YAxisSettings(
-      axisTextStyle: AxisSettings.textStyleFromJson(json['axisTextStyle']),
+      axisTextStyle: json['axisTextStyle'] != null
+          ? AxisSettings.textStyleFromJson(json['axisTextStyle'])
+          : null,
       strokeWidth: json['strokeWidth'].toDouble(),
-      axisColor: colorFromJson(json['axisColor']),
+      axisColor:
+          json['axisColor'] != null ? colorFromJson(json['axisColor']) : null,
       yAxisPos: YAxisPos.values.firstWhere(
         (pos) => pos.name == json['yAxisPos'],
         orElse: () => YAxisPos.right,
