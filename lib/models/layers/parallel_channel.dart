@@ -82,6 +82,10 @@ class ParallelChannel extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     final path = Path();
     path.moveTo(toX(topLeft.dx), toY(topLeft.dy));
     path.lineTo(toX(topRight.dx), toY(topRight.dy));
@@ -92,11 +96,11 @@ class ParallelChannel extends Layer {
     canvas.drawPath(
         path,
         Paint()
-          ..color = color.withAlpha(channelAlpha)
+          ..color = effectiveColor.withAlpha(channelAlpha)
           ..style = PaintingStyle.fill);
 
     Paint linePaint = Paint()
-      ..color = color
+      ..color = effectiveColor
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
@@ -109,7 +113,7 @@ class ParallelChannel extends Layer {
         (topRight.dx + bottomRight.dx) / 2, (topRight.dy + bottomRight.dy) / 2);
 
     Paint dottedPaint = Paint()
-      ..color = color
+      ..color = effectiveColor
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -141,18 +145,18 @@ class ParallelChannel extends Layer {
 
     if (isSelected) {
       // Corner handles
-      _drawHandle(canvas, topLeft);
-      _drawHandle(canvas, topRight);
-      _drawHandle(canvas, bottomLeft);
-      _drawHandle(canvas, bottomRight);
+      _drawHandle(canvas, topLeft, effectiveColor);
+      _drawHandle(canvas, topRight, effectiveColor);
+      _drawHandle(canvas, bottomLeft, effectiveColor);
+      _drawHandle(canvas, bottomRight, effectiveColor);
 
       // Mid-side handles
-      _drawMidHandle(canvas, topMiddle);
-      _drawMidHandle(canvas, bottomMiddle);
+      _drawMidHandle(canvas, topMiddle, effectiveColor);
+      _drawMidHandle(canvas, bottomMiddle, effectiveColor);
     }
   }
 
-  void _drawHandle(Canvas canvas, Offset point) {
+  void _drawHandle(Canvas canvas, Offset point, Color effectiveColor) {
     canvas.drawCircle(
         toCanvas(point), endPointRadius, Paint()..color = Colors.white);
 
@@ -160,12 +164,12 @@ class ParallelChannel extends Layer {
         toCanvas(point),
         endPointRadius,
         Paint()
-          ..color = color
+          ..color = effectiveColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2);
   }
 
-  void _drawMidHandle(Canvas canvas, Offset point) {
+  void _drawMidHandle(Canvas canvas, Offset point, Color effectiveColor) {
     final rect = Rect.fromCenter(
         center: toCanvas(point),
         width: endPointRadius * 1.8,
@@ -176,7 +180,7 @@ class ParallelChannel extends Layer {
     canvas.drawRect(
         rect,
         Paint()
-          ..color = color
+          ..color = effectiveColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2);
   }

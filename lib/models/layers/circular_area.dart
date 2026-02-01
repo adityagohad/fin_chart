@@ -45,13 +45,17 @@ class CircularArea extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     canvas.drawCircle(
         toCanvas(point),
         radius,
         Paint()
           ..strokeWidth = 1
           ..style = PaintingStyle.stroke
-          ..color = color);
+          ..color = effectiveColor);
 
     canvas.drawCircle(
         toCanvas(point),
@@ -59,7 +63,7 @@ class CircularArea extends Layer {
         Paint()
           ..strokeWidth = 1
           ..style = PaintingStyle.fill
-          ..color = color.withAlpha(100));
+          ..color = effectiveColor.withAlpha(100));
 
     if (isSelected) {
       canvas.drawRect(
@@ -70,7 +74,7 @@ class CircularArea extends Layer {
           Paint()
             ..strokeWidth = 1
             ..style = PaintingStyle.fill
-            ..color = color);
+            ..color = effectiveColor);
 
       canvas.drawRect(
           Rect.fromCenter(
@@ -80,7 +84,7 @@ class CircularArea extends Layer {
           Paint()
             ..strokeWidth = 1
             ..style = PaintingStyle.fill
-            ..color = color);
+            ..color = effectiveColor);
 
       canvas.drawRect(
           Rect.fromCenter(
@@ -90,7 +94,7 @@ class CircularArea extends Layer {
           Paint()
             ..strokeWidth = 1
             ..style = PaintingStyle.fill
-            ..color = color);
+            ..color = effectiveColor);
 
       canvas.drawRect(
           Rect.fromCenter(
@@ -100,7 +104,7 @@ class CircularArea extends Layer {
           Paint()
             ..strokeWidth = 1
             ..style = PaintingStyle.fill
-            ..color = color);
+            ..color = effectiveColor);
     }
   }
 

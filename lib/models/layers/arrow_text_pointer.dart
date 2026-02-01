@@ -70,6 +70,10 @@ class ArrowTextPointer extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     final Offset tip = toCanvas(pos);
 
     // Calculate points for 2D arrow
@@ -117,12 +121,12 @@ class ArrowTextPointer extends Layer {
 
     // Fill paint for 2D arrow
     final Paint fillPaint = Paint()
-      ..color = color
+      ..color = effectiveColor
       ..style = PaintingStyle.fill;
 
     // Outline paint for 2D arrow
     final Paint strokePaint = Paint()
-      ..color = color.withAlpha(62)
+      ..color = effectiveColor.withAlpha(62)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
@@ -134,7 +138,7 @@ class ArrowTextPointer extends Layer {
     final textPainter = TextPainter(
       text: TextSpan(
         text: label,
-        style: TextStyle(color: color, fontSize: 14),
+        style: TextStyle(color: effectiveColor, fontSize: 14),
       ),
       textDirection: TextDirection.ltr,
     );

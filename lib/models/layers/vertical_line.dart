@@ -39,11 +39,15 @@ class VerticalLine extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(Colors.purple)
+        : Colors.purple;
+
     canvas.drawLine(
         Offset(toX(pos) + xStepWidth / 2, topPos),
         Offset(toX(pos) + xStepWidth / 2, bottomPos),
         Paint()
-          ..color = Colors.purple
+          ..color = effectiveColor
           ..strokeWidth = 2);
   }
 
@@ -66,6 +70,7 @@ class VerticalLine extends Layer {
   @override
   Widget layerToolTip(
       {Widget? child,
+      ThemeData? theme,
       required Function()? onSettings,
       required Function()? onLockUpdate,
       required Function()? onDelete}) {

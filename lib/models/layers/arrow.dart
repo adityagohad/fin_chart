@@ -69,9 +69,8 @@ class Arrow extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
-    // Use theme color as default, but allow user customization
-    final effectiveColor = color == Colors.black || color == Colors.white
-        ? theme.customColors.chartArrowLayerColor
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
         : color;
 
     Paint paint = Paint()

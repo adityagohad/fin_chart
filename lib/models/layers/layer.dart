@@ -78,6 +78,7 @@ abstract class Layer with RegionProp {
 
   Widget layerToolTip(
       {Widget? child,
+      ThemeData? theme,
       required Function()? onSettings,
       required Function()? onLockUpdate,
       required Function()? onDelete}) {

@@ -45,11 +45,15 @@ class HorizontalLine extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     canvas.drawLine(
         Offset(leftPos, toY(value)),
         Offset(rightPos, toY(value)),
         Paint()
-          ..color = color
+          ..color = effectiveColor
           ..strokeWidth = strokeWidth);
   }
 

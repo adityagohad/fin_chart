@@ -55,10 +55,14 @@ class Label extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(textStyle.color ?? Colors.black)
+        : textStyle.color ?? Colors.black;
+
     final TextPainter text = TextPainter(
       text: TextSpan(
         text: label,
-        style: textStyle,
+        style: textStyle.copyWith(color: effectiveColor),
       ),
       textDirection: TextDirection.ltr,
     )..layout();

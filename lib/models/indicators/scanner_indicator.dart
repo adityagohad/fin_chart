@@ -286,6 +286,7 @@ class ScannerIndicator extends Indicator {
     required Function()? onSettings,
     required Function()? onDelete,
     Widget? child,
+    ThemeData? theme,
   }) {
     String labelText;
     if (selectedScannerType != null) {

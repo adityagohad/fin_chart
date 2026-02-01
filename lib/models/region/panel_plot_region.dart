@@ -71,10 +71,8 @@ class PanelPlotRegion extends PlotRegion {
             Offset(leftPos, pos),
             (Offset(rightPos, pos)),
             Paint()
-              ..color = (theme.brightness == Brightness.light
-                      ? Colors.grey.shade300
-                      : Colors.grey.shade800)
-                  .withOpacity(0.5));
+              ..strokeWidth = 0.5
+              ..color = Colors.grey);
         final TextPainter text = TextPainter(
           text: TextSpan(
             text: value.toStringAsFixed(2),
@@ -124,6 +122,7 @@ class PanelPlotRegion extends PlotRegion {
         left: leftPos,
         top: topPos + 10,
         child: indicator.indicatorToolTip(
+            theme: theme,
             selectedIndicator: selectedIndicator,
             onClick: onClick,
             onSettings: onSettings,

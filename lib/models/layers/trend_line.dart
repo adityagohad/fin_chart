@@ -59,10 +59,14 @@ class TrendLine extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     Paint paint = Paint()
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
-      ..color = color;
+      ..color = effectiveColor;
 
     canvas.drawLine(Offset(toX(from.dx), toY(from.dy)),
         Offset(toX(to.dx), toY(to.dy)), paint);
@@ -79,7 +83,7 @@ class TrendLine extends Layer {
           toCanvas(from),
           endPointRadius,
           Paint()
-            ..color = color
+            ..color = effectiveColor
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeWidth);
 
@@ -94,7 +98,7 @@ class TrendLine extends Layer {
           toCanvas(to),
           endPointRadius,
           Paint()
-            ..color = color
+            ..color = effectiveColor
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeWidth);
     }

@@ -67,6 +67,7 @@ abstract class Indicator with RegionProp {
 
   Widget indicatorToolTip(
       {Widget? child,
+      ThemeData? theme,
       required Indicator? selectedIndicator,
       required Function(Indicator)? onClick,
       required Function()? onSettings,
@@ -79,7 +80,11 @@ abstract class Indicator with RegionProp {
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme != null
+                        ? theme.brightness == Brightness.dark
+                            ? Colors.grey.shade800
+                            : Colors.white
+                        : Colors.white,
                     border: Border.all(color: Colors.blue),
                     borderRadius: BorderRadius.circular(10)),
                 child: Row(
@@ -110,7 +115,12 @@ abstract class Indicator with RegionProp {
                 ),
               )
             : Container(
-                decoration: const BoxDecoration(color: Colors.white),
+                decoration: BoxDecoration(
+                    color: theme != null
+                        ? theme.brightness == Brightness.dark
+                            ? Colors.grey.shade800
+                            : Colors.white
+                        : Colors.white),
                 child: Text(
                   type.name.toUpperCase(),
                   style: const TextStyle(

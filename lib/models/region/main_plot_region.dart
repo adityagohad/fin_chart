@@ -212,10 +212,8 @@ class MainPlotRegion extends PlotRegion {
             Offset(leftPos, pos),
             (Offset(rightPos, pos)),
             Paint()
-              ..color = (theme.brightness == Brightness.light
-                      ? Colors.grey.shade300
-                      : Colors.grey.shade800)
-                  .withOpacity(0.5));
+              ..strokeWidth = 0.5
+              ..color = Colors.grey);
         final TextPainter text = TextPainter(
           text: TextSpan(
             text: value.toStringAsFixed(2),
@@ -269,6 +267,7 @@ class MainPlotRegion extends PlotRegion {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ...indicators.map((indicator) => indicator.indicatorToolTip(
+                theme: theme,
                 selectedIndicator: selectedIndicator,
                 onClick: onClick,
                 onSettings: onSettings,

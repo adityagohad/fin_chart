@@ -44,11 +44,15 @@ class HorizontalBand extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     canvas.drawRect(
         Rect.fromLTWH(leftPos, toY(value) - allowedError / 2,
             rightPos - leftPos, allowedError),
         Paint()
-          ..color = color.withAlpha(100)
+          ..color = effectiveColor.withAlpha(100)
           ..strokeWidth = 2);
   }
 

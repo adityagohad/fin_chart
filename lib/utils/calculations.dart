@@ -130,6 +130,15 @@ String? colorToJson(Color? color) {
   return '#$hexAlpha$hexRed$hexGreen$hexBlue';
 }
 
+Color invertColor(Color color) {
+  return Color.from(
+    alpha: color.a,
+    red: 1.0 - color.r,
+    green: 1.0 - color.g,
+    blue: 1.0 - color.b,
+  );
+}
+
 Offset offsetFromJson(Map<String, dynamic> json) {
   return Offset(
     (json['dx'] as num).toDouble(),

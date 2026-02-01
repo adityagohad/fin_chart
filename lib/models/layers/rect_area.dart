@@ -88,10 +88,14 @@ class RectArea extends Layer {
 
   @override
   void drawLayer({required Canvas canvas, required ThemeData theme}) {
+    Color effectiveColor = theme.brightness == Brightness.dark
+        ? invertColor(color)
+        : color;
+
     canvas.drawRect(
         Rect.fromPoints(toCanvas(topLeft), toCanvas(bottomRight)),
         Paint()
-          ..color = color.withAlpha(alpha)
+          ..color = effectiveColor.withAlpha(alpha)
           ..style = PaintingStyle.fill);
 
     if (isSelected) {
@@ -99,7 +103,7 @@ class RectArea extends Layer {
           Rect.fromLTRB(toX(topLeft.dx), toY(topLeft.dy), toX(bottomRight.dx),
               toY(bottomRight.dy)),
           Paint()
-            ..color = color
+            ..color = effectiveColor
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeWidth);
 
@@ -111,14 +115,14 @@ class RectArea extends Layer {
             ..style = PaintingStyle.fill
             ..strokeWidth = 5);
 
-      _drawHandle(canvas, topLeft);
-      _drawHandle(canvas, topRight);
-      _drawHandle(canvas, bottomRight);
-      _drawHandle(canvas, bottomLeft);
+      _drawHandle(canvas, topLeft, effectiveColor);
+      _drawHandle(canvas, topRight, effectiveColor);
+      _drawHandle(canvas, bottomRight, effectiveColor);
+      _drawHandle(canvas, bottomLeft, effectiveColor);
     }
   }
 
-  _drawHandle(Canvas canvas, Offset point) {
+  _drawHandle(Canvas canvas, Offset point, Color effectiveColor) {
     canvas.drawCircle(
         toCanvas(point),
         endPointRadius,
@@ -131,7 +135,7 @@ class RectArea extends Layer {
         toCanvas(point),
         endPointRadius,
         Paint()
-          ..color = color
+          ..color = effectiveColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth);
   }
