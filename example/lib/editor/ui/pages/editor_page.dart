@@ -28,10 +28,12 @@ import 'package:fin_chart/models/indicators/ev_sales.dart';
 import 'package:fin_chart/models/indicators/pivot_point.dart';
 import 'package:fin_chart/models/indicators/pe.dart';
 import 'package:fin_chart/models/indicators/pb.dart';
+import 'package:fin_chart/models/indicators/roc.dart';
 import 'package:fin_chart/models/indicators/scanner_indicator.dart';
 import 'package:fin_chart/models/indicators/supertrend.dart';
 import 'package:fin_chart/models/indicators/vwap.dart';
 import 'package:fin_chart/models/region/main_plot_region.dart';
+import 'package:fin_chart/models/scanners/scanner_result.dart';
 import 'package:fin_chart/models/tasks/add_data.task.dart';
 import 'package:fin_chart/models/tasks/add_indicator.task.dart';
 import 'package:fin_chart/models/tasks/add_layer.task.dart';
@@ -111,6 +113,17 @@ class _EditorPageState extends State<EditorPage> {
   Timer? _autosaveTimer;
   static const String _savedRecipeKey = 'saved_recipe';
 
+  ScannerResult? _selectedScannerResult;
+
+  void _deleteSelectedScannerResult() {
+    if (_selectedScannerResult != null) {
+      _chartKey.currentState?.removeSelectedScannerResult();
+      setState(() {
+        _selectedScannerResult = null;
+      });
+    }
+  }
+
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -132,6 +145,12 @@ class _EditorPageState extends State<EditorPage> {
         // const SizedBox(
         //   width: 20,
         // ),
+        if (_selectedScannerResult != null) // Add this block
+          IconButton(
+            onPressed: _deleteSelectedScannerResult,
+            icon: const Icon(Icons.delete_sweep_outlined),
+            tooltip: "Delete Scanner Finding",
+          ),
         if (selectedEvent != null)
           IconButton(
             onPressed: _deleteSelectedEvent,
@@ -334,6 +353,14 @@ class _EditorPageState extends State<EditorPage> {
                         onIndicatorSelect: _onIndicatorSelect,
                         onInteraction: _onInteraction,
                         chartType: _chartType,
+                        onScannerResultSelect: (result) {
+                          setState(() {
+                            _selectedScannerResult = result;
+                            if (result != null) {
+                              selectedEvent = null;
+                            }
+                          });
+                        },
                       )
                     : Chart.from(
                         key: _chartKey,
@@ -350,6 +377,9 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   _onLayerSelect(PlotRegion region, Layer layer) {
+    setState(() {
+      _selectedScannerResult = null;
+    });
     if (_currentTaskType == TaskType.addLayer) {
       _updateTaskList(AddLayerTask(regionId: region.id, layer: layer));
     }
@@ -358,10 +388,10 @@ class _EditorPageState extends State<EditorPage> {
   void _onRegionSelect(PlotRegion region) {
     selectedRegion = region;
 
-    // Check if the region has a selected event
     if (region is MainPlotRegion && region.selectedEvent != null) {
       setState(() {
         selectedEvent = region.selectedEvent;
+        _selectedScannerResult = null;
       });
     } else {
       setState(() {
@@ -1771,11 +1801,13 @@ class _EditorPageState extends State<EditorPage> {
       tableTaskId = selected;
     }
     final tableTask = tableTasks.firstWhere((t) => t.id == tableTaskId);
-    final result = await showHighlightTableRowDialog(
-      context: context,
-      tableTaskId: tableTaskId,
-      tables: tableTask.tables.tables,
-    );
+    final result = mounted
+        ? await showHighlightTableRowDialog(
+            context: context,
+            tableTaskId: tableTaskId,
+            tables: tableTask.tables.tables,
+          )
+        : null;
     if (result != null) {
       final selectedRows = result.map((k, v) => MapEntry(k, v.toList()));
       _updateTaskList(HighlightTableRowTask(
@@ -1955,6 +1987,9 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case IndicatorType.scanner:
         indicator = ScannerIndicator();
+      case IndicatorType.roc:
+        indicator = Roc();
+        break;
     }
     _chartKey.currentState?.addIndicator(indicator);
   }

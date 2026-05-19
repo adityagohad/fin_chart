@@ -119,32 +119,15 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
 
   if (selectedOptionChain == null) return null;
 
-  final selectedRowIndex = await showDialog<dynamic>(
-    context: context,
-    builder: (BuildContext dialogContext) {
-      final previewKey = GlobalKey<PreviewScreenState>();
+  final selectedRowIndex = context.mounted
+      ? await showDialog<dynamic>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            final previewKey = GlobalKey<PreviewScreenState>();
 
-      return Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.9,
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Select Row in ${selectedOptionChain.optionChainId}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
               Expanded(
                 child: Padding(
@@ -161,15 +144,18 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
                         isEditorMode: false),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: const Text('Cancel'),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Select Row in ${selectedOptionChain.optionChainId}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
@@ -210,12 +196,10 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
+            );
+          },
+        )
+      : null;
 
   if (selectedRowIndex != null) {
     final selectionMode =
