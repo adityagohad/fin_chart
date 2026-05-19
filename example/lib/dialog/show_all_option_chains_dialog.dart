@@ -1,5 +1,4 @@
-import 'package:fin_chart/models/tasks/add_option_chain.task.dart';
-import 'package:fin_chart/models/tasks/choose_correct_option_chain_task.dart';
+import 'package:fin_chart/models/tasks/create_option_chain.task.dart';
 import 'package:fin_chart/models/tasks/highlight_correct_option_chain_value_task.dart';
 import 'package:fin_chart/models/tasks/task.dart';
 import 'package:fin_chart/option_chain/models/column_config.dart';
@@ -13,9 +12,7 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
   required BuildContext context,
   required List<Task> tasks,
 }) async {
-  final optionChainTasks = tasks.whereType<AddOptionChainTask>().toList();
-  final chooseCorrectTasks =
-      tasks.whereType<ChooseCorrectOptionValueChainTask>().toList();
+  final optionChainTasks = tasks.whereType<CreateOptionChainTask>().toList();
 
   if (optionChainTasks.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -24,18 +21,7 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
     return null;
   }
 
-  int? getMaxSelectableRows(String optionChainId) {
-    try {
-      final task = chooseCorrectTasks.firstWhere(
-        (task) => task.taskId == optionChainId,
-      );
-      return task.maxSelectableRows;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  final selectedOptionChain = await showDialog<AddOptionChainTask>(
+  final selectedOptionChain = await showDialog<CreateOptionChainTask>(
     context: context,
     builder: (BuildContext dialogContext) {
       return Dialog(
@@ -106,9 +92,7 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
                                       columns: task.columns,
                                       visibility: task.visibility,
                                       settings: task.settings,
-                                      isEditorMode: true,
-                                      maxSelectableRows: getMaxSelectableRows(
-                                          task.optionChainId)),
+                                      isEditorMode: true),
                                 ),
                               ),
                             ],
@@ -145,10 +129,20 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.9,
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: PreviewScreen(
+                    key: previewKey,
+                    previewData: PreviewData(
+                        optionData: selectedOptionChain.data,
+                        columns: selectedOptionChain.columns,
+                        visibility: selectedOptionChain.visibility,
+                        settings: (selectedOptionChain.settings ??
+                            OptionChainSettings())
+                          ..isBuySellVisible = false,
+                        isEditorMode: false),
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -163,74 +157,41 @@ Future<HighlightCorrectOptionChainValueTask?> showAllOptionChains({
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: PreviewScreen(
-                          key: previewKey,
-                          previewData: PreviewData(
-                              optionData: selectedOptionChain.data,
-                              columns: selectedOptionChain.columns,
-                              visibility: selectedOptionChain.visibility,
-                              settings: (selectedOptionChain.settings ??
-                                  OptionChainSettings())
-                                ..isBuySellVisible = false,
-                              isEditorMode: false,
-                              maxSelectableRows: getMaxSelectableRows(
-                                  selectedOptionChain.optionChainId)),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(dialogContext),
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              final selectionMode =
-                                  selectedOptionChain.settings?.selectionMode ??
-                                      SelectionMode.entireRow;
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        final selectionMode =
+                            selectedOptionChain.settings?.selectionMode ??
+                                SelectionMode.entireRow;
 
-                              if (selectionMode == SelectionMode.bucketRow) {
-                                final bucketRows =
-                                    previewKey.currentState?.getBucketRows();
-                                if (bucketRows != null &&
-                                    bucketRows.isNotEmpty) {
-                                  Navigator.pop(dialogContext, bucketRows);
-                                } else {
-                                  ScaffoldMessenger.of(dialogContext)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Please select at least one row')),
-                                  );
-                                }
-                              } else {
-                                final selectedIndex = previewKey.currentState
-                                    ?.getCorrectRowIndex();
-                                if (selectedIndex != null &&
-                                    selectedIndex.isNotEmpty) {
-                                  Navigator.pop(dialogContext, selectedIndex);
-                                } else {
-                                  ScaffoldMessenger.of(dialogContext)
-                                      .showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Please select at least one row')),
-                                  );
-                                }
-                              }
-                            },
-                            child: const Text('Select'),
-                          ),
-                        ],
-                      ),
+                        if (selectionMode == SelectionMode.bucketRow) {
+                          final bucketRows =
+                              previewKey.currentState?.getBucketRows();
+                          if (bucketRows != null && bucketRows.isNotEmpty) {
+                            Navigator.pop(dialogContext, bucketRows);
+                          } else {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Please select at least one row')),
+                            );
+                          }
+                        } else {
+                          final selectedIndex =
+                              previewKey.currentState?.getCorrectRowIndex();
+                          if (selectedIndex != null &&
+                              selectedIndex.isNotEmpty) {
+                            Navigator.pop(dialogContext, selectedIndex);
+                          } else {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Please select at least one row')),
+                            );
+                          }
+                        }
+                      },
+                      child: const Text('Select'),
                     ),
                   ],
                 ),

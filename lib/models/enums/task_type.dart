@@ -7,8 +7,8 @@ enum TaskType {
   // addLayerOfType,
   waitTask,
   clearTask,
+  createOptionChain,
   addOptionChain,
-  chooseCorrectOptionChainValue,
   highlightCorrectOptionChainValue,
   showPayOffGraph,
   addTab,
@@ -22,7 +22,12 @@ enum TaskType {
   tableTask,
   highlightTableRow,
   showInsightsV2Page,
-  showSideNav
+  showSideNav,
+  editOptionRow,
+  editColumnVisibility,
+  setMaxSelectableRows,
+  toggleBuySellVisibility,
+  selectRows
 }
 
 // extension TaskTypeExtension on TaskType {
