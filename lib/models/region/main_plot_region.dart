@@ -10,6 +10,7 @@ import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:fin_chart/utils/constants.dart';
 
 class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
@@ -155,9 +156,9 @@ class MainPlotRegion extends PlotRegion {
       } else if (candle.state == CandleState.highlighted) {
         candleColor = Colors.purple;
       } else if (candle.open < candle.close) {
-        candleColor = Colors.green;
+        candleColor = bullishColor;
       } else {
-        candleColor = Colors.red;
+        candleColor = bearishColor;
       }
 
       double maxVolume = candles

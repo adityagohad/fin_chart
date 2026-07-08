@@ -1,4 +1,5 @@
 import 'package:fin_chart/models/i_candle.dart';
+import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter/services.dart';
@@ -970,7 +971,8 @@ class TrendLinePainter extends CustomPainter {
           final point = points[i];
           final isSelected = i == selectedPointIndex;
 
-          pointPaint.color = isSelected ? Colors.red : Colors.blue;
+          pointPaint.color =
+              isSelected ? const Color.fromRGBO(242, 54, 69, 1) : Colors.blue;
 
           canvas.drawCircle(
             Offset(point.x * size.width, point.y * size.height),
@@ -999,12 +1001,12 @@ class TrendLinePainter extends CustomPainter {
           Offset(x, yHigh),
           Offset(x, yLow),
           Paint()
-            ..color = (candle.close > candle.open ? Colors.green : Colors.red)
+            ..color = (candle.close > candle.open ? bullishColor : bearishColor)
                 .withAlpha(isSelected ? 128 : 255));
 
       // Draw candle body
       final bodyPaint = Paint()
-        ..color = (candle.close > candle.open ? Colors.green : Colors.red)
+        ..color = (candle.close > candle.open ? bullishColor : bearishColor)
             .withAlpha(isSelected ? 128 : 255);
 
       final bodyRect = Rect.fromPoints(
@@ -1088,7 +1090,7 @@ class VolumePainter extends CustomPainter {
 
       // Draw volume bar with color based on candle
       final isGreen = candle.close > candle.open;
-      final barColor = (isGreen ? Colors.green : Colors.red)
+      final barColor = (isGreen ? bullishColor : bearishColor)
           .withAlpha(isSelected ? 128 : 255);
 
       final barRect = Rect.fromLTRB(barLeft, barTop, barRight, barBottom);
