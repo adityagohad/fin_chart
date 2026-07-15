@@ -4,7 +4,11 @@ import 'package:fin_chart/models/tasks/add_data.task.dart';
 import 'package:fin_chart/models/tasks/add_indicator.task.dart';
 import 'package:fin_chart/models/tasks/add_layer.task.dart';
 import 'package:fin_chart/models/tasks/add_prompt.task.dart';
+import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
+import 'package:fin_chart/models/tasks/show_tools.task.dart';
 import 'package:fin_chart/models/enums/task_type.dart';
+import 'package:fin_chart/models/enums/layer_type.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
 import 'package:fin_chart/models/recipe.dart';
 import 'package:fin_chart/models/tasks/highlight_correct_option_chain_value_task.dart';
 import 'package:fin_chart/models/tasks/choose_correct_option_chain_task.dart';
@@ -51,6 +55,10 @@ class _ChartDemoState extends State<ChartDemo> {
   int currentPageIndex = 0;
   Map<String, List<GlobalKey<TableDisplayWidgetState>>> tableWidgetKeys = {};
   Map<String, Map<int, Set<int>>> userSelectedRows = {};
+
+  ShowToolsTask? _currentShowToolsTask;
+  bool _isToolPanelOpen = false;
+  OpenToolPanelTask? _currentToolPanelTask;
 
   @override
   void initState() {
@@ -443,6 +451,21 @@ class _ChartDemoState extends State<ChartDemo> {
         setState(() {});
         onTaskFinish();
         break;
+      case TaskType.showTools:
+        final task = currentTask as ShowToolsTask;
+        setState(() {
+          _currentShowToolsTask = task;
+        });
+        onTaskFinish();
+        break;
+      case TaskType.openToolPanel:
+        final task = currentTask as OpenToolPanelTask;
+        setState(() {
+          _isToolPanelOpen = task.open;
+          _currentToolPanelTask = task;
+        });
+        onTaskFinish();
+        break;
     }
   }
 
@@ -501,160 +524,227 @@ class _ChartDemoState extends State<ChartDemo> {
           Text(tabs.toString()),
           Expanded(
             flex: 6,
-            child: PageView.builder(
-                controller: controller,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: tabs.length,
-                itemBuilder: (context, index) {
-                  final tab = tabs[index];
-                  switch (tab["type"]) {
-                    case "chart":
-                      return Chart.from(
-                          key: _chartKey,
-                          recipe: recipe,
-                          onInteraction: (p0, p1) {},
-                          theme: Theme.of(context));
-                    case "option_chain":
-                      final taskId = tab["taskId"]!;
-                      final chooseTask = recipe.tasks
-                          .whereType<ChooseCorrectOptionValueChainTask>()
-                          .firstWhere((t) => t.taskId == taskId);
+            child: Row(
+              children: [
+                if (_isToolPanelOpen) _buildToolsPanel(),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      PageView.builder(
+                          controller: controller,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: tabs.length,
+                          itemBuilder: (context, index) {
+                            final tab = tabs[index];
+                            switch (tab["type"]) {
+                              case "chart":
+                                return Chart.from(
+                                    key: _chartKey,
+                                    recipe: recipe,
+                                    onInteraction: (p0, p1) {},
+                                    theme: Theme.of(context));
+                              case "option_chain":
+                                final taskId = tab["taskId"]!;
+                                final chooseTask = recipe.tasks
+                                    .whereType<
+                                        ChooseCorrectOptionValueChainTask>()
+                                    .firstWhere((t) => t.taskId == taskId);
 
-                      final optionChainTask = optionChainTasks.firstWhere(
-                        (t) => t.optionChainId == chooseTask.taskId,
-                        orElse: () => optionChainTasks.first,
-                      );
+                                final optionChainTask =
+                                    optionChainTasks.firstWhere(
+                                  (t) =>
+                                      t.optionChainId == chooseTask.taskId,
+                                  orElse: () => optionChainTasks.first,
+                                );
 
-                      return PreviewScreen.from(
-                          key: previewScreenKeys[taskId] ?? _previewScreenKey,
-                          task: optionChainTask,
-                          isEditorMode: false,
-                          maxSelectableRows: chooseTask.maxSelectableRows);
-                    case "payoff":
-                      final taskId = tab["taskId"]!;
-                      final payoffTask = payoffGraphTasks.firstWhere(
-                        (t) => t.id == taskId,
-                        orElse: () => payoffGraphTasks.first,
-                      );
-                      return Container(
-                        color: Colors.blue,
-                        child: Center(
-                          child: Text("Payoff Graph View for ${payoffTask.id}"),
-                        ),
-                      );
-                    case "insights":
-                      final taskId = tab["taskId"]!;
-                      final insightsTask = recipe.tasks
-                          .whereType<ShowInsightsPageTask>()
-                          .firstWhere((t) => t.id == taskId);
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            MarkdownWidget(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              data: insightsTask.title,
-                              config: MarkdownConfig(configs: [
-                                H1Config(
-                                    style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold)),
-                              ]),
-                            ),
-                            const SizedBox(height: 16),
-                            MarkdownWidget(
-                                physics: const NeverScrollableScrollPhysics(),
-                                shrinkWrap: true,
-                                data: insightsTask.description),
-                          ],
-                        ),
-                      );
-                    case "table":
-                      final taskId = tab["taskId"]!;
-                      final tableTask = recipe.tasks
-                          .whereType<TableTask>()
-                          .firstWhere((t) => t.id == taskId);
-                      if (!tableWidgetKeys.containsKey(taskId)) {
-                        tableWidgetKeys[taskId] = List.generate(
-                          tableTask.tables.tables.length,
-                          (_) => GlobalKey<TableDisplayWidgetState>(),
-                        );
-                      }
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...tableTask.tables.tables
-                                .asMap()
-                                .entries
-                                .map((entry) {
-                              final idx = entry.key;
-                              final table = entry.value;
-                              final selectedRows =
-                                  userSelectedRows[taskId]?[idx] ?? <int>{};
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 24),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      table.tableTitle,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge,
-                                    ),
-                                    if (table.tableDescription.isNotEmpty)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 8.0),
-                                        child: Text(
-                                          table.tableDescription,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium,
-                                        ),
+                                return PreviewScreen.from(
+                                    key: previewScreenKeys[taskId] ??
+                                        _previewScreenKey,
+                                    task: optionChainTask,
+                                    isEditorMode: false,
+                                    maxSelectableRows:
+                                        chooseTask.maxSelectableRows);
+                              case "payoff":
+                                final taskId = tab["taskId"]!;
+                                final payoffTask = payoffGraphTasks.firstWhere(
+                                  (t) => t.id == taskId,
+                                  orElse: () => payoffGraphTasks.first,
+                                );
+                                return Container(
+                                  color: Colors.blue,
+                                  child: Center(
+                                    child: Text(
+                                        "Payoff Graph View for ${payoffTask.id}"),
+                                  ),
+                                );
+                              case "insights":
+                                final taskId = tab["taskId"]!;
+                                final insightsTask = recipe.tasks
+                                    .whereType<ShowInsightsPageTask>()
+                                    .firstWhere((t) => t.id == taskId);
+                                return Container(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      MarkdownWidget(
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        shrinkWrap: true,
+                                        data: insightsTask.title,
+                                        config: MarkdownConfig(configs: [
+                                          H1Config(
+                                              style: TextStyle(
+                                                  fontSize: 24,
+                                                  fontWeight:
+                                                      FontWeight.bold)),
+                                        ]),
                                       ),
-                                    TableDisplayWidget(
-                                      key: tableWidgetKeys[taskId]![idx],
-                                      columns: table.columns,
-                                      rows: table.rows,
-                                      selectedRowIndices: selectedRows,
-                                      onRowTap: (rowIdx) {
-                                        setState(() {
-                                          userSelectedRows[taskId] ??= {};
-                                          final selected =
-                                              userSelectedRows[taskId]![idx] ??
-                                                  <int>{};
-                                          if (selected.contains(rowIdx)) {
-                                            selected.remove(rowIdx);
-                                          } else {
-                                            selected.add(rowIdx);
-                                          }
-                                          userSelectedRows[taskId]![idx] =
-                                              selected;
-                                        });
-                                      },
-                                    ),
-                                  ],
+                                      const SizedBox(height: 16),
+                                      MarkdownWidget(
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          shrinkWrap: true,
+                                          data: insightsTask.description),
+                                    ],
+                                  ),
+                                );
+                              case "table":
+                                final taskId = tab["taskId"]!;
+                                final tableTask = recipe.tasks
+                                    .whereType<TableTask>()
+                                    .firstWhere((t) => t.id == taskId);
+                                if (!tableWidgetKeys
+                                    .containsKey(taskId)) {
+                                  tableWidgetKeys[taskId] = List.generate(
+                                    tableTask.tables.tables.length,
+                                    (_) =>
+                                        GlobalKey<TableDisplayWidgetState>(),
+                                  );
+                                }
+                                return SingleChildScrollView(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ...tableTask.tables.tables
+                                          .asMap()
+                                          .entries
+                                          .map((entry) {
+                                        final idx = entry.key;
+                                        final table = entry.value;
+                                        final selectedRows =
+                                            userSelectedRows[taskId]
+                                                    ?[idx] ??
+                                                <int>{};
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 24),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                table.tableTitle,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge,
+                                              ),
+                                              if (table.tableDescription
+                                                  .isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 8.0),
+                                                  child: Text(
+                                                    table.tableDescription,
+                                                    style:
+                                                        Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium,
+                                                  ),
+                                                ),
+                                              TableDisplayWidget(
+                                                key: tableWidgetKeys[
+                                                    taskId]![idx],
+                                                columns: table.columns,
+                                                rows: table.rows,
+                                                selectedRowIndices:
+                                                    selectedRows,
+                                                onRowTap: (rowIdx) {
+                                                  setState(() {
+                                                    userSelectedRows[
+                                                            taskId] ??= {};
+                                                    final selected =
+                                                        userSelectedRows[
+                                                                    taskId]![
+                                                                idx] ??
+                                                            <int>{};
+                                                    if (selected
+                                                        .contains(
+                                                            rowIdx)) {
+                                                      selected.remove(
+                                                          rowIdx);
+                                                    } else {
+                                                      selected.add(
+                                                          rowIdx);
+                                                    }
+                                                    userSelectedRows[
+                                                            taskId]![idx] =
+                                                        selected;
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                );
+                              case "insights_v2":
+                                final taskId = tab["taskId"]!;
+                                final insightsTask = recipe.tasks
+                                    .whereType<ShowInsightsPageV2Task>()
+                                    .firstWhere((t) => t.id == taskId);
+                                return InsightsPreviewPage(
+                                    task: insightsTask);
+                              default:
+                                return Container();
+                            }
+                          }),
+                      if (_currentShowToolsTask != null)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Material(
+                            color: Colors.black54,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                setState(() {
+                                  _isToolPanelOpen = !_isToolPanelOpen;
+                                });
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Icon(
+                                  Icons.build,
+                                  color: Colors.white,
+                                  size: 20,
                                 ),
-                              );
-                            }),
-                          ],
+                              ),
+                            ),
+                          ),
                         ),
-                      );
-                    case "insights_v2":
-                      final taskId = tab["taskId"]!;
-                      final insightsTask = recipe.tasks
-                          .whereType<ShowInsightsPageV2Task>()
-                          .firstWhere((t) => t.id == taskId);
-                      return InsightsPreviewPage(task: insightsTask);
-                    default:
-                      return Container();
-                  }
-                }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
               flex: 1,
@@ -662,6 +752,195 @@ class _ChartDemoState extends State<ChartDemo> {
         ],
       )),
     );
+  }
+
+  Widget _buildToolsPanel() {
+    final enabledTools = _currentToolPanelTask?.enabledTools ?? {};
+    bool isEnabled(String name) => enabledTools[name] ?? true;
+
+    final indicators = IndicatorType.values;
+    final layers = LayerType.values;
+
+    return Container(
+      width: 220,
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        border: Border(
+          right: BorderSide(color: Colors.grey[700]!),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[700]!),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tools',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isToolPanelOpen = false;
+                    });
+                  },
+                  child: const Icon(Icons.close,
+                      color: Colors.white70, size: 18),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              children: [
+                _buildSectionHeader('Indicators'),
+                ...indicators.map((indicator) {
+                  final enabled = isEnabled(indicator.name);
+                  return _buildToolItem(
+                    _indicatorIcon(indicator),
+                    indicator.name,
+                    enabled: enabled,
+                  );
+                }),
+                const SizedBox(height: 8),
+                _buildSectionHeader('Drawing Tools'),
+                ...layers.map((layer) {
+                  final enabled = isEnabled(layer.name);
+                  return _buildToolItem(
+                    _layerIcon(layer),
+                    layer.name,
+                    enabled: enabled,
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white54,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolItem(IconData icon, String label, {bool enabled = true}) {
+    return InkWell(
+      onTap: enabled ? () {} : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.35,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon,
+                  color: enabled ? Colors.white70 : Colors.white38, size: 18),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: enabled ? Colors.white70 : Colors.white38,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              if (!enabled)
+                const Icon(Icons.lock_outline,
+                    color: Colors.white24, size: 14),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _indicatorIcon(IndicatorType type) {
+    switch (type) {
+      case IndicatorType.rsi:
+        return Icons.speed;
+      case IndicatorType.macd:
+        return Icons.candlestick_chart;
+      case IndicatorType.sma:
+      case IndicatorType.ema:
+        return Icons.auto_graph;
+      case IndicatorType.bollingerBand:
+        return Icons.straighten;
+      case IndicatorType.stochastic:
+        return Icons.show_chart;
+      case IndicatorType.mfi:
+        return Icons.account_balance_wallet;
+      case IndicatorType.adx:
+        return Icons.trending_up;
+      case IndicatorType.atr:
+        return Icons.gesture;
+      case IndicatorType.pivotPoint:
+        return Icons.horizontal_rule;
+      case IndicatorType.pe:
+      case IndicatorType.pb:
+        return Icons.attach_money;
+      case IndicatorType.supertrend:
+        return Icons.alt_route;
+      case IndicatorType.vwap:
+        return Icons.functions;
+      case IndicatorType.evEbitda:
+      case IndicatorType.evSales:
+        return Icons.analytics;
+      case IndicatorType.scanner:
+        return Icons.radar;
+      case IndicatorType.roc:
+        return Icons.timeline;
+    }
+  }
+
+  IconData _layerIcon(LayerType type) {
+    switch (type) {
+      case LayerType.label:
+        return Icons.text_fields;
+      case LayerType.horizontalLine:
+        return Icons.horizontal_rule;
+      case LayerType.horizontalBand:
+        return Icons.straighten;
+      case LayerType.trendLine:
+        return Icons.show_chart;
+      case LayerType.parallelChannel:
+        return Icons.timeline;
+      case LayerType.rectArea:
+        return Icons.crop_square;
+      case LayerType.circularArea:
+        return Icons.circle_outlined;
+      case LayerType.arrow:
+        return Icons.arrow_right_alt;
+      case LayerType.arrowTextPointer:
+        return Icons.location_on;
+      case LayerType.verticalLine:
+        return Icons.format_size;
+    }
   }
 
   Widget userActionContainer() {
@@ -707,6 +986,8 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.tableTask:
       case TaskType.highlightTableRow:
       case TaskType.showInsightsV2Page:
+      case TaskType.showTools:
+      case TaskType.openToolPanel:
         return Container();
     }
   }

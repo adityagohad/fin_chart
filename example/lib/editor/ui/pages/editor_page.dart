@@ -3,6 +3,8 @@ import 'package:example/dialog/add_tab_dialog.dart';
 import 'package:example/dialog/choose_bucket_rows_dialog.dart';
 import 'package:example/dialog/edit_added_tab_dialog.dart';
 import 'package:example/dialog/edit_move_tab_dialog.dart';
+import 'package:example/dialog/open_tools_panel_dialog.dart';
+import 'package:example/dialog/show_tools_dialog.dart';
 import 'package:example/dialog/pay_off_graph_dialog.dart';
 import 'package:example/dialog/show_all_added_tabs_dialog.dart';
 import 'package:example/dialog/show_all_option_chains_dialog.dart';
@@ -14,6 +16,7 @@ import 'package:example/dialog/show_popup_dialog.dart';
 import 'package:example/dialog/show_table_task_dialog.dart';
 import 'package:example/editor/ui/pages/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
+import 'package:example/editor/ui/pages/sahi_chart_demo.dart';
 import 'package:example/editor/ui/widget/markdown_textfield.dart';
 import 'package:fin_chart/fin_chart.dart';
 import 'package:fin_chart/models/enums/mcq_arrangment_type.dart';
@@ -44,6 +47,8 @@ import 'package:fin_chart/models/tasks/show_insights_page.task.dart';
 import 'package:fin_chart/models/tasks/table_task.dart';
 import 'package:fin_chart/models/tasks/task.dart';
 import 'package:fin_chart/models/tasks/wait.task.dart';
+import 'package:fin_chart/models/tasks/show_tools.task.dart';
+import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:example/editor/ui/widget/blinking_text.dart';
 import 'package:example/editor/ui/widget/indicator_type_dropdown.dart';
 import 'package:example/editor/ui/widget/layer_type_dropdown.dart';
@@ -165,7 +170,7 @@ class _EditorPageState extends State<EditorPage> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ChartDemo(
+                    builder: (context) => SahiChartDemo(
                         recipeDataJson: jsonEncode(Recipe(
                       data: candleData,
                       chartSettings: _chartKey.currentState!.getChartSettings(),
@@ -285,6 +290,8 @@ class _EditorPageState extends State<EditorPage> {
           case TaskType.tableTask:
           case TaskType.highlightTableRow:
           case TaskType.showInsightsV2Page:
+          case TaskType.showTools:
+          case TaskType.openToolPanel:
             break;
           case TaskType.addData:
             VerticalLine layer = VerticalLine.fromRecipe(
@@ -618,6 +625,22 @@ class _EditorPageState extends State<EditorPage> {
         case TaskType.showInsightsV2Page:
           showInsightsPageV2Task();
           break;
+        case TaskType.showTools:
+          if (pos >= 0 && pos <= tasks.length) {
+            insertPosition = pos;
+          } else {
+            insertPosition = tasks.length;
+          }
+          _showShowToolsDialog();
+          break;
+        case TaskType.openToolPanel:
+          if (pos >= 0 && pos <= tasks.length) {
+            insertPosition = pos;
+          } else {
+            insertPosition = tasks.length;
+          }
+          _showOpenToolsPanelDialog();
+          break;
       }
       if (pos >= 0 && pos <= tasks.length) {
         insertPosition = pos;
@@ -691,6 +714,12 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case TaskType.showInsightsV2Page:
         editInsightsPageV2Task(task as ShowInsightsPageV2Task);
+        break;
+      case TaskType.showTools:
+        _editShowToolsDialog(task as ShowToolsTask);
+        break;
+      case TaskType.openToolPanel:
+        _editOpenToolsPanelDialog(task as OpenToolPanelTask);
         break;
     }
   }
@@ -1521,6 +1550,42 @@ class _EditorPageState extends State<EditorPage> {
         }
       });
     });
+  }
+
+  void _showShowToolsDialog() async {
+    final result = await showShowToolsDialog(context: context);
+    if (result != null) {
+      _updateTaskList(result);
+    }
+  }
+
+  void _editShowToolsDialog(ShowToolsTask task) async {
+    final result =
+        await showShowToolsDialog(context: context, initialTask: task);
+    if (result != null) {
+      setState(() {
+        task.tools = result.tools;
+      });
+    }
+  }
+
+  void _showOpenToolsPanelDialog() async {
+    final result = await showOpenToolsPanelDialog(context: context);
+    if (result != null) {
+      _updateTaskList(result);
+    }
+  }
+
+  void _editOpenToolsPanelDialog(OpenToolPanelTask task) async {
+    final result =
+        await showOpenToolsPanelDialog(context: context, initialTask: task);
+    if (result != null) {
+      setState(() {
+        task.open = result.open;
+        task.enabledTools.clear();
+        task.enabledTools.addAll(result.enabledTools);
+      });
+    }
   }
 
   void showChooseBucketRows() async {

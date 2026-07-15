@@ -7,8 +7,10 @@ import 'package:fin_chart/models/tasks/choose_correct_option_chain_task.dart';
 import 'package:fin_chart/models/tasks/clear_bucket_rows_task.dart';
 import 'package:fin_chart/models/tasks/highlight_correct_option_chain_value_task.dart';
 import 'package:fin_chart/models/tasks/highlight_table_row_task.dart';
+import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:fin_chart/models/tasks/show_bottom_sheet.task.dart';
 import 'package:fin_chart/models/tasks/show_insights_page.task.dart';
+import 'package:fin_chart/models/tasks/show_tools.task.dart';
 import 'package:fin_chart/models/tasks/table_task.dart';
 import 'package:fin_chart/models/tasks/task.dart';
 import 'package:example/editor/ui/widget/task_type_dropdown.dart';
@@ -500,6 +502,63 @@ class _TaskListWidgetState extends State<TaskListWidget> {
             ),
           ],
         );
+      case TaskType.showTools:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Show Tools"),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.openToolPanel:
+        final panelTask = task as OpenToolPanelTask;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Open Tool Panel"),
+            const SizedBox(width: 8),
+            _buildVisibilityBadge(panelTask.open),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
     }
+  }
+
+  Widget _buildVisibilityBadge(bool isVisible) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isVisible ? Colors.green : Colors.red,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        isVisible ? 'Visible' : 'Hidden',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

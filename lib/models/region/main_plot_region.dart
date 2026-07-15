@@ -10,7 +10,6 @@ import 'package:fin_chart/models/settings/y_axis_settings.dart';
 import 'package:fin_chart/utils/calculations.dart';
 import 'package:fin_chart/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:fin_chart/utils/constants.dart';
 
 class MainPlotRegion extends PlotRegion {
   final List<ICandle> candles;
@@ -216,7 +215,7 @@ class MainPlotRegion extends PlotRegion {
               ..color = (theme.brightness == Brightness.light
                       ? Colors.grey.shade300
                       : Colors.grey.shade800)
-                  .withOpacity(0.5));
+                  .withAlpha((0.5 * 255).round()));
         final TextPainter text = TextPainter(
           text: TextSpan(
             text: value.toStringAsFixed(2),
