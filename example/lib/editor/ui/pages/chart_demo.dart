@@ -466,6 +466,9 @@ class _ChartDemoState extends State<ChartDemo> {
         });
         onTaskFinish();
         break;
+      case TaskType.addChartTab:
+        onTaskFinish();
+        break;
     }
   }
 
@@ -988,6 +991,7 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.showInsightsV2Page:
       case TaskType.showTools:
       case TaskType.openToolPanel:
+      case TaskType.addChartTab:
         return Container();
     }
   }

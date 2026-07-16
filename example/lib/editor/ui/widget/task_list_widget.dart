@@ -26,6 +26,7 @@ class TaskListWidget extends StatefulWidget {
   final Function(Task) onTaskClick;
   final Function(Task) onTaskEdit;
   final Function(Task) onTaskDelete;
+  final Set<TaskType> disabledTaskTypes;
 
   const TaskListWidget({
     super.key,
@@ -34,6 +35,7 @@ class TaskListWidget extends StatefulWidget {
     required this.onTaskClick,
     required this.onTaskEdit,
     required this.onTaskDelete,
+    this.disabledTaskTypes = const {},
   });
 
   @override
@@ -51,6 +53,7 @@ class _TaskListWidgetState extends State<TaskListWidget> {
             width: 300,
             child: TaskTypeDropdown(
               selectedType: null,
+              disabledTypes: widget.disabledTaskTypes,
               onChanged: (taskType) {
                 Navigator.of(context).pop();
                 widget.onTaskAdd(taskType, position);
@@ -334,6 +337,25 @@ class _TaskListWidgetState extends State<TaskListWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text("Added ${(task as AddTabTask).taskId} tab"),
+            const SizedBox(width: 20),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.addChartTab:
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Chart: ${(task as AddChartTabTask).tabTitle}"),
             const SizedBox(width: 20),
             InkWell(
               onTap: () {

@@ -14,6 +14,7 @@ Future<AddTabTask?> addTabDialog({
 }) async {
   final filteredTasks = tasks
       .where((t) =>
+          t is AddChartTabTask ||
           t is ChooseCorrectOptionValueChainTask ||
           t is ShowPayOffGraphTask ||
           t is ShowInsightsPageTask ||
@@ -58,7 +59,42 @@ Future<AddTabTask?> addTabDialog({
                     Widget previewWidget;
                     String taskType;
 
-                    if (task is ChooseCorrectOptionValueChainTask) {
+                    if (task is AddChartTabTask) {
+                      taskType = 'Chart';
+                      previewWidget = Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(
+                            color: Colors.blue,
+                            width: 1,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.candlestick_chart_outlined,
+                                      size: 24),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Chart: ${task.tabTitle}',
+                                    style:
+                                        Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                  'Data range: ${task.fromPoint} - ${task.tillPoint < 0 ? "end" : task.tillPoint}'),
+                            ],
+                          ),
+                        ),
+                      );
+                    } else if (task is ChooseCorrectOptionValueChainTask) {
                       final optionChain = getOptionChainDetails(task.taskId);
                       taskType = 'Option Chain';
                       if (optionChain != null) {
