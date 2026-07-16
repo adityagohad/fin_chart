@@ -24,6 +24,7 @@ enum TaskType {
   showInsightsV2Page,
   showTools,
   openToolPanel,
+  addChartTab,
 }
 
 // extension TaskTypeExtension on TaskType {

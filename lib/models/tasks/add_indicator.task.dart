@@ -6,7 +6,9 @@ import 'package:fin_chart/models/enums/task_type.dart';
 
 class AddIndicatorTask extends Task {
   final Indicator indicator;
-  AddIndicatorTask({required this.indicator})
+  final String? chartId;
+
+  AddIndicatorTask({required this.indicator, this.chartId})
       : super(
             id: generateV4(),
             actionType: ActionType.empty,
@@ -16,12 +18,14 @@ class AddIndicatorTask extends Task {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = super.toJson();
     data['indicator'] = indicator.toJson();
+    data['chartId'] = chartId;
     return data;
   }
 
   factory AddIndicatorTask.fromJson(Map<String, dynamic> json) {
     return AddIndicatorTask(
       indicator: Indicator.fromJson(json: json['indicator']),
+      chartId: json['chartId'],
     );
   }
 }

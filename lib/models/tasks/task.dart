@@ -103,6 +103,8 @@ abstract class Task {
         return ShowToolsTask.fromJson(json);
       case 'openToolPanel':
         return OpenToolPanelTask.fromJson(json);
+      case 'addChartTab':
+        return AddChartTabTask.fromJson(json);
       default:
         throw ArgumentError('Unknown task type: $taskType');
     }
