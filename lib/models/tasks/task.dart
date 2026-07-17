@@ -11,6 +11,8 @@ import 'package:fin_chart/models/tasks/choose_bucket_rows_task.dart';
 import 'package:fin_chart/models/tasks/clear_bucket_rows_task.dart';
 import 'package:fin_chart/models/tasks/show_insights_page.task.dart';
 import 'package:fin_chart/models/tasks/show_tools.task.dart';
+import 'package:fin_chart/models/tasks/toggle_tool_visibility.task.dart';
+import 'package:fin_chart/models/tasks/add_remove_tools.task.dart';
 import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:fin_chart/models/tasks/wait.task.dart';
 import 'package:flutter/material.dart';
@@ -101,6 +103,10 @@ abstract class Task {
         return ShowInsightsPageV2Task.fromJson(json);
       case 'showTools':
         return ShowToolsTask.fromJson(json);
+      case 'toggleToolVisibility':
+        return ToggleToolVisibilityTask.fromJson(json);
+      case 'addRemoveTools':
+        return AddRemoveToolsTask.fromJson(json);
       case 'openToolPanel':
         return OpenToolPanelTask.fromJson(json);
       default:

@@ -5,6 +5,8 @@ import 'package:example/dialog/edit_added_tab_dialog.dart';
 import 'package:example/dialog/edit_move_tab_dialog.dart';
 import 'package:example/dialog/open_tools_panel_dialog.dart';
 import 'package:example/dialog/show_tools_dialog.dart';
+import 'package:example/dialog/toggle_tool_visibility_dialog.dart';
+import 'package:example/dialog/add_remove_tools_dialog.dart';
 import 'package:example/dialog/pay_off_graph_dialog.dart';
 import 'package:example/dialog/show_all_added_tabs_dialog.dart';
 import 'package:example/dialog/show_all_option_chains_dialog.dart';
@@ -48,6 +50,9 @@ import 'package:fin_chart/models/tasks/table_task.dart';
 import 'package:fin_chart/models/tasks/task.dart';
 import 'package:fin_chart/models/tasks/wait.task.dart';
 import 'package:fin_chart/models/tasks/show_tools.task.dart';
+import 'package:fin_chart/models/tasks/toggle_tool_visibility.task.dart';
+import 'package:fin_chart/models/tasks/add_remove_tools.task.dart';
+import 'package:fin_chart/models/sahi_tools_model.dart';
 import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:example/editor/ui/widget/blinking_text.dart';
 import 'package:example/editor/ui/widget/indicator_type_dropdown.dart';
@@ -291,6 +296,8 @@ class _EditorPageState extends State<EditorPage> {
           case TaskType.highlightTableRow:
           case TaskType.showInsightsV2Page:
           case TaskType.showTools:
+          case TaskType.toggleToolVisibility:
+          case TaskType.addRemoveTools:
           case TaskType.openToolPanel:
             break;
           case TaskType.addData:
@@ -552,6 +559,7 @@ class _EditorPageState extends State<EditorPage> {
 
   _onTaskAdd(TaskType taskType, int pos) {
     setState(() {
+      insertPosition = (pos >= 0 && pos <= tasks.length) ? pos : tasks.length;
       switch (taskType) {
         case TaskType.addIndicator:
         case TaskType.addLayer:
@@ -573,11 +581,6 @@ class _EditorPageState extends State<EditorPage> {
           mcqPrompt();
           break;
         case TaskType.clearTask:
-          if (pos >= 0 && pos <= tasks.length) {
-            insertPosition = pos;
-          } else {
-            insertPosition = tasks.length;
-          }
           _updateTaskList(ClearTask());
           break;
         case TaskType.addOptionChain:
@@ -626,26 +629,17 @@ class _EditorPageState extends State<EditorPage> {
           showInsightsPageV2Task();
           break;
         case TaskType.showTools:
-          if (pos >= 0 && pos <= tasks.length) {
-            insertPosition = pos;
-          } else {
-            insertPosition = tasks.length;
-          }
           _showShowToolsDialog();
           break;
+        case TaskType.toggleToolVisibility:
+          _showToggleToolVisibilityDialog();
+          break;
+        case TaskType.addRemoveTools:
+          _showAddRemoveToolsDialog();
+          break;
         case TaskType.openToolPanel:
-          if (pos >= 0 && pos <= tasks.length) {
-            insertPosition = pos;
-          } else {
-            insertPosition = tasks.length;
-          }
           _showOpenToolsPanelDialog();
           break;
-      }
-      if (pos >= 0 && pos <= tasks.length) {
-        insertPosition = pos;
-      } else {
-        insertPosition = tasks.length;
       }
     });
   }
@@ -717,6 +711,12 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case TaskType.showTools:
         _editShowToolsDialog(task as ShowToolsTask);
+        break;
+      case TaskType.toggleToolVisibility:
+        _editToggleToolVisibilityDialog(task as ToggleToolVisibilityTask);
+        break;
+      case TaskType.addRemoveTools:
+        _editAddRemoveToolsDialog(task as AddRemoveToolsTask);
         break;
       case TaskType.openToolPanel:
         _editOpenToolsPanelDialog(task as OpenToolPanelTask);
@@ -1565,6 +1565,91 @@ class _EditorPageState extends State<EditorPage> {
     if (result != null) {
       setState(() {
         task.tools = result.tools;
+      });
+    }
+  }
+
+  List<SahiToolsModel> _buildCurrentTools() {
+    final List<String> allToolNames = [];
+    for (final indicator in IndicatorType.values) {
+      allToolNames.add(indicator.name);
+    }
+    for (final layer in LayerType.values) {
+      allToolNames.add(layer.name);
+    }
+
+    final Map<String, bool> visibility = {};
+    final Map<String, bool> enabled = {};
+
+    for (final t in tasks) {
+      if (t is ShowToolsTask) {
+        for (final tool in t.tools) {
+          visibility[tool.title] = tool.isVisible;
+          enabled[tool.title] = tool.isEnabled;
+        }
+      } else if (t is ToggleToolVisibilityTask) {
+        visibility.addAll(t.visibility);
+      } else if (t is AddRemoveToolsTask) {
+        enabled.addAll(t.enabled);
+      }
+    }
+
+    return allToolNames
+        .where((name) => visibility[name] ?? false)
+        .map((name) => SahiToolsModel(
+              title: name,
+              isVisible: true,
+              isEnabled: enabled[name] ?? false,
+            ))
+        .toList();
+  }
+
+  void _showToggleToolVisibilityDialog() async {
+    final currentTools = _buildCurrentTools();
+    final result = await showToggleToolVisibilityDialog(
+      context: context,
+      currentTools: currentTools,
+    );
+    if (result != null) {
+      _updateTaskList(result);
+    }
+  }
+
+  void _editToggleToolVisibilityDialog(ToggleToolVisibilityTask task) async {
+    final currentTools = _buildCurrentTools();
+    final result = await showToggleToolVisibilityDialog(
+      context: context,
+      initialTask: task,
+      currentTools: currentTools,
+    );
+    if (result != null) {
+      setState(() {
+        task.visibility = result.visibility;
+      });
+    }
+  }
+
+  void _showAddRemoveToolsDialog() async {
+    final currentTools = _buildCurrentTools();
+    final result = await showAddRemoveToolsDialog(
+      context: context,
+      currentTools: currentTools,
+    );
+    if (result != null) {
+      _updateTaskList(result);
+    }
+  }
+
+  void _editAddRemoveToolsDialog(AddRemoveToolsTask task) async {
+    final currentTools = _buildCurrentTools();
+    final result = await showAddRemoveToolsDialog(
+      context: context,
+      initialTask: task,
+      currentTools: currentTools,
+    );
+    if (result != null) {
+      setState(() {
+        task.enabled = result.enabled;
       });
     }
   }

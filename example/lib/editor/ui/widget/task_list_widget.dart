@@ -520,6 +520,42 @@ class _TaskListWidgetState extends State<TaskListWidget> {
             ),
           ],
         );
+      case TaskType.toggleToolVisibility:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Toggle Tool Visibility"),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.addRemoveTools:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Add/Remove Tools"),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
       case TaskType.openToolPanel:
         final panelTask = task as OpenToolPanelTask;
         return Row(

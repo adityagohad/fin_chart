@@ -458,6 +458,14 @@ class _ChartDemoState extends State<ChartDemo> {
         });
         onTaskFinish();
         break;
+      case TaskType.toggleToolVisibility:
+        setState(() {});
+        onTaskFinish();
+        break;
+      case TaskType.addRemoveTools:
+        setState(() {});
+        onTaskFinish();
+        break;
       case TaskType.openToolPanel:
         final task = currentTask as OpenToolPanelTask;
         setState(() {
@@ -987,6 +995,8 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.highlightTableRow:
       case TaskType.showInsightsV2Page:
       case TaskType.showTools:
+      case TaskType.toggleToolVisibility:
+      case TaskType.addRemoveTools:
       case TaskType.openToolPanel:
         return Container();
     }

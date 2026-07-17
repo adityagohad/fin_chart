@@ -23,6 +23,8 @@ enum TaskType {
   highlightTableRow,
   showInsightsV2Page,
   showTools,
+  toggleToolVisibility,
+  addRemoveTools,
   openToolPanel,
 }
 

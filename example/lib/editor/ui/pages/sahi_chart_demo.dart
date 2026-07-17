@@ -6,7 +6,12 @@ import 'package:fin_chart/models/tasks/add_layer.task.dart';
 import 'package:fin_chart/models/tasks/add_prompt.task.dart';
 import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:fin_chart/models/tasks/show_tools.task.dart';
+import 'package:fin_chart/models/tasks/toggle_tool_visibility.task.dart';
+import 'package:fin_chart/models/tasks/add_remove_tools.task.dart';
 import 'package:fin_chart/models/enums/task_type.dart';
+import 'package:fin_chart/models/enums/layer_type.dart';
+import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/models/sahi_tools_model.dart';
 import 'package:fin_chart/models/recipe.dart';
 import 'package:fin_chart/models/tasks/highlight_correct_option_chain_value_task.dart';
 import 'package:fin_chart/models/tasks/choose_correct_option_chain_task.dart';
@@ -440,6 +445,14 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         });
         onTaskFinish();
         break;
+      case TaskType.toggleToolVisibility:
+        setState(() {});
+        onTaskFinish();
+        break;
+      case TaskType.addRemoveTools:
+        setState(() {});
+        onTaskFinish();
+        break;
       case TaskType.openToolPanel:
         final task = currentTask as OpenToolPanelTask;
         setState(() {
@@ -460,6 +473,42 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
       duration: const Duration(seconds: 1),
       curve: Curves.easeIn,
     );
+  }
+
+  List<SahiToolsModel> _buildToolsList() {
+    final List<String> allToolNames = [];
+    for (final indicator in IndicatorType.values) {
+      allToolNames.add(indicator.name);
+    }
+    for (final layer in LayerType.values) {
+      allToolNames.add(layer.name);
+    }
+
+    final Map<String, bool> visibility = {};
+    final Map<String, bool> enabled = {};
+
+    final executedTasks = recipe.tasks.sublist(0, taskPointer);
+    for (final t in executedTasks) {
+      if (t is ShowToolsTask) {
+        for (final tool in t.tools) {
+          visibility[tool.title] = tool.isVisible;
+          enabled[tool.title] = tool.isEnabled;
+        }
+      } else if (t is ToggleToolVisibilityTask) {
+        visibility.addAll(t.visibility);
+      } else if (t is AddRemoveToolsTask) {
+        enabled.addAll(t.enabled);
+      }
+    }
+
+    return allToolNames
+        .where((name) => visibility[name] ?? false)
+        .map((name) => SahiToolsModel(
+              title: name,
+              isVisible: true,
+              isEnabled: enabled[name] ?? false,
+            ))
+        .toList();
   }
 
   void onTaskFinish() {
@@ -486,7 +535,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
             Divider(height: 1, thickness: 1, color: colors.sahiDivider),
             if (_currentShowToolsTask != null)
               SahiToolsBar(
-                tools: _currentShowToolsTask?.tools ?? [],
+                tools: _buildToolsList(),
               ),
             Expanded(
               child: SahiContentArea(
