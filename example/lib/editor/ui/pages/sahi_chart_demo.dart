@@ -11,6 +11,22 @@ import 'package:fin_chart/models/tasks/add_remove_tools.task.dart';
 import 'package:fin_chart/models/enums/task_type.dart';
 import 'package:fin_chart/models/enums/layer_type.dart';
 import 'package:fin_chart/models/indicators/indicator.dart';
+import 'package:fin_chart/models/indicators/pivot_point.dart';
+import 'package:fin_chart/models/indicators/pe.dart';
+import 'package:fin_chart/models/indicators/pb.dart';
+import 'package:fin_chart/models/indicators/supertrend.dart';
+import 'package:fin_chart/models/indicators/vwap.dart';
+import 'package:fin_chart/models/indicators/ev_ebitda.dart';
+import 'package:fin_chart/models/indicators/ev_sales.dart';
+import 'package:fin_chart/models/indicators/scanner_indicator.dart';
+import 'package:fin_chart/models/indicators/roc.dart';
+import 'package:fin_chart/models/layers/label.dart';
+import 'package:fin_chart/models/layers/trend_line.dart';
+import 'package:fin_chart/models/layers/horizontal_line.dart';
+import 'package:fin_chart/models/layers/rect_area.dart';
+import 'package:fin_chart/models/layers/circular_area.dart';
+import 'package:fin_chart/models/layers/arrow.dart';
+import 'package:fin_chart/models/layers/layer.dart';
 import 'package:fin_chart/models/sahi_tools_model.dart';
 import 'package:fin_chart/models/recipe.dart';
 import 'package:fin_chart/models/tasks/highlight_correct_option_chain_value_task.dart';
@@ -63,6 +79,9 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
   Map<String, Map<int, Set<int>>> userSelectedRows = {};
 
   ShowToolsTask? _currentShowToolsTask;
+  LayerType? _selectedLayerType;
+  List<Offset> drawPoints = [];
+  Offset? startingPoint;
   bool _isToolPanelOpen = false;
   OpenToolPanelTask? _currentToolPanelTask;
 
@@ -164,7 +183,10 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         setState(() {});
         break;
       case TaskType.clearTask:
-        _activeChartKey?.currentState?.clearChart();
+        final currentChartKey = _chartKeyForCurrentTab();
+        if (currentChartKey?.currentState != null) {
+          currentChartKey?.currentState?.clearChart();
+        }
         onTaskFinish();
         break;
       case TaskType.addOptionChain:
@@ -548,6 +570,174 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     });
   }
 
+  GlobalKey<ChartState>? _chartKeyForCurrentTab() {
+    if (currentPageIndex < 0 || currentPageIndex >= tabs.length) return null;
+    final tab = tabs[currentPageIndex];
+    if (tab["type"] != "chart") return null;
+    final taskId = tab["taskId"];
+    if (taskId == null) return null;
+    return chartKeys[taskId];
+  }
+
+  void _onToolTap(String toolName) {
+    final chartState = _chartKeyForCurrentTab()?.currentState;
+    if (chartState == null) return;
+
+    for (final indicatorType in IndicatorType.values) {
+      if (indicatorType.name == toolName) {
+        Indicator indicator;
+        switch (indicatorType) {
+          case IndicatorType.rsi:
+            indicator = Rsi();
+            break;
+          case IndicatorType.macd:
+            indicator = Macd();
+            break;
+          case IndicatorType.sma:
+            indicator = Sma();
+            break;
+          case IndicatorType.ema:
+            indicator = Ema();
+            break;
+          case IndicatorType.bollingerBand:
+            indicator = BollingerBands();
+            break;
+          case IndicatorType.stochastic:
+            indicator = Stochastic();
+            break;
+          case IndicatorType.atr:
+            indicator = Atr();
+            break;
+          case IndicatorType.mfi:
+            indicator = Mfi();
+            break;
+          case IndicatorType.adx:
+            indicator = Adx();
+            break;
+          case IndicatorType.pivotPoint:
+            indicator = PivotPoint();
+            break;
+          case IndicatorType.pe:
+            indicator = Pe();
+            break;
+          case IndicatorType.pb:
+            indicator = Pb();
+            break;
+          case IndicatorType.supertrend:
+            indicator = Supertrend();
+            break;
+          case IndicatorType.vwap:
+            indicator = Vwap();
+            break;
+          case IndicatorType.evEbitda:
+            indicator = EvEbitda();
+            break;
+          case IndicatorType.evSales:
+            indicator = EvSales();
+            break;
+          case IndicatorType.scanner:
+            indicator = ScannerIndicator();
+            break;
+          case IndicatorType.roc:
+            indicator = Roc();
+            break;
+        }
+        chartState.addIndicator(indicator);
+        return;
+      }
+    }
+
+    for (final layerType in LayerType.values) {
+      if (layerType.name == toolName) {
+        setState(() {
+          _selectedLayerType = layerType;
+        });
+        chartState.updateLayerGettingAddedState(layerType);
+        return;
+      }
+    }
+  }
+
+  void _onInteraction(Offset tapDownPoint, Offset updatedPoint) {
+    if (_selectedLayerType == null) return;
+
+    drawPoints.add(tapDownPoint);
+    startingPoint = updatedPoint;
+    Layer? layer;
+    switch (_selectedLayerType) {
+      case LayerType.label:
+        layer = Label.fromTool(
+            pos: drawPoints.first,
+            label: "Text",
+            textStyle: const TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.bold));
+        break;
+      case LayerType.trendLine:
+        if (drawPoints.length >= 2) {
+          layer = TrendLine.fromTool(
+              from: drawPoints.first,
+              to: drawPoints.last,
+              startPoint: startingPoint!);
+        }
+        break;
+      case LayerType.horizontalLine:
+        layer = HorizontalLine.fromTool(value: drawPoints.first.dy);
+        break;
+      case LayerType.horizontalBand:
+        layer = HorizontalBand.fromTool(
+            value: drawPoints.first.dy, allowedError: 70);
+        break;
+      case LayerType.rectArea:
+        if (drawPoints.length >= 2) {
+          layer = RectArea.fromTool(
+              topLeft: drawPoints.first,
+              bottomRight: drawPoints.last,
+              dragStartPos: startingPoint!);
+        }
+        break;
+      case LayerType.circularArea:
+        layer = CircularArea.fromTool(point: drawPoints.first);
+        break;
+      case LayerType.arrow:
+        if (drawPoints.length >= 2) {
+          layer = Arrow.fromTool(
+              from: drawPoints.first,
+              to: drawPoints.last,
+              startPoint: startingPoint!);
+        }
+        break;
+      case LayerType.verticalLine:
+        layer = VerticalLine.fromTool(pos: tapDownPoint.dx);
+        break;
+      case LayerType.parallelChannel:
+        if (drawPoints.length >= 2) {
+          layer = ParallelChannel.fromTool(
+              topLeft: drawPoints.first,
+              bottomRight: drawPoints.last,
+              dragPoint: startingPoint!);
+        }
+        break;
+      case LayerType.arrowTextPointer:
+        layer = ArrowTextPointer.fromTool(pos: drawPoints.first, label: "");
+        break;
+      case null:
+        break;
+    }
+
+    if (layer != null) {
+      final chartState = _chartKeyForCurrentTab()?.currentState;
+      if (chartState != null) {
+        setState(() {
+          _selectedLayerType = null;
+          drawPoints.clear();
+        });
+        chartState.addLayerUsingTool(layer);
+      }
+    }
+  }
+
   List<SahiToolsModel> _buildToolsList() {
     final List<String> allToolNames = [];
     for (final indicator in IndicatorType.values) {
@@ -609,6 +799,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
             if (_currentShowToolsTask != null)
               SahiToolsBar(
                 tools: _buildToolsList(),
+                onToolTap: _onToolTap,
               ),
             Expanded(
               child: SahiContentArea(
@@ -640,6 +831,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
                     });
                   });
                 },
+                onInteraction: _onInteraction,
               ),
             ),
             SahiUserActionArea(

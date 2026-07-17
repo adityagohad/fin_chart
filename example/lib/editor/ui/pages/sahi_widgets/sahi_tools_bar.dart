@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 
 class SahiToolsBar extends StatelessWidget {
   final List<SahiToolsModel> tools;
+  final void Function(String toolName)? onToolTap;
 
-  const SahiToolsBar({super.key, required this.tools});
+  const SahiToolsBar({super.key, required this.tools, this.onToolTap});
 
   IconData _getIcon(String name) {
     for (final indicator in IndicatorType.values) {
@@ -66,45 +67,50 @@ class SahiToolsBar extends StatelessWidget {
                           const SizedBox(width: 6),
                       itemBuilder: (context, index) {
                         final tool = visibleTools[index];
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: tool.isEnabled
-                                ? colors.sahiPanelItemBg
-                                : null,
-                            borderRadius: BorderRadius.circular(6),
-                            border: tool.isEnabled
-                                ? Border.all(
-                                    color: colors.sahiTabBorder,
-                                    width: 1,
-                                  )
-                                : null,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _getIcon(tool.title),
-                                size: 13,
-                                color: tool.isEnabled
-                                    ? colors.sahiChipEnabledText
-                                    : colors.sahiChipDisabledText,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                tool.title,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                        return GestureDetector(
+                          onTap: tool.isEnabled
+                              ? () => onToolTap?.call(tool.title)
+                              : null,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: tool.isEnabled
+                                  ? colors.sahiPanelItemBg
+                                  : null,
+                              borderRadius: BorderRadius.circular(6),
+                              border: tool.isEnabled
+                                  ? Border.all(
+                                      color: colors.sahiTabBorder,
+                                      width: 1,
+                                    )
+                                  : null,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getIcon(tool.title),
+                                  size: 13,
                                   color: tool.isEnabled
                                       ? colors.sahiChipEnabledText
                                       : colors.sahiChipDisabledText,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 5),
+                                Text(
+                                  tool.title,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: tool.isEnabled
+                                        ? colors.sahiChipEnabledText
+                                        : colors.sahiChipDisabledText,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

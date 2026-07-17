@@ -28,6 +28,7 @@ class SahiContentArea extends StatelessWidget {
   final Map<String, List<GlobalKey<TableDisplayWidgetState>>> tableWidgetKeys;
   final Map<String, Map<int, Set<int>>> userSelectedRows;
   final Function(Map<int, Set<int>>) onTableSelectionChanged;
+  final Function(Offset, Offset)? onInteraction;
 
   const SahiContentArea({
     super.key,
@@ -47,6 +48,7 @@ class SahiContentArea extends StatelessWidget {
     required this.tableWidgetKeys,
     required this.userSelectedRows,
     required this.onTableSelectionChanged,
+    this.onInteraction,
   });
 
   @override
@@ -115,7 +117,7 @@ class SahiContentArea extends StatelessWidget {
         return Chart(
             key: chartKey,
             candles: const [],
-            onInteraction: (p0, p1) {},
+            onInteraction: onInteraction,
             theme: Theme.of(context));
       case "option_chain":
         return _buildOptionChainTab(tab);

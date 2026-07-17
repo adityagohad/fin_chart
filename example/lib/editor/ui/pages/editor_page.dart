@@ -554,21 +554,21 @@ class _EditorPageState extends State<EditorPage> {
                 id: addDataTask.verticleLineId,
                 pos: localPos < 0 ? 0 : localPos);
             layer.isLocked = true;
-            activeKey?.currentState?.addLayerAtRegion(
+            activeKey.currentState?.addLayerAtRegion(
                 recipe.chartSettings.mainPlotRegionId, layer);
             break;
           case TaskType.addIndicator:
             final indicatorTask = task as AddIndicatorTask;
             final indicatorChartKey =
                 _chartKeyForId(indicatorTask.chartId) ?? activeKey;
-            indicatorChartKey?.currentState
+            indicatorChartKey.currentState
                 ?.addIndicator(indicatorTask.indicator);
             break;
           case TaskType.addLayer:
             AddLayerTask t = task as AddLayerTask;
             final layerChartKey =
                 _chartKeyForId(t.chartId ?? _chartIdForTask(t)) ?? activeKey;
-            layerChartKey?.currentState?.addLayerAtRegion(t.regionId, t.layer);
+            layerChartKey.currentState?.addLayerAtRegion(t.regionId, t.layer);
             break;
           default:
             break;
