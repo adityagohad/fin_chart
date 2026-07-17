@@ -474,6 +474,9 @@ class _ChartDemoState extends State<ChartDemo> {
         });
         onTaskFinish();
         break;
+      case TaskType.addChartTab:
+        onTaskFinish();
+        break;
     }
   }
 
@@ -998,6 +1001,7 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.toggleToolVisibility:
       case TaskType.addRemoveTools:
       case TaskType.openToolPanel:
+      case TaskType.addChartTab:
         return Container();
     }
   }

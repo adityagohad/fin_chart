@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:example/dialog/add_tab_dialog.dart';
+import 'package:example/dialog/add_chart_tab_dialog.dart';
 import 'package:example/dialog/choose_bucket_rows_dialog.dart';
 import 'package:example/dialog/edit_added_tab_dialog.dart';
+import 'package:example/dialog/edit_chart_tab_dialog.dart';
 import 'package:example/dialog/edit_move_tab_dialog.dart';
 import 'package:example/dialog/open_tools_panel_dialog.dart';
 import 'package:example/dialog/show_tools_dialog.dart';
@@ -16,7 +18,6 @@ import 'package:example/dialog/show_insights_pagev2_dialog.dart';
 import 'package:example/dialog/show_option_chain_by_id.dart';
 import 'package:example/dialog/show_popup_dialog.dart';
 import 'package:example/dialog/show_table_task_dialog.dart';
-import 'package:example/editor/ui/pages/chart_demo.dart';
 import 'package:example/dialog/add_data_dialog.dart';
 import 'package:example/editor/ui/pages/sahi_chart_demo.dart';
 import 'package:example/editor/ui/widget/markdown_textfield.dart';
@@ -117,9 +118,178 @@ class _EditorPageState extends State<EditorPage> {
 
   ScannerResult? _selectedScannerResult;
 
+  // Chart tab management
+  List<Map<String, dynamic>> _chartTabs = [];
+  int _activeChartTabIndex = -1;
+  Map<String, List<ICandle>> _chartCandleData = {};
+
+  GlobalKey<ChartState> get _activeChartKey {
+    if (_activeChartTabIndex >= 0 && _activeChartTabIndex < _chartTabs.length) {
+      return _chartTabs[_activeChartTabIndex]['key'] as GlobalKey<ChartState>;
+    }
+    return _chartKey;
+  }
+
+  bool get _hasChart => tasks.any((t) => t is AddChartTabTask);
+
+  List<ICandle> _activeCandles() {
+    if (_chartTabs.isNotEmpty &&
+        _activeChartTabIndex >= 0 &&
+        _activeChartTabIndex < _chartTabs.length) {
+      final activeId = _chartTabs[_activeChartTabIndex]['id'] as String;
+      return _chartCandleData[activeId] ?? [];
+    }
+    return candleData;
+  }
+
+  List<ICandle> _buildFlattenedCandleDataForSave() {
+    if (_chartTabs.isEmpty) {
+      return List<ICandle>.from(candleData);
+    }
+
+    final flattened = <ICandle>[];
+    int cursor = 0;
+
+    for (final tab in _chartTabs) {
+      final tabId = tab['id'] as String;
+      final tabData = List<ICandle>.from(_chartCandleData[tabId] ?? const []);
+      AddChartTabTask? tabTask;
+      for (final task in tasks) {
+        if (task is AddChartTabTask && task.id == tabId) {
+          tabTask = task;
+          break;
+        }
+      }
+
+      if (tabTask == null) {
+        continue;
+      }
+
+      tabTask.fromPoint = cursor;
+      tabTask.tillPoint = cursor + tabData.length;
+      cursor = tabTask.tillPoint;
+      flattened.addAll(tabData);
+    }
+
+    return flattened;
+  }
+
+  int _getChartBaseOffsetByTabIndex(int tabIndex) {
+    if (tabIndex <= 0) return 0;
+
+    int offset = 0;
+    for (int i = 0; i < tabIndex && i < _chartTabs.length; i++) {
+      final tabId = _chartTabs[i]['id'] as String;
+      offset += (_chartCandleData[tabId] ?? const <ICandle>[]).length;
+    }
+    return offset;
+  }
+
+  int _getChartBaseOffsetById(String chartId) {
+    final tabIndex = _chartTabs.indexWhere((tab) => tab['id'] == chartId);
+    if (tabIndex == -1) return 0;
+    return _getChartBaseOffsetByTabIndex(tabIndex);
+  }
+
+  int _getLastTillPointForChart(String chartId, int fallbackBaseOffset) {
+    bool isCurrentChart = false;
+    int lastTill = fallbackBaseOffset;
+
+    for (final task in tasks) {
+      if (task is AddChartTabTask) {
+        if (isCurrentChart) {
+          break;
+        }
+        isCurrentChart = task.id == chartId;
+      } else if (isCurrentChart && task is AddDataTask) {
+        if (task.tillPoint > lastTill) {
+          lastTill = task.tillPoint;
+        }
+      }
+    }
+
+    return lastTill;
+  }
+
+  String? _chartIdForTask(Task targetTask, {List<Task>? sourceTasks}) {
+    final taskList = sourceTasks ?? tasks;
+    String? currentChartId;
+
+    for (final task in taskList) {
+      if (task is AddChartTabTask) {
+        currentChartId = task.id;
+      }
+      if (identical(task, targetTask)) {
+        return currentChartId;
+      }
+    }
+    return null;
+  }
+
+  GlobalKey<ChartState>? _chartKeyForId(String? chartId) {
+    if (chartId == null) {
+      return _chartKey;
+    }
+    for (final tab in _chartTabs) {
+      if (tab['id'] == chartId) {
+        return tab['key'] as GlobalKey<ChartState>;
+      }
+    }
+    return null;
+  }
+
+  String? _currentChartId() {
+    if (_chartTabs.isEmpty ||
+        _activeChartTabIndex < 0 ||
+        _activeChartTabIndex >= _chartTabs.length) {
+      return null;
+    }
+    return _chartTabs[_activeChartTabIndex]['id'] as String;
+  }
+
+  List<FundamentalEvent> _activeChartFundamentalEvents() {
+    final chartState = _activeChartKey.currentState;
+    if (chartState == null) {
+      return <FundamentalEvent>[];
+    }
+    for (final region in chartState.regions) {
+      if (region is MainPlotRegion) {
+        return region.fundamentalEvents;
+      }
+    }
+    return <FundamentalEvent>[];
+  }
+
+  void _removeChartTabById(String chartId) {
+    final tabIndex = _chartTabs.indexWhere((tab) => tab['id'] == chartId);
+    if (tabIndex == -1) return;
+
+    _chartTabs.removeAt(tabIndex);
+    _chartCandleData.remove(chartId);
+
+    if (_chartTabs.isEmpty) {
+      _activeChartTabIndex = -1;
+      return;
+    }
+
+    if (_activeChartTabIndex >= _chartTabs.length) {
+      _activeChartTabIndex = _chartTabs.length - 1;
+    } else if (_activeChartTabIndex > tabIndex) {
+      _activeChartTabIndex -= 1;
+    }
+  }
+
+  void _activateChartTab(int index) {
+    if (index < 0 || index >= _chartTabs.length) return;
+    if (_activeChartTabIndex == index) return;
+    setState(() {
+      _activeChartTabIndex = index;
+    });
+  }
+
   void _deleteSelectedScannerResult() {
     if (_selectedScannerResult != null) {
-      _chartKey.currentState?.removeSelectedScannerResult();
+      _activeChartKey.currentState?.removeSelectedScannerResult();
       setState(() {
         _selectedScannerResult = null;
       });
@@ -138,16 +308,7 @@ class _EditorPageState extends State<EditorPage> {
                 )
               : const Text("Trade:able Charts"),
       actions: [
-        // ElevatedButton(
-        //     onPressed: () {
-        //       //log(jsonEncode(_chartKey.currentState?.toJson()));
-        //       //_chartKey.currentState?.addIndicator(Rsi());
-        //     },
-        //     child: const Text("Action")),
-        // const SizedBox(
-        //   width: 20,
-        // ),
-        if (_selectedScannerResult != null) // Add this block
+        if (_selectedScannerResult != null)
           IconButton(
             onPressed: _deleteSelectedScannerResult,
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -171,42 +332,52 @@ class _EditorPageState extends State<EditorPage> {
           },
         ),
         IconButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SahiChartDemo(
-                        recipeDataJson: jsonEncode(Recipe(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SahiChartDemo(
+                  recipeDataJson: jsonEncode(
+                    Recipe(
                       data: candleData,
-                      chartSettings: _chartKey.currentState!.getChartSettings(),
+                      chartSettings:
+                          _activeChartKey.currentState!.getChartSettings(),
                       tasks: tasks,
                       fundamentalEvents: fundamentalEvents,
-                    ).toJson())),
-                  ));
-            },
-            iconSize: 42,
-            icon: const Icon(Icons.play_arrow_rounded)),
-
+                    ).toJson(),
+                  ),
+                ),
+              ),
+            );
+          },
+          iconSize: 42,
+          icon: const Icon(Icons.play_arrow_rounded),
+        ),
         IconButton(
           onPressed: () {
-            Clipboard.setData(ClipboardData(
-                    text: jsonEncode(Recipe(
-                            data: candleData,
-                            chartSettings:
-                                _chartKey.currentState!.getChartSettings(),
-                            tasks: tasks,
-                            fundamentalEvents: fundamentalEvents)
-                        .toJson())))
-                .then((_) {
+            Clipboard.setData(
+              ClipboardData(
+                text: jsonEncode(
+                  Recipe(
+                    data: candleData,
+                    chartSettings:
+                        _activeChartKey.currentState!.getChartSettings(),
+                    tasks: tasks,
+                    fundamentalEvents: fundamentalEvents,
+                  ).toJson(),
+                ),
+              ),
+            ).then((_) {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("recipe to clipboar")));
+                  const SnackBar(content: Text("recipe to clipboar")),
+                );
               }
             });
           },
           iconSize: 42,
           icon: const Icon(Icons.copy_all_rounded),
-        )
+        ),
       ],
     );
   }
@@ -216,7 +387,7 @@ class _EditorPageState extends State<EditorPage> {
       setState(() {
         fundamentalEvents.removeWhere((event) => event.id == selectedEvent!.id);
         // Update the chart to reflect the removal
-        for (var region in _chartKey.currentState!.regions) {
+        for (var region in _activeChartKey.currentState!.regions) {
           if (region is MainPlotRegion) {
             region.fundamentalEvents
                 .removeWhere((event) => event.id == selectedEvent!.id);
@@ -243,12 +414,21 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   void _saveCurrentRecipe() {
-    if (candleData.isEmpty) return; // Don't save empty states
+    final flattenedData = _buildFlattenedCandleDataForSave();
+    if (flattenedData.isEmpty) return; // Don't save empty states
 
     try {
+      final chartState = _activeChartKey.currentState ?? _chartKey.currentState;
+      if (chartState == null) {
+        return;
+      }
+
+      // Keep the editor-level backing list consistent with what is persisted.
+      candleData = List<ICandle>.from(flattenedData);
+
       final recipeData = Recipe(
-        data: candleData,
-        chartSettings: _chartKey.currentState!.getChartSettings(),
+        data: flattenedData,
+        chartSettings: chartState.getChartSettings(),
         tasks: tasks,
         fundamentalEvents: fundamentalEvents,
       );
@@ -269,11 +449,75 @@ class _EditorPageState extends State<EditorPage> {
 
   populateRecipe(Recipe recipe) async {
     await Future.delayed(const Duration(seconds: 1));
+
+    // First pass: build _chartCandleData before any widgets are built
+    Map<String, List<ICandle>> chartData = {};
+    final chartTabTasks = recipe.tasks.whereType<AddChartTabTask>().toList();
+    final hasExplicitTabRanges =
+        chartTabTasks.any((task) => task.fromPoint > 0 || task.tillPoint >= 0);
+
+    if (hasExplicitTabRanges) {
+      for (final task in chartTabTasks) {
+        final int safeFrom = task.fromPoint.clamp(0, recipe.data.length);
+        final int rawTill =
+            task.tillPoint < 0 ? recipe.data.length : task.tillPoint;
+        final int safeTill = rawTill.clamp(safeFrom, recipe.data.length);
+        chartData[task.id] = recipe.data.sublist(safeFrom, safeTill);
+      }
+    } else {
+      String? activeTabId;
+      for (final task in recipe.tasks) {
+        if (task is AddChartTabTask) {
+          chartData[task.id] = [];
+          activeTabId = task.id;
+        } else if (task is AddDataTask && activeTabId != null) {
+          final int safeFrom = task.fromPoint.clamp(0, recipe.data.length);
+          final int safeTill =
+              task.tillPoint.clamp(safeFrom, recipe.data.length);
+          final dataSlice = recipe.data.sublist(safeFrom, safeTill);
+          chartData[activeTabId] = [
+            ...chartData[activeTabId]!,
+            ...dataSlice,
+          ];
+        }
+      }
+    }
+
     setState(() {
       candleData.addAll(recipe.data);
-      _chartKey.currentState?.addData(candleData);
       tasks.addAll(recipe.tasks);
       fundamentalEvents.addAll(recipe.fundamentalEvents ?? []);
+      _chartCandleData = chartData;
+
+      for (Task task in tasks) {
+        if (task is AddChartTabTask) {
+          final chartKey = GlobalKey<ChartState>();
+          _chartTabs.add({
+            'id': task.id,
+            'title': task.tabTitle,
+            'key': chartKey,
+          });
+        }
+      }
+
+      if (_chartTabs.isNotEmpty) {
+        _activeChartTabIndex = 0;
+      } else {
+        _chartKey.currentState?.addData(candleData);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chartTabs.isEmpty) {
+        _chartKey.currentState?.addData(candleData);
+      }
+
+      GlobalKey<ChartState>? activeKey = _chartTabs.isNotEmpty
+          ? _chartTabs[0]['key'] as GlobalKey<ChartState>
+          : _chartKey;
+      String? activeChartId =
+          _chartTabs.isNotEmpty ? _chartTabs[0]['id'] as String : null;
+
       for (Task task in tasks) {
         switch (task.taskType) {
           case TaskType.addPrompt:
@@ -296,25 +540,37 @@ class _EditorPageState extends State<EditorPage> {
           case TaskType.highlightTableRow:
           case TaskType.showInsightsV2Page:
           case TaskType.showTools:
-          case TaskType.toggleToolVisibility:
-          case TaskType.addRemoveTools:
           case TaskType.openToolPanel:
             break;
           case TaskType.addData:
+            final addDataTask = task as AddDataTask;
+            final resolvedChartId = addDataTask.chartId ?? activeChartId;
+            final chartBaseOffset = resolvedChartId == null
+                ? 0
+                : _getChartBaseOffsetById(resolvedChartId);
+            final localPos =
+                (addDataTask.tillPoint - chartBaseOffset - 1).toDouble();
             VerticalLine layer = VerticalLine.fromRecipe(
-                id: (task as AddDataTask).verticleLineId,
-                pos: (task).tillPoint.toDouble() - 1);
+                id: addDataTask.verticleLineId,
+                pos: localPos < 0 ? 0 : localPos);
             layer.isLocked = true;
-            _chartKey.currentState?.addLayerAtRegion(
+            activeKey?.currentState?.addLayerAtRegion(
                 recipe.chartSettings.mainPlotRegionId, layer);
             break;
           case TaskType.addIndicator:
-            _chartKey.currentState
-                ?.addIndicator((task as AddIndicatorTask).indicator);
+            final indicatorTask = task as AddIndicatorTask;
+            final indicatorChartKey =
+                _chartKeyForId(indicatorTask.chartId) ?? activeKey;
+            indicatorChartKey?.currentState
+                ?.addIndicator(indicatorTask.indicator);
             break;
           case TaskType.addLayer:
             AddLayerTask t = task as AddLayerTask;
-            _chartKey.currentState?.addLayerAtRegion(t.regionId, t.layer);
+            final layerChartKey =
+                _chartKeyForId(t.chartId ?? _chartIdForTask(t)) ?? activeKey;
+            layerChartKey?.currentState?.addLayerAtRegion(t.regionId, t.layer);
+            break;
+          default:
             break;
         }
       }
@@ -336,6 +592,7 @@ class _EditorPageState extends State<EditorPage> {
           child: Column(
         children: [
           Expanded(flex: 1, child: _buildTaskListWidget()),
+          if (_hasChart) _buildChartTabBar(),
           Expanded(
               flex: 8,
               child: Container(
@@ -344,35 +601,9 @@ class _EditorPageState extends State<EditorPage> {
                       ? Colors.red.withAlpha(50)
                       : Colors.white.withAlpha(100),
                 ),
-                child: widget.recipeStr == null
-                    ? Chart(
-                        key: _chartKey,
-                        candles: candleData,
-                        onLayerSelect: _onLayerSelect,
-                        onRegionSelect: _onRegionSelect,
-                        onIndicatorSelect: _onIndicatorSelect,
-                        onInteraction: _onInteraction,
-                        chartType: _chartType,
-                        theme: Theme.of(context),
-                        onScannerResultSelect: (result) {
-                          setState(() {
-                            _selectedScannerResult = result;
-                            if (result != null) {
-                              selectedEvent = null;
-                            }
-                          });
-                        },
-                      )
-                    : Chart.from(
-                        key: _chartKey,
-                        recipe: recipe!,
-                        onLayerSelect: _onLayerSelect,
-                        onRegionSelect: _onRegionSelect,
-                        onIndicatorSelect: _onIndicatorSelect,
-                        onInteraction: _onInteraction,
-                        theme: Theme.of(context)),
+                child: _buildChartArea(),
               )),
-          Expanded(flex: 1, child: _buildToolBox()),
+          if (_hasChart) Expanded(flex: 1, child: _buildToolBox()),
         ],
       )),
     );
@@ -383,7 +614,13 @@ class _EditorPageState extends State<EditorPage> {
       _selectedScannerResult = null;
     });
     if (_currentTaskType == TaskType.addLayer) {
-      _updateTaskList(AddLayerTask(regionId: region.id, layer: layer));
+      _updateTaskList(
+        AddLayerTask(
+          regionId: region.id,
+          layer: layer,
+          chartId: _currentChartId(),
+        ),
+      );
     }
   }
 
@@ -404,7 +641,12 @@ class _EditorPageState extends State<EditorPage> {
 
   _onIndicatorSelect(Indicator indicator) {
     if (_currentTaskType == TaskType.addIndicator) {
-      _updateTaskList(AddIndicatorTask(indicator: indicator));
+      _updateTaskList(
+        AddIndicatorTask(
+          indicator: indicator,
+          chartId: _currentChartId(),
+        ),
+      );
     }
   }
 
@@ -466,21 +708,31 @@ class _EditorPageState extends State<EditorPage> {
         case LayerType.verticalLine:
           layer = VerticalLine.fromTool(pos: tapDownPoint.dx);
           layer.isLocked = true;
-          int fromPoint = 0;
-          for (Task task in tasks) {
-            if (task is AddDataTask) {
-              if (tapDownPoint.dx.round() < task.tillPoint) {
-                task.fromPoint = tapDownPoint.dx.round() + 1;
-                break;
-              } else {
-                fromPoint = task.tillPoint;
-              }
-            }
+          final String currentChartId = _chartTabs.isNotEmpty
+              ? _chartTabs[_activeChartTabIndex]['id'] as String
+              : '';
+
+          final int chartBaseOffset = _chartTabs.isNotEmpty
+              ? _getChartBaseOffsetByTabIndex(_activeChartTabIndex)
+              : 0;
+          final int localDx = tapDownPoint.dx.round();
+          final int globalDx = chartBaseOffset + localDx;
+
+          final int lastTill = currentChartId.isNotEmpty
+              ? _getLastTillPointForChart(currentChartId, chartBaseOffset)
+              : candleData.length;
+          final int fromPoint =
+              currentChartId.isNotEmpty ? lastTill : candleData.length;
+
+          if (globalDx + 1 <= fromPoint) {
+            break;
           }
+
           _updateTaskList(AddDataTask(
               fromPoint: fromPoint,
-              tillPoint: tapDownPoint.dx.round() + 1,
-              verticleLineId: layer.id));
+              tillPoint: globalDx + 1,
+              verticleLineId: layer.id,
+              chartId: currentChartId.isNotEmpty ? currentChartId : null));
           break;
         case null:
           layer = null;
@@ -512,14 +764,20 @@ class _EditorPageState extends State<EditorPage> {
               xOffset: selectedRegion!.xOffset,
               yMinValue: selectedRegion!.yMinValue,
               yMaxValue: selectedRegion!.yMaxValue);
-          _chartKey.currentState?.addLayerUsingTool(layer);
+          _activeChartKey.currentState?.addLayerUsingTool(layer);
         }
       });
     }
     if (isWaitingForEventPosition) {
       setState(() {
         isWaitingForEventPosition = false;
-        DateTime candleDate = candleData[tapDownPoint.dx.round()].date;
+        final candles = _activeCandles();
+        if (candles.isEmpty) {
+          return;
+        }
+        final int candleIndex =
+            tapDownPoint.dx.round().clamp(0, candles.length - 1);
+        DateTime candleDate = candles[candleIndex].date;
 
         // Show the dialog
         showDialog(
@@ -529,7 +787,7 @@ class _EditorPageState extends State<EditorPage> {
               index: tapDownPoint.dx.round(),
               onEventAdded: (event) {
                 setState(() {
-                  _chartKey.currentState?.addFundamentalEvent(event);
+                  _activeChartKey.currentState?.addFundamentalEvent(event);
                   fundamentalEvents.add(event);
                 });
               },
@@ -553,6 +811,13 @@ class _EditorPageState extends State<EditorPage> {
         onTaskClick: _onTaskClick,
         onTaskEdit: _onTaskEdit,
         onTaskDelete: _onTaskDelete,
+        disabledTaskTypes: _hasChart
+            ? {}
+            : {
+                TaskType.addData,
+                TaskType.addIndicator,
+                TaskType.addLayer,
+              },
       ),
     );
   }
@@ -566,7 +831,7 @@ class _EditorPageState extends State<EditorPage> {
           _currentTaskType = taskType;
           break;
         case TaskType.addData:
-          _chartKey.currentState
+          _activeChartKey.currentState
               ?.updateLayerGettingAddedState(LayerType.verticalLine);
           _currentTaskType = taskType;
           _selectedLayerType = LayerType.verticalLine;
@@ -597,6 +862,9 @@ class _EditorPageState extends State<EditorPage> {
           break;
         case TaskType.addTab:
           showAddTab();
+          break;
+        case TaskType.addChartTab:
+          showAddChartTab();
           break;
         case TaskType.removeTab:
           showAllAddedTabs();
@@ -680,6 +948,9 @@ class _EditorPageState extends State<EditorPage> {
       case TaskType.addTab:
         editAddedTab(task as AddTabTask);
         break;
+      case TaskType.addChartTab:
+        editAddedChartTab(task as AddChartTabTask);
+        break;
       case TaskType.removeTab:
         break;
       case TaskType.moveTab:
@@ -726,10 +997,52 @@ class _EditorPageState extends State<EditorPage> {
 
   _onTaskDelete(Task task) {
     setState(() {
-      tasks.removeWhere((t) => t == task);
-      if (task is AddDataTask) {
-        _chartKey.currentState?.removeLayerById(task.verticleLineId);
+      if (task is AddChartTabTask) {
+        final startIndex = tasks.indexOf(task);
+        if (startIndex == -1) {
+          return;
+        }
+
+        int endIndex = tasks.length;
+        for (int i = startIndex + 1; i < tasks.length; i++) {
+          if (tasks[i] is AddChartTabTask) {
+            endIndex = i;
+            break;
+          }
+        }
+
+        final relatedTasks = tasks.sublist(startIndex, endIndex);
+        final chartKey = _chartKeyForId(task.id);
+        if (chartKey?.currentState != null) {
+          for (final related in relatedTasks) {
+            if (related is AddDataTask) {
+              chartKey!.currentState!.removeLayerById(related.verticleLineId);
+            }
+          }
+        }
+
+        tasks.removeRange(startIndex, endIndex);
+        _removeChartTabById(task.id);
+        candleData = _buildFlattenedCandleDataForSave();
+        return;
       }
+
+      if (task is AddDataTask) {
+        final chartId = task.chartId ?? _chartIdForTask(task);
+        _chartKeyForId(chartId)
+            ?.currentState
+            ?.removeLayerById(task.verticleLineId);
+      } else if (task is AddIndicatorTask) {
+        _chartKeyForId(task.chartId)
+            ?.currentState
+            ?.removeIndicator(task.indicator);
+      } else if (task is AddLayerTask) {
+        final chartId = task.chartId ?? _chartIdForTask(task);
+        _chartKeyForId(chartId)?.currentState?.removeLayerById(task.layer.id);
+      }
+
+      tasks.remove(task);
+      candleData = _buildFlattenedCandleDataForSave();
     });
   }
 
@@ -833,11 +1146,44 @@ class _EditorPageState extends State<EditorPage> {
     }
   }
 
+  void showAddChartTab() async {
+    final chooseTab = await addChartTabDialog(
+      context: context,
+    );
+    if (chooseTab != null) {
+      final chartKey = GlobalKey<ChartState>();
+      setState(() {
+        _chartCandleData[chooseTab.id] = [];
+        _chartTabs.add({
+          'id': chooseTab.id,
+          'title': chooseTab.tabTitle,
+          'key': chartKey,
+        });
+        _activeChartTabIndex = _chartTabs.length - 1;
+      });
+      _updateTaskList(chooseTab);
+    }
+  }
+
   void editAddedTab(AddTabTask task) async {
     await editTabDialog(context: context, task: task).then((data) {
       setState(() {
         if (data != null) {
           task.tabTitle = data.tabTitle;
+        }
+      });
+    });
+  }
+
+  void editAddedChartTab(AddChartTabTask task) async {
+    await editChartTabDialog(context: context, task: task).then((data) {
+      setState(() {
+        if (data != null) {
+          task.tabTitle = data.tabTitle;
+          final tabIndex = _chartTabs.indexWhere((t) => t['id'] == task.id);
+          if (tabIndex != -1) {
+            _chartTabs[tabIndex]['title'] = data.tabTitle;
+          }
         }
       });
     });
@@ -1811,6 +2157,133 @@ class _EditorPageState extends State<EditorPage> {
     }
   }
 
+  Widget _buildChartTabBar() {
+    if (_chartTabs.isEmpty) return const SizedBox.shrink();
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.grey.withAlpha(50),
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.withAlpha(100), width: 1),
+        ),
+      ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _chartTabs.length,
+        itemBuilder: (context, index) {
+          final tab = _chartTabs[index];
+          final isActive = index == _activeChartTabIndex;
+          return GestureDetector(
+            onTap: () {
+              _activateChartTab(index);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    isActive ? Colors.blue.withAlpha(50) : Colors.transparent,
+                border: Border(
+                  right:
+                      BorderSide(color: Colors.grey.withAlpha(100), width: 1),
+                  bottom: BorderSide(
+                    color: isActive ? Colors.blue : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(
+                tab['title'] ?? 'Chart ${index + 1}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                  color: isActive ? Colors.blue : Colors.black87,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildChartArea() {
+    if (_chartTabs.isEmpty) {
+      // No charts yet, show default chart
+      if (widget.recipeStr == null) {
+        return Chart(
+          key: _chartKey,
+          candles: candleData,
+          onLayerSelect: _onLayerSelect,
+          onRegionSelect: _onRegionSelect,
+          onIndicatorSelect: _onIndicatorSelect,
+          onInteraction: _onInteraction,
+          chartType: _chartType,
+          theme: Theme.of(context),
+          onScannerResultSelect: (result) {
+            setState(() {
+              _selectedScannerResult = result;
+              if (result != null) {
+                selectedEvent = null;
+              }
+            });
+          },
+        );
+      } else {
+        return Chart.from(
+            key: _chartKey,
+            recipe: recipe!,
+            onLayerSelect: _onLayerSelect,
+            onRegionSelect: _onRegionSelect,
+            onIndicatorSelect: _onIndicatorSelect,
+            onInteraction: _onInteraction,
+            theme: Theme.of(context));
+      }
+    }
+    return Stack(
+      children: _chartTabs.asMap().entries.map((entry) {
+        final index = entry.key;
+        final tab = entry.value;
+        final chartKey = tab['key'] as GlobalKey<ChartState>;
+        final tabId = tab['id'] as String;
+        final tabCandleData = _chartCandleData[tabId] ?? [];
+        return Offstage(
+          offstage: index != _activeChartTabIndex,
+          child: Chart(
+            key: chartKey,
+            candles: tabCandleData,
+            onLayerSelect: (region, layer) {
+              _activateChartTab(index);
+              _onLayerSelect(region, layer);
+            },
+            onRegionSelect: (region) {
+              _activateChartTab(index);
+              _onRegionSelect(region);
+            },
+            onIndicatorSelect: (indicator) {
+              _activateChartTab(index);
+              _onIndicatorSelect(indicator);
+            },
+            onInteraction: (tapDownPoint, updatedPoint) {
+              _activateChartTab(index);
+              _onInteraction(tapDownPoint, updatedPoint);
+            },
+            chartType: _chartType,
+            theme: Theme.of(context),
+            onScannerResultSelect: (result) {
+              _activateChartTab(index);
+              setState(() {
+                _selectedScannerResult = result;
+                if (result != null) {
+                  selectedEvent = null;
+                }
+              });
+            },
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildToolBox() {
     return Container(
       width: double.infinity,
@@ -1837,7 +2310,7 @@ class _EditorPageState extends State<EditorPage> {
                   _chartType = _chartType == ChartType.candlestick
                       ? ChartType.line
                       : ChartType.candlestick;
-                  _chartKey.currentState?.setChartType(_chartType);
+                  _activeChartKey.currentState?.setChartType(_chartType);
                 });
               },
             ),
@@ -1864,7 +2337,7 @@ class _EditorPageState extends State<EditorPage> {
                 onChanged: (layerType) {
                   setState(() {
                     _selectedLayerType = layerType;
-                    _chartKey.currentState
+                    _activeChartKey.currentState
                         ?.updateLayerGettingAddedState(layerType);
                   });
                 })
@@ -1880,9 +2353,21 @@ class _EditorPageState extends State<EditorPage> {
         builder: (BuildContext context) {
           return AddDataDialog(onDataUpdate: (data) {
             setState(() {
-              candleData.addAll(data);
+              if (_chartTabs.isNotEmpty &&
+                  _activeChartTabIndex >= 0 &&
+                  _activeChartTabIndex < _chartTabs.length) {
+                final activeId =
+                    _chartTabs[_activeChartTabIndex]['id'] as String;
+                _chartCandleData[activeId] = [
+                  ...(_chartCandleData[activeId] ?? []),
+                  ...data,
+                ];
+                candleData = _buildFlattenedCandleDataForSave();
+              } else {
+                candleData.addAll(data);
+              }
             });
-            _chartKey.currentState?.addData(data);
+            _activeChartKey.currentState?.addData(data);
           });
         });
   }
@@ -1891,11 +2376,18 @@ class _EditorPageState extends State<EditorPage> {
     setState(() {
       // Enable waiting mode in chart
       isWaitingForEventPosition = true;
-      _chartKey.currentState?.isWaitingForEventPosition = true;
+      _activeChartKey.currentState?.isWaitingForEventPosition = true;
     });
   }
 
   void _addIndicator(IndicatorType indicatorType) {
+    final chartState = _activeChartKey.currentState;
+    if (chartState == null) {
+      return;
+    }
+
+    final currentChartId = _currentChartId();
+
     Indicator? indicator;
     switch (indicatorType) {
       case IndicatorType.rsi:
@@ -1927,25 +2419,12 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case IndicatorType.pivotPoint:
         indicator = PivotPoint();
+        break;
       case IndicatorType.pe:
-        indicator = Pe(getFundamentalEvents: () {
-          for (final region in _chartKey.currentState!.regions) {
-            if (region is MainPlotRegion) {
-              return region.fundamentalEvents;
-            }
-          }
-          return <FundamentalEvent>[];
-        });
+        indicator = Pe(getFundamentalEvents: _activeChartFundamentalEvents);
         break;
       case IndicatorType.pb:
-        indicator = Pb(getFundamentalEvents: () {
-          for (final region in _chartKey.currentState!.regions) {
-            if (region is MainPlotRegion) {
-              return region.fundamentalEvents;
-            }
-          }
-          return <FundamentalEvent>[];
-        });
+        indicator = Pb(getFundamentalEvents: _activeChartFundamentalEvents);
         break;
       case IndicatorType.supertrend:
         indicator = Supertrend();
@@ -1961,11 +2440,18 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case IndicatorType.scanner:
         indicator = ScannerIndicator();
+        break;
       case IndicatorType.roc:
         indicator = Roc();
         break;
     }
-    _chartKey.currentState?.addIndicator(indicator);
+    chartState.addIndicator(indicator);
+    if (_currentTaskType == TaskType.addIndicator) {
+      _updateTaskList(AddIndicatorTask(
+        indicator: indicator,
+        chartId: currentChartId,
+      ));
+    }
   }
 
   @override

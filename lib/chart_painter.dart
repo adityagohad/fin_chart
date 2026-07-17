@@ -150,10 +150,23 @@ class ChartPainter extends CustomPainter {
     final candles = data;
     if (candles.isEmpty) return;
 
-    // Calculate the time between candles
-    final timePerCandle = candles.length > 1
-        ? candles[1].date.difference(candles[0].date).inMinutes
-        : 1;
+    // Use a robust interval estimate so label formatting remains stable even
+    // when the first gap is irregular (common with sliced/restored tab data).
+    int timePerCandle = 1;
+    if (candles.length > 1) {
+      final intervals = <int>[];
+      final int sampleCount = candles.length > 60 ? 60 : candles.length;
+      for (int i = 1; i < sampleCount; i++) {
+        final diff = candles[i].date.difference(candles[i - 1].date).inMinutes;
+        if (diff > 0) {
+          intervals.add(diff);
+        }
+      }
+      if (intervals.isNotEmpty) {
+        intervals.sort();
+        timePerCandle = intervals[intervals.length ~/ 2];
+      }
+    }
 
     // Assign a fixed format for each candle based on its time interval
     String Function(DateTime) formatTime;

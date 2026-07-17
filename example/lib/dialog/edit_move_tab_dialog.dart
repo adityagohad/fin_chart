@@ -7,10 +7,7 @@ Future<MoveTabTask?> editMoveTabDialog(
     required MoveTabTask task,
     required List<Task> tasks}) async {
   final addTabTasks = tasks.whereType<AddTabTask>().toList();
-  final availableTabs = [
-    AddTabTask(tabTitle: "Chart", taskId: "chart"),
-    ...addTabTasks,
-  ];
+  final availableTabs = addTabTasks;
 
   if (availableTabs.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(

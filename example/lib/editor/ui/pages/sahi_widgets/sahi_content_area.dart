@@ -17,10 +17,10 @@ class SahiContentArea extends StatelessWidget {
   final bool isToolPanelOpen;
   final Map<String, bool> enabledTools;
   final VoidCallback onToolPanelClose;
-  final PageController controller;
+  final int currentPageIndex;
   final List<Map<String, String>> tabs;
   final Recipe recipe;
-  final GlobalKey<ChartState> chartKey;
+  final Map<String, GlobalKey<ChartState>> chartKeys;
   final GlobalKey<PreviewScreenState> previewScreenKey;
   final Map<String, GlobalKey<PreviewScreenState>> previewScreenKeys;
   final List<AddOptionChainTask> optionChainTasks;
@@ -36,10 +36,10 @@ class SahiContentArea extends StatelessWidget {
     required this.isToolPanelOpen,
     required this.enabledTools,
     required this.onToolPanelClose,
-    required this.controller,
+    required this.currentPageIndex,
     required this.tabs,
     required this.recipe,
-    required this.chartKey,
+    required this.chartKeys,
     required this.previewScreenKey,
     required this.previewScreenKeys,
     required this.optionChainTasks,
@@ -63,13 +63,14 @@ class SahiContentArea extends StatelessWidget {
                   onClose: onToolPanelClose,
                 ),
               Expanded(
-                child: PageView.builder(
-                  controller: controller,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: tabs.length,
-                  itemBuilder: (context, index) =>
-                      _buildTabContent(context, tabs[index]),
-                ),
+                child: tabs.isEmpty
+                    ? const SizedBox.shrink()
+                    : IndexedStack(
+                        index: currentPageIndex.clamp(0, tabs.length - 1),
+                        children: tabs
+                            .map((tab) => _buildTabContent(context, tab))
+                            .toList(),
+                      ),
               ),
             ],
           ),
@@ -106,9 +107,14 @@ class SahiContentArea extends StatelessWidget {
   Widget _buildTabContent(BuildContext context, Map<String, String> tab) {
     switch (tab["type"]) {
       case "chart":
-        return Chart.from(
+        final taskId = tab["taskId"];
+        final chartKey = taskId != null ? chartKeys[taskId] : null;
+        if (chartKey == null) {
+          return const Center(child: Text('Chart not found'));
+        }
+        return Chart(
             key: chartKey,
-            recipe: recipe,
+            candles: const [],
             onInteraction: (p0, p1) {},
             theme: Theme.of(context));
       case "option_chain":

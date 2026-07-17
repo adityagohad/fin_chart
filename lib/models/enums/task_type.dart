@@ -26,6 +26,7 @@ enum TaskType {
   toggleToolVisibility,
   addRemoveTools,
   openToolPanel,
+  addChartTab,
 }
 
 // extension TaskTypeExtension on TaskType {

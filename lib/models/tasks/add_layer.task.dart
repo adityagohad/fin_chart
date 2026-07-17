@@ -7,9 +7,11 @@ import 'package:fin_chart/utils/calculations.dart';
 class AddLayerTask extends Task {
   final String regionId;
   final Layer layer;
+  final String? chartId;
   AddLayerTask({
     required this.regionId,
     required this.layer,
+    this.chartId,
   }) : super(
             id: generateV4(),
             actionType: ActionType.empty,
@@ -20,6 +22,7 @@ class AddLayerTask extends Task {
     final Map<String, dynamic> data = super.toJson();
     data['layer'] = layer.toJson();
     data['regionId'] = regionId;
+    data['chartId'] = chartId;
     return data;
   }
 
@@ -27,6 +30,7 @@ class AddLayerTask extends Task {
     return AddLayerTask(
       layer: Layer.fromJson(json: json['layer']),
       regionId: json['regionId'],
+      chartId: json['chartId'],
     );
   }
 }

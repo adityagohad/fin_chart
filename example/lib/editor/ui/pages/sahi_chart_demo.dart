@@ -44,9 +44,10 @@ class SahiChartDemo extends StatefulWidget {
 }
 
 class _SahiChartDemoState extends State<SahiChartDemo> {
-  final GlobalKey<ChartState> _chartKey = GlobalKey();
   final GlobalKey<PreviewScreenState> _previewScreenKey = GlobalKey();
   Map<String, GlobalKey<PreviewScreenState>> previewScreenKeys = {};
+  Map<String, GlobalKey<ChartState>> chartKeys = {};
+  GlobalKey<ChartState>? _activeChartKey;
   late Recipe recipe;
 
   int taskPointer = 0;
@@ -54,8 +55,6 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
 
   String promptText = "";
   String hintText = "";
-  Widget? chart;
-  PageController controller = PageController();
   List<AddOptionChainTask> optionChainTasks = [];
   List<ShowPayOffGraphTask> payoffGraphTasks = [];
   List<Map<String, String>> tabs = [];
@@ -67,6 +66,11 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
   bool _isToolPanelOpen = false;
   OpenToolPanelTask? _currentToolPanelTask;
 
+  String? _activeChartId;
+  int _activeChartStartOffset = 0;
+  int _activeChartEndOffset = -1;
+  final Map<String, bool> _hasPlottedFirstChunk = {};
+
   @override
   void initState() {
     recipe = Recipe.fromJson(jsonDecode(widget.recipeDataJson));
@@ -74,18 +78,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
       currentTask = recipe.tasks.first;
       dd();
     }
-    tabs.add({"type": "chart", "title": "Chart"});
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    chart = Chart.from(
-        key: _chartKey,
-        recipe: recipe,
-        onInteraction: (p0, p1) {},
-        theme: Theme.of(context));
   }
 
   void dd() async {
@@ -97,24 +90,63 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     switch (currentTask.taskType) {
       case TaskType.addData:
         AddDataTask task = currentTask as AddDataTask;
-        _chartKey.currentState
-            ?.addDataWithAnimation(
-                recipe.data.sublist(task.fromPoint, task.tillPoint),
-                const Duration(milliseconds: 10))
-            .then((value) {
-          if (value) {
-            onTaskFinish();
+        final chartKey = _activeChartKey;
+        if (chartKey == null) {
+          onTaskFinish();
+          break;
+        }
+        final state = chartKey.currentState;
+        if (state == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            onTaskRun();
+          });
+          break;
+        }
+
+        int from = task.fromPoint;
+        int till = task.tillPoint;
+
+        if (_activeChartId != null) {
+          final isFirstChunk = _hasPlottedFirstChunk[_activeChartId!] != true;
+          if (isFirstChunk) {
+            from = _activeChartStartOffset;
+          } else if (from < _activeChartStartOffset) {
+            from = _activeChartStartOffset;
           }
+
+          if (_activeChartEndOffset >= 0 && till > _activeChartEndOffset) {
+            till = _activeChartEndOffset;
+          }
+        }
+
+        from = from.clamp(0, recipe.data.length);
+        till = till.clamp(from, recipe.data.length);
+        if (till <= from) {
+          onTaskFinish();
+          break;
+        }
+
+        state
+            .addDataWithAnimation(recipe.data.sublist(from, till),
+                const Duration(milliseconds: 10))
+            .then((_) {
+          if (_activeChartId != null) {
+            _hasPlottedFirstChunk[_activeChartId!] = true;
+          }
+          onTaskFinish();
         });
         break;
       case TaskType.addIndicator:
         AddIndicatorTask task = currentTask as AddIndicatorTask;
-        _chartKey.currentState?.addIndicator(task.indicator);
+        final targetChartKey =
+            task.chartId != null ? chartKeys[task.chartId] : _activeChartKey;
+        targetChartKey?.currentState?.addIndicator(task.indicator);
         onTaskFinish();
         break;
       case TaskType.addLayer:
         AddLayerTask task = currentTask as AddLayerTask;
-        _chartKey.currentState?.addLayerAtRegion(task.regionId, task.layer);
+        _activeChartKey?.currentState
+            ?.addLayerAtRegion(task.regionId, task.layer);
         onTaskFinish();
         break;
       case TaskType.addPrompt:
@@ -132,7 +164,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         setState(() {});
         break;
       case TaskType.clearTask:
-        _chartKey.currentState?.clearChart();
+        _activeChartKey?.currentState?.clearChart();
         onTaskFinish();
         break;
       case TaskType.addOptionChain:
@@ -163,104 +195,150 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         onTaskFinish();
         break;
       case TaskType.addTab:
-        setState(() {
+        {
           final task = currentTask as AddTabTask;
-          previewScreenKeys[task.taskId] = GlobalKey<PreviewScreenState>();
 
-          final optionChainTasks = recipe.tasks
-              .whereType<ChooseCorrectOptionValueChainTask>()
-              .where((t) => t.taskId == task.taskId)
-              .toList();
-
-          if (optionChainTasks.isNotEmpty) {
-            tabs.add({
-              "type": "option_chain",
-              "title": task.tabTitle,
-              "taskId": task.taskId
-            });
-          }
-
-          final payoffTasks = recipe.tasks
-              .whereType<ShowPayOffGraphTask>()
+          final chartTask = recipe.tasks
+              .whereType<AddChartTabTask>()
               .where((t) => t.id == task.taskId)
               .toList();
 
-          if (payoffTasks.isNotEmpty) {
-            tabs.add({
-              "type": "payoff",
-              "title": task.tabTitle,
-              "taskId": task.taskId
-            });
-          }
+          if (chartTask.isNotEmpty) {
+            final existingIndex = tabs.indexWhere((tab) =>
+                tab["type"] == "chart" && tab["taskId"] == task.taskId);
+            if (existingIndex == -1) {
+              setState(() {
+                tabs.add({
+                  "type": "chart",
+                  "title": task.tabTitle,
+                  "taskId": task.taskId,
+                });
+              });
+            }
+            _activeChartKey = chartKeys[task.taskId];
+            onTaskFinish();
+          } else {
+            setState(() {
+              previewScreenKeys[task.taskId] = GlobalKey<PreviewScreenState>();
 
-          final insightsTasks = recipe.tasks
-              .whereType<ShowInsightsPageTask>()
-              .where((t) => t.id == task.taskId)
-              .toList();
+              final optionChainTasks = recipe.tasks
+                  .whereType<ChooseCorrectOptionValueChainTask>()
+                  .where((t) => t.taskId == task.taskId)
+                  .toList();
 
-          if (insightsTasks.isNotEmpty) {
-            tabs.add({
-              "type": "insights",
-              "title": task.tabTitle,
-              "taskId": task.taskId,
-            });
-          }
-          final tableTasks = recipe.tasks
-              .whereType<TableTask>()
-              .where((t) => t.id == task.taskId)
-              .toList();
-          if (tableTasks.isNotEmpty) {
-            tabs.add({
-              "type": "table",
-              "title": task.tabTitle,
-              "taskId": task.taskId,
-            });
-          }
+              if (optionChainTasks.isNotEmpty) {
+                tabs.add({
+                  "type": "option_chain",
+                  "title": task.tabTitle,
+                  "taskId": task.taskId
+                });
+              }
 
-          final insightsV2Tasks = recipe.tasks
-              .whereType<ShowInsightsPageV2Task>()
-              .where((t) => t.id == task.taskId)
-              .toList();
+              final payoffTasks = recipe.tasks
+                  .whereType<ShowPayOffGraphTask>()
+                  .where((t) => t.id == task.taskId)
+                  .toList();
 
-          if (insightsV2Tasks.isNotEmpty) {
-            tabs.add({
-              "type": "insights_v2",
-              "title": task.tabTitle,
-              "taskId": task.taskId,
+              if (payoffTasks.isNotEmpty) {
+                tabs.add({
+                  "type": "payoff",
+                  "title": task.tabTitle,
+                  "taskId": task.taskId
+                });
+              }
+
+              final insightsTasks = recipe.tasks
+                  .whereType<ShowInsightsPageTask>()
+                  .where((t) => t.id == task.taskId)
+                  .toList();
+
+              if (insightsTasks.isNotEmpty) {
+                tabs.add({
+                  "type": "insights",
+                  "title": task.tabTitle,
+                  "taskId": task.taskId,
+                });
+              }
+              final tableTasks = recipe.tasks
+                  .whereType<TableTask>()
+                  .where((t) => t.id == task.taskId)
+                  .toList();
+              if (tableTasks.isNotEmpty) {
+                tabs.add({
+                  "type": "table",
+                  "title": task.tabTitle,
+                  "taskId": task.taskId,
+                });
+              }
+
+              final insightsV2Tasks = recipe.tasks
+                  .whereType<ShowInsightsPageV2Task>()
+                  .where((t) => t.id == task.taskId)
+                  .toList();
+
+              if (insightsV2Tasks.isNotEmpty) {
+                tabs.add({
+                  "type": "insights_v2",
+                  "title": task.tabTitle,
+                  "taskId": task.taskId,
+                });
+              }
             });
+            onTaskFinish();
           }
+        }
+        break;
+      case TaskType.addChartTab:
+        setState(() {
+          final task = currentTask as AddChartTabTask;
+          final chartKey = GlobalKey<ChartState>();
+          chartKeys[task.id] = chartKey;
+          _activeChartId = task.id;
+          _activeChartStartOffset = task.fromPoint;
+          _activeChartEndOffset = task.tillPoint;
+          _hasPlottedFirstChunk[task.id] = false;
+          _activeChartKey = chartKey;
         });
         onTaskFinish();
         break;
       case TaskType.removeTab:
         setState(() {
           final task = currentTask as RemoveTabTask;
+          final removedTab = tabs.firstWhere(
+            (tab) => tab["title"] == task.tabTitle,
+            orElse: () => {},
+          );
+          if (removedTab["type"] == "chart" && removedTab["taskId"] != null) {
+            chartKeys.remove(removedTab["taskId"]);
+          }
           tabs.removeWhere((tab) => tab["title"] == task.tabTitle);
         });
         onTaskFinish();
         break;
       case TaskType.moveTab:
         MoveTabTask task = currentTask as MoveTabTask;
-        if (task.tabTaskID == "chart") {
-          navigateToPage(0).then((_) {
-            onTaskFinish();
-          });
-          return;
-        }
-        final addTabTasks = recipe.tasks.whereType<AddTabTask>().toList();
-        if (addTabTasks.isEmpty) {
+        final targetIndex = tabs.indexWhere(
+          (tab) => tab["taskId"] == task.tabTaskID,
+        );
+        if (targetIndex == -1) {
           onTaskFinish();
           return;
         }
-        final targetTabTask =
-            addTabTasks.firstWhere((t) => t.taskId == task.tabTaskID);
-        final targetTab = tabs.firstWhere(
-          (tab) => tab["title"] == targetTabTask.tabTitle,
-          orElse: () => tabs.first,
-        );
-        final targetTabIndex = tabs.indexOf(targetTab);
-
-        navigateToPage(targetTabIndex).then((_) {
+        final targetTab = tabs[targetIndex];
+        if (targetTab["type"] == "chart") {
+          final taskId = targetTab["taskId"];
+          if (taskId != null && chartKeys.containsKey(taskId)) {
+            _activeChartId = taskId;
+            _activeChartKey = chartKeys[taskId];
+            final chartTask = recipe.tasks
+                .whereType<AddChartTabTask>()
+                .firstWhere((t) => t.id == taskId,
+                    orElse: () => AddChartTabTask(tabTitle: '', id: taskId));
+            _activeChartStartOffset = chartTask.fromPoint;
+            _activeChartEndOffset = chartTask.tillPoint;
+          }
+        }
+        navigateToPage(targetIndex).then((_) {
           onTaskFinish();
         });
         break;
@@ -468,11 +546,6 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     setState(() {
       currentPageIndex = pageIndex;
     });
-    await controller.animateToPage(
-      pageIndex,
-      duration: const Duration(seconds: 1),
-      curve: Curves.easeIn,
-    );
   }
 
   List<SahiToolsModel> _buildToolsList() {
@@ -548,10 +621,10 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
                     _isToolPanelOpen = false;
                   });
                 },
-                controller: controller,
+                currentPageIndex: currentPageIndex,
                 tabs: tabs,
                 recipe: recipe,
-                chartKey: _chartKey,
+                chartKeys: chartKeys,
                 previewScreenKey: _previewScreenKey,
                 previewScreenKeys: previewScreenKeys,
                 optionChainTasks: optionChainTasks,
