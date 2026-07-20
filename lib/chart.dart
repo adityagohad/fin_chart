@@ -409,6 +409,30 @@ class ChartState extends State<Chart>
     });
   }
 
+  void clearAllTools() {
+    setState(() {
+      regions.removeWhere((r) => r is PanelPlotRegion);
+      for (PlotRegion region in regions) {
+        region.layers.clear();
+        if (region is MainPlotRegion) {
+          region.indicators.clear();
+        }
+      }
+      selectedIndicator = null;
+      selectedLayer = null;
+      if (regions.isNotEmpty) {
+        double remainingHeight = 0;
+        for (var r in regions) {
+          remainingHeight += r.bottomPos - r.topPos;
+        }
+        double totalHeight = bottomPos - topPos;
+        double multiplier =
+            remainingHeight > 0 ? totalHeight / remainingHeight : 1;
+        _updateRegionBounds(multiplier);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);

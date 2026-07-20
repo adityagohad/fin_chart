@@ -109,7 +109,8 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     switch (currentTask.taskType) {
       case TaskType.addData:
         AddDataTask task = currentTask as AddDataTask;
-        final chartKey = _activeChartKey;
+        final chartKey =
+            task.chartId != null ? chartKeys[task.chartId] : _activeChartKey;
         if (chartKey == null) {
           onTaskFinish();
           break;
@@ -125,16 +126,24 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         int from = task.fromPoint;
         int till = task.tillPoint;
 
-        if (_activeChartId != null) {
-          final isFirstChunk = _hasPlottedFirstChunk[_activeChartId!] != true;
+        final targetChartId = task.chartId ?? _activeChartId;
+        if (targetChartId != null) {
+          final chartTask = recipe.tasks
+              .whereType<AddChartTabTask>()
+              .where((t) => t.id == targetChartId)
+              .firstOrNull;
+          final startOffset = chartTask?.fromPoint ?? _activeChartStartOffset;
+          final endOffset = chartTask?.tillPoint ?? _activeChartEndOffset;
+
+          final isFirstChunk = _hasPlottedFirstChunk[targetChartId] != true;
           if (isFirstChunk) {
-            from = _activeChartStartOffset;
-          } else if (from < _activeChartStartOffset) {
-            from = _activeChartStartOffset;
+            from = startOffset;
+          } else if (from < startOffset) {
+            from = startOffset;
           }
 
-          if (_activeChartEndOffset >= 0 && till > _activeChartEndOffset) {
-            till = _activeChartEndOffset;
+          if (endOffset >= 0 && till > endOffset) {
+            till = endOffset;
           }
         }
 
@@ -149,8 +158,8 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
             .addDataWithAnimation(recipe.data.sublist(from, till),
                 const Duration(milliseconds: 10))
             .then((_) {
-          if (_activeChartId != null) {
-            _hasPlottedFirstChunk[_activeChartId!] = true;
+          if (targetChartId != null) {
+            _hasPlottedFirstChunk[targetChartId] = true;
           }
           onTaskFinish();
         });
@@ -658,6 +667,17 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     }
   }
 
+  void _onClearTools() {
+    final chartState = _chartKeyForCurrentTab()?.currentState;
+    if (chartState == null) return;
+    chartState.clearAllTools();
+    setState(() {
+      _selectedLayerType = null;
+      drawPoints.clear();
+      startingPoint = null;
+    });
+  }
+
   void _onInteraction(Offset tapDownPoint, Offset updatedPoint) {
     if (_selectedLayerType == null) return;
 
@@ -800,6 +820,38 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
               SahiToolsBar(
                 tools: _buildToolsList(),
                 onToolTap: _onToolTap,
+                trailing: GestureDetector(
+                  onTap: _onClearTools,
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: colors.sahiTabBorder,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.delete_outline,
+                            size: 14, color: colors.sahiTextPrimary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: colors.sahiTextPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             Expanded(
               child: SahiContentArea(

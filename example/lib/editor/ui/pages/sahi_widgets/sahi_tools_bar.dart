@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 class SahiToolsBar extends StatelessWidget {
   final List<SahiToolsModel> tools;
   final void Function(String toolName)? onToolTap;
+  final Widget? trailing;
 
-  const SahiToolsBar({super.key, required this.tools, this.onToolTap});
+  const SahiToolsBar(
+      {super.key, required this.tools, this.onToolTap, this.trailing});
 
   IconData _getIcon(String name) {
     for (final indicator in IndicatorType.values) {
@@ -55,16 +57,14 @@ class SahiToolsBar extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.sahiChipEnabledBg,
                     borderRadius: BorderRadius.circular(6),
-                    border:
-                        Border.all(color: colors.sahiTabBorder, width: 1),
+                    border: Border.all(color: colors.sahiTabBorder, width: 1),
                   ),
                   child: SizedBox(
                     height: 32,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: visibleTools.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 6),
+                      separatorBuilder: (_, __) => const SizedBox(width: 6),
                       itemBuilder: (context, index) {
                         final tool = visibleTools[index];
                         return GestureDetector(
@@ -118,6 +118,7 @@ class SahiToolsBar extends StatelessWidget {
                   ),
                 ),
               ),
+              if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: 30),
