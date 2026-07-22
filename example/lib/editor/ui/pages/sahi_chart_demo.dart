@@ -85,6 +85,12 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
   bool _isToolPanelOpen = false;
   OpenToolPanelTask? _currentToolPanelTask;
 
+  String? _courseVideoUrl;
+  bool _showCourseVideoBtn = false;
+
+  List<JourneyState> journeys = [];
+  String? _activeJourneyId;
+
   String? _activeChartId;
   int _activeChartStartOffset = 0;
   int _activeChartEndOffset = -1;
@@ -570,6 +576,66 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         });
         onTaskFinish();
         break;
+      case TaskType.startJourney:
+        final task = currentTask as StartJourneyTask;
+        setState(() {
+          journeys.add(JourneyState(id: task.journeyId));
+          _activeJourneyId = task.journeyId;
+        });
+        onTaskFinish();
+        break;
+      case TaskType.completeJourney:
+        setState(() {
+          if (_activeJourneyId != null) {
+            final journey = journeys.firstWhere(
+              (j) => j.id == _activeJourneyId,
+              orElse: () => JourneyState(id: ''),
+            );
+            journey.completed = true;
+          }
+        });
+        onTaskFinish();
+        break;
+      case TaskType.attachVideoToJourney:
+        final task = currentTask as AttachVideoToJourneyTask;
+        if (_activeJourneyId == null) {
+          onTaskFinish();
+          break;
+        }
+        setState(() {
+          task.journeyId = _activeJourneyId!;
+          final journey = journeys.firstWhere(
+            (j) => j.id == _activeJourneyId,
+            orElse: () => JourneyState(id: _activeJourneyId!),
+          );
+          journey.videoUrl = task.videoUrl;
+        });
+        onTaskFinish();
+        break;
+      case TaskType.hideVideoBtnInJourney:
+        final task = currentTask as HideVideoBtnInJourneyTask;
+        if (_activeJourneyId == null) {
+          onTaskFinish();
+          break;
+        }
+        setState(() {
+          task.journeyId = _activeJourneyId!;
+          final journey = journeys.firstWhere(
+            (j) => j.id == _activeJourneyId,
+            orElse: () => JourneyState(id: _activeJourneyId!),
+          );
+          journey.hideVideoBtn = true;
+        });
+        onTaskFinish();
+        break;
+      case TaskType.addCourseVideo:
+        final task = currentTask as AddCourseVideoTask;
+        setState(() {
+          _courseVideoUrl = task.videoUrl;
+          _showCourseVideoBtn = true;
+        });
+        onTaskFinish();
+        break;
     }
   }
 
@@ -814,6 +880,14 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
               tabs: tabs,
               currentPageIndex: currentPageIndex,
               onTabTap: navigateToPage,
+              activeJourney: _activeJourneyId != null
+                  ? journeys.firstWhere(
+                      (j) => j.id == _activeJourneyId,
+                      orElse: () => JourneyState(id: ''),
+                    )
+                  : null,
+              courseVideoUrl: _courseVideoUrl,
+              showCourseVideoBtn: _showCourseVideoBtn,
             ),
             Divider(height: 1, thickness: 1, color: colors.sahiDivider),
             if (_currentShowToolsTask != null)

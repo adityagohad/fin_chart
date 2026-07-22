@@ -19,6 +19,11 @@ import 'package:flutter/material.dart';
 import 'package:fin_chart/models/enums/action_type.dart';
 import 'package:fin_chart/models/enums/task_type.dart';
 import 'package:fin_chart/models/tasks/add_option_chain.task.dart';
+import 'package:fin_chart/models/tasks/complete_journey.task.dart';
+import 'package:fin_chart/models/tasks/attach_video_to_journey.task.dart';
+import 'package:fin_chart/models/tasks/hide_video_btn_in_journey.task.dart';
+import 'package:fin_chart/models/tasks/add_course_video.task.dart';
+import 'package:fin_chart/models/tasks/start_journey.task.dart';
 
 class TaskListWidget extends StatefulWidget {
   final List<Task> task;
@@ -586,6 +591,68 @@ class _TaskListWidgetState extends State<TaskListWidget> {
             const Text("Open Tool Panel"),
             const SizedBox(width: 8),
             _buildVisibilityBadge(panelTask.open),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.completeJourney:
+        return const Text("Complete Journey");
+      case TaskType.startJourney:
+        final t = task as StartJourneyTask;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Start Journey: ${t.journeyId}"),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.attachVideoToJourney:
+        final t = task as AttachVideoToJourneyTask;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Attach Video: ${t.journeyId}"),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.hideVideoBtnInJourney:
+        final t = task as HideVideoBtnInJourneyTask;
+        return Text("Hide Video Btn: ${t.journeyId}");
+      case TaskType.addCourseVideo:
+        final t = task as AddCourseVideoTask;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Course Video: ${t.title}"),
             const SizedBox(width: 8),
             InkWell(
               onTap: () {

@@ -27,6 +27,11 @@ enum TaskType {
   addRemoveTools,
   openToolPanel,
   addChartTab,
+  startJourney,
+  completeJourney,
+  attachVideoToJourney,
+  hideVideoBtnInJourney,
+  addCourseVideo,
 }
 
 // extension TaskTypeExtension on TaskType {

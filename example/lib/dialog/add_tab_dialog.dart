@@ -87,9 +87,6 @@ Future<AddTabTask?> addTabDialog({
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                  'Data range: ${task.fromPoint} - ${task.tillPoint < 0 ? "end" : task.tillPoint}'),
                             ],
                           ),
                         ),

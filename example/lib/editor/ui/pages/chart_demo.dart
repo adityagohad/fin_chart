@@ -477,6 +477,21 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.addChartTab:
         onTaskFinish();
         break;
+      case TaskType.startJourney:
+        onTaskFinish();
+        break;
+      case TaskType.completeJourney:
+        onTaskFinish();
+        break;
+      case TaskType.attachVideoToJourney:
+        onTaskFinish();
+        break;
+      case TaskType.hideVideoBtnInJourney:
+        onTaskFinish();
+        break;
+      case TaskType.addCourseVideo:
+        onTaskFinish();
+        break;
     }
   }
 
@@ -563,8 +578,7 @@ class _ChartDemoState extends State<ChartDemo> {
 
                                 final optionChainTask =
                                     optionChainTasks.firstWhere(
-                                  (t) =>
-                                      t.optionChainId == chooseTask.taskId,
+                                  (t) => t.optionChainId == chooseTask.taskId,
                                   orElse: () => optionChainTasks.first,
                                 );
 
@@ -608,8 +622,7 @@ class _ChartDemoState extends State<ChartDemo> {
                                           H1Config(
                                               style: TextStyle(
                                                   fontSize: 24,
-                                                  fontWeight:
-                                                      FontWeight.bold)),
+                                                  fontWeight: FontWeight.bold)),
                                         ]),
                                       ),
                                       const SizedBox(height: 16),
@@ -626,12 +639,10 @@ class _ChartDemoState extends State<ChartDemo> {
                                 final tableTask = recipe.tasks
                                     .whereType<TableTask>()
                                     .firstWhere((t) => t.id == taskId);
-                                if (!tableWidgetKeys
-                                    .containsKey(taskId)) {
+                                if (!tableWidgetKeys.containsKey(taskId)) {
                                   tableWidgetKeys[taskId] = List.generate(
                                     tableTask.tables.tables.length,
-                                    (_) =>
-                                        GlobalKey<TableDisplayWidgetState>(),
+                                    (_) => GlobalKey<TableDisplayWidgetState>(),
                                   );
                                 }
                                 return SingleChildScrollView(
@@ -647,12 +658,11 @@ class _ChartDemoState extends State<ChartDemo> {
                                         final idx = entry.key;
                                         final table = entry.value;
                                         final selectedRows =
-                                            userSelectedRows[taskId]
-                                                    ?[idx] ??
+                                            userSelectedRows[taskId]?[idx] ??
                                                 <int>{};
                                         return Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 24),
+                                          padding:
+                                              const EdgeInsets.only(bottom: 24),
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
@@ -663,48 +673,42 @@ class _ChartDemoState extends State<ChartDemo> {
                                                     .textTheme
                                                     .titleLarge,
                                               ),
-                                              if (table.tableDescription
-                                                  .isNotEmpty)
+                                              if (table
+                                                  .tableDescription.isNotEmpty)
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
                                                           bottom: 8.0),
                                                   child: Text(
                                                     table.tableDescription,
-                                                    style:
-                                                        Theme.of(context)
-                                                            .textTheme
-                                                            .bodyMedium,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium,
                                                   ),
                                                 ),
                                               TableDisplayWidget(
-                                                key: tableWidgetKeys[
-                                                    taskId]![idx],
+                                                key: tableWidgetKeys[taskId]![
+                                                    idx],
                                                 columns: table.columns,
                                                 rows: table.rows,
                                                 selectedRowIndices:
                                                     selectedRows,
                                                 onRowTap: (rowIdx) {
                                                   setState(() {
-                                                    userSelectedRows[
-                                                            taskId] ??= {};
+                                                    userSelectedRows[taskId] ??=
+                                                        {};
                                                     final selected =
                                                         userSelectedRows[
-                                                                    taskId]![
-                                                                idx] ??
+                                                                taskId]![idx] ??
                                                             <int>{};
                                                     if (selected
-                                                        .contains(
-                                                            rowIdx)) {
-                                                      selected.remove(
-                                                          rowIdx);
+                                                        .contains(rowIdx)) {
+                                                      selected.remove(rowIdx);
                                                     } else {
-                                                      selected.add(
-                                                          rowIdx);
+                                                      selected.add(rowIdx);
                                                     }
-                                                    userSelectedRows[
-                                                            taskId]![idx] =
-                                                        selected;
+                                                    userSelectedRows[taskId]![
+                                                        idx] = selected;
                                                   });
                                                 },
                                               ),
@@ -720,8 +724,7 @@ class _ChartDemoState extends State<ChartDemo> {
                                 final insightsTask = recipe.tasks
                                     .whereType<ShowInsightsPageV2Task>()
                                     .firstWhere((t) => t.id == taskId);
-                                return InsightsPreviewPage(
-                                    task: insightsTask);
+                                return InsightsPreviewPage(task: insightsTask);
                               default:
                                 return Container();
                             }
@@ -808,8 +811,8 @@ class _ChartDemoState extends State<ChartDemo> {
                       _isToolPanelOpen = false;
                     });
                   },
-                  child: const Icon(Icons.close,
-                      color: Colors.white70, size: 18),
+                  child:
+                      const Icon(Icons.close, color: Colors.white70, size: 18),
                 ),
               ],
             ),
@@ -882,8 +885,7 @@ class _ChartDemoState extends State<ChartDemo> {
                 ),
               ),
               if (!enabled)
-                const Icon(Icons.lock_outline,
-                    color: Colors.white24, size: 14),
+                const Icon(Icons.lock_outline, color: Colors.white24, size: 14),
             ],
           ),
         ),
@@ -1002,6 +1004,11 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.addRemoveTools:
       case TaskType.openToolPanel:
       case TaskType.addChartTab:
+      case TaskType.completeJourney:
+      case TaskType.startJourney:
+      case TaskType.attachVideoToJourney:
+      case TaskType.hideVideoBtnInJourney:
+      case TaskType.addCourseVideo:
         return Container();
     }
   }

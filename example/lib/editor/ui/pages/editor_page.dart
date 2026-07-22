@@ -79,6 +79,12 @@ import 'package:example/dialog/add_option_chain_dialog.dart';
 import 'package:fin_chart/models/tasks/choose_bucket_rows_task.dart';
 import 'package:example/dialog/clear_bucket_rows_dialog.dart';
 import 'package:example/dialog/show_highlight_table_row_dialog.dart';
+import 'package:example/dialog/video_url_dialog.dart';
+import 'package:fin_chart/models/tasks/complete_journey.task.dart';
+import 'package:fin_chart/models/tasks/attach_video_to_journey.task.dart';
+import 'package:fin_chart/models/tasks/hide_video_btn_in_journey.task.dart';
+import 'package:fin_chart/models/tasks/add_course_video.task.dart';
+import 'package:fin_chart/models/tasks/start_journey.task.dart';
 
 class EditorPage extends StatefulWidget {
   final String? recipeStr;
@@ -541,6 +547,11 @@ class _EditorPageState extends State<EditorPage> {
           case TaskType.showInsightsV2Page:
           case TaskType.showTools:
           case TaskType.openToolPanel:
+          case TaskType.completeJourney:
+          case TaskType.startJourney:
+          case TaskType.attachVideoToJourney:
+          case TaskType.hideVideoBtnInJourney:
+          case TaskType.addCourseVideo:
             break;
           case TaskType.addData:
             final addDataTask = task as AddDataTask;
@@ -908,6 +919,21 @@ class _EditorPageState extends State<EditorPage> {
         case TaskType.openToolPanel:
           _showOpenToolsPanelDialog();
           break;
+        case TaskType.completeJourney:
+          _updateTaskList(CompleteJourneyTask());
+          break;
+        case TaskType.startJourney:
+          _showStartJourneyDialog();
+          break;
+        case TaskType.attachVideoToJourney:
+          _showAttachVideoDialog();
+          break;
+        case TaskType.hideVideoBtnInJourney:
+          _showHideVideoBtnDialog();
+          break;
+        case TaskType.addCourseVideo:
+          _showAddCourseVideoDialog();
+          break;
       }
     });
   }
@@ -991,6 +1017,20 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case TaskType.openToolPanel:
         _editOpenToolsPanelDialog(task as OpenToolPanelTask);
+        break;
+      case TaskType.completeJourney:
+        break;
+      case TaskType.startJourney:
+        _editStartJourneyDialog(task as StartJourneyTask);
+        break;
+      case TaskType.attachVideoToJourney:
+        _editAttachVideoDialog(task as AttachVideoToJourneyTask);
+        break;
+      case TaskType.hideVideoBtnInJourney:
+        _editHideVideoBtnDialog(task as HideVideoBtnInJourneyTask);
+        break;
+      case TaskType.addCourseVideo:
+        _editAddCourseVideoDialog(task as AddCourseVideoTask);
         break;
     }
   }
@@ -2017,6 +2057,79 @@ class _EditorPageState extends State<EditorPage> {
         task.enabledTools.addAll(result.enabledTools);
       });
     }
+  }
+
+  void _showStartJourneyDialog() async {
+    await showStartJourneyDialog(context: context).then((data) {
+      if (data != null) {
+        _updateTaskList(data);
+      }
+    });
+  }
+
+  void _editStartJourneyDialog(StartJourneyTask task) async {
+    await showStartJourneyDialog(context: context).then((data) {
+      setState(() {
+        if (data != null) {
+          task.journeyId = data.journeyId;
+        }
+      });
+    });
+  }
+
+  void _showAttachVideoDialog() async {
+    await showAttachVideoDialog(context: context).then((data) {
+      if (data != null) {
+        _updateTaskList(data);
+      }
+    });
+  }
+
+  void _editAttachVideoDialog(AttachVideoToJourneyTask task) async {
+    await showAttachVideoDialog(context: context, initialTask: task).then((data) {
+      setState(() {
+        if (data != null) {
+          task.videoUrl = data.videoUrl;
+        }
+      });
+    });
+  }
+
+  void _showHideVideoBtnDialog() async {
+    await showHideVideoBtnDialog(context: context).then((data) {
+      if (data != null) {
+        _updateTaskList(data);
+      }
+    });
+  }
+
+  void _editHideVideoBtnDialog(HideVideoBtnInJourneyTask task) async {
+    await showHideVideoBtnDialog(context: context).then((data) {
+      setState(() {
+        if (data != null) {
+          task.journeyId = data.journeyId;
+        }
+      });
+    });
+  }
+
+  void _showAddCourseVideoDialog() async {
+    await showAddCourseVideoDialog(context: context).then((data) {
+      if (data != null) {
+        _updateTaskList(data);
+      }
+    });
+  }
+
+  void _editAddCourseVideoDialog(AddCourseVideoTask task) async {
+    await showAddCourseVideoDialog(context: context, initialTask: task).then((data) {
+      setState(() {
+        if (data != null) {
+          task.videoUrl = data.videoUrl;
+          task.title = data.title;
+        }
+      });
+    });
   }
 
   void showChooseBucketRows() async {
