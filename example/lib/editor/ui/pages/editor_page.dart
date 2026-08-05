@@ -2038,6 +2038,7 @@ class _EditorPageState extends State<EditorPage> {
     if (result != null) {
       setState(() {
         task.enabled = result.enabled;
+        task.toolConfigs = result.toolConfigs;
       });
     }
   }

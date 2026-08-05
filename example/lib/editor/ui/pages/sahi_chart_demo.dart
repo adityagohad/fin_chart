@@ -80,6 +80,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
   Map<String, Map<int, Set<int>>> userSelectedRows = {};
 
   ShowToolsTask? _currentShowToolsTask;
+  AddRemoveToolsTask? _currentAddRemoveToolsTask;
   LayerType? _selectedLayerType;
   List<Offset> drawPoints = [];
   Offset? startingPoint;
@@ -581,7 +582,10 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         onTaskFinish();
         break;
       case TaskType.addRemoveTools:
-        setState(() {});
+        final task = currentTask as AddRemoveToolsTask;
+        setState(() {
+          _currentAddRemoveToolsTask = task;
+        });
         onTaskFinish();
         break;
       case TaskType.openToolPanel:
@@ -676,62 +680,67 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
 
     for (final indicatorType in IndicatorType.values) {
       if (indicatorType.name == toolName) {
+        final config = _currentAddRemoveToolsTask?.getToolConfig(toolName);
         Indicator indicator;
-        switch (indicatorType) {
-          case IndicatorType.rsi:
-            indicator = Rsi();
-            break;
-          case IndicatorType.macd:
-            indicator = Macd();
-            break;
-          case IndicatorType.sma:
-            indicator = Sma();
-            break;
-          case IndicatorType.ema:
-            indicator = Ema();
-            break;
-          case IndicatorType.bollingerBand:
-            indicator = BollingerBands();
-            break;
-          case IndicatorType.stochastic:
-            indicator = Stochastic();
-            break;
-          case IndicatorType.atr:
-            indicator = Atr();
-            break;
-          case IndicatorType.mfi:
-            indicator = Mfi();
-            break;
-          case IndicatorType.adx:
-            indicator = Adx();
-            break;
-          case IndicatorType.pivotPoint:
-            indicator = PivotPoint();
-            break;
-          case IndicatorType.pe:
-            indicator = Pe();
-            break;
-          case IndicatorType.pb:
-            indicator = Pb();
-            break;
-          case IndicatorType.supertrend:
-            indicator = Supertrend();
-            break;
-          case IndicatorType.vwap:
-            indicator = Vwap();
-            break;
-          case IndicatorType.evEbitda:
-            indicator = EvEbitda();
-            break;
-          case IndicatorType.evSales:
-            indicator = EvSales();
-            break;
-          case IndicatorType.scanner:
-            indicator = ScannerIndicator();
-            break;
-          case IndicatorType.roc:
-            indicator = Roc();
-            break;
+        if (config != null) {
+          indicator = Indicator.fromJson(json: config);
+        } else {
+          switch (indicatorType) {
+            case IndicatorType.rsi:
+              indicator = Rsi();
+              break;
+            case IndicatorType.macd:
+              indicator = Macd();
+              break;
+            case IndicatorType.sma:
+              indicator = Sma();
+              break;
+            case IndicatorType.ema:
+              indicator = Ema();
+              break;
+            case IndicatorType.bollingerBand:
+              indicator = BollingerBands();
+              break;
+            case IndicatorType.stochastic:
+              indicator = Stochastic();
+              break;
+            case IndicatorType.atr:
+              indicator = Atr();
+              break;
+            case IndicatorType.mfi:
+              indicator = Mfi();
+              break;
+            case IndicatorType.adx:
+              indicator = Adx();
+              break;
+            case IndicatorType.pivotPoint:
+              indicator = PivotPoint();
+              break;
+            case IndicatorType.pe:
+              indicator = Pe();
+              break;
+            case IndicatorType.pb:
+              indicator = Pb();
+              break;
+            case IndicatorType.supertrend:
+              indicator = Supertrend();
+              break;
+            case IndicatorType.vwap:
+              indicator = Vwap();
+              break;
+            case IndicatorType.evEbitda:
+              indicator = EvEbitda();
+              break;
+            case IndicatorType.evSales:
+              indicator = EvSales();
+              break;
+            case IndicatorType.scanner:
+              indicator = ScannerIndicator();
+              break;
+            case IndicatorType.roc:
+              indicator = Roc();
+              break;
+          }
         }
         chartState.addIndicator(indicator);
         return;
@@ -829,6 +838,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     }
 
     if (layer != null) {
+      layer = _applyLayerConfig(layer);
       final chartState = _chartKeyForCurrentTab()?.currentState;
       if (chartState != null) {
         setState(() {
@@ -838,6 +848,81 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         chartState.addLayerUsingTool(layer);
       }
     }
+  }
+
+  Layer _applyLayerConfig(Layer layer) {
+    final config =
+        _currentAddRemoveToolsTask?.getToolConfig(layer.type.name);
+    if (config == null) return layer;
+
+    switch (layer.type) {
+      case LayerType.horizontalLine:
+        final c = HorizontalLine.fromJson(json: config);
+        final l = layer as HorizontalLine;
+        l.color = c.color;
+        l.strokeWidth = c.strokeWidth;
+        break;
+      case LayerType.trendLine:
+        final c = TrendLine.fromJson(json: config);
+        final l = layer as TrendLine;
+        l.color = c.color;
+        l.strokeWidth = c.strokeWidth;
+        l.endPointRadius = c.endPointRadius;
+        break;
+      case LayerType.label:
+        final c = Label.fromJson(json: config);
+        final l = layer as Label;
+        l.label = c.label;
+        l.textStyle = c.textStyle;
+        break;
+      case LayerType.horizontalBand:
+        final c = HorizontalBand.fromJson(json: config);
+        final l = layer as HorizontalBand;
+        l.color = c.color;
+        l.allowedError = c.allowedError;
+        break;
+      case LayerType.rectArea:
+        final c = RectArea.fromJson(json: config);
+        final l = layer as RectArea;
+        l.color = c.color;
+        l.alpha = c.alpha;
+        l.strokeWidth = c.strokeWidth;
+        l.endPointRadius = c.endPointRadius;
+        l.isLocked = c.isLocked;
+        break;
+      case LayerType.circularArea:
+        final c = CircularArea.fromJson(json: config);
+        final l = layer as CircularArea;
+        l.color = c.color;
+        l.radius = c.radius;
+        break;
+      case LayerType.arrow:
+        final c = Arrow.fromJson(json: config);
+        final l = layer as Arrow;
+        l.color = c.color;
+        l.strokeWidth = c.strokeWidth;
+        l.endPointRadius = c.endPointRadius;
+        l.arrowheadSize = c.arrowheadSize;
+        l.isArrowheadAtTo = c.isArrowheadAtTo;
+        break;
+      case LayerType.parallelChannel:
+        final c = ParallelChannel.fromJson(json: config);
+        final l = layer as ParallelChannel;
+        l.color = c.color;
+        l.strokeWidth = c.strokeWidth;
+        l.channelAlpha = c.channelAlpha;
+        l.endPointRadius = c.endPointRadius;
+        break;
+      case LayerType.arrowTextPointer:
+        final c = ArrowTextPointer.fromJson(json: config);
+        final l = layer as ArrowTextPointer;
+        l.label = c.label;
+        l.textAlignment = c.textAlignment;
+        break;
+      case LayerType.verticalLine:
+        break;
+    }
+    return layer;
   }
 
   List<SahiToolsModel> _buildToolsList() {

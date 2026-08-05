@@ -5,9 +5,12 @@ import 'package:fin_chart/utils/calculations.dart';
 
 class AddRemoveToolsTask extends Task {
   Map<String, bool> enabled;
+  Map<String, Map<String, dynamic>> toolConfigs;
 
-  AddRemoveToolsTask({this.enabled = const {}})
-      : super(
+  AddRemoveToolsTask({
+    this.enabled = const {},
+    this.toolConfigs = const {},
+  }) : super(
           id: generateV4(),
           actionType: ActionType.empty,
           taskType: TaskType.addRemoveTools,
@@ -15,10 +18,13 @@ class AddRemoveToolsTask extends Task {
 
   bool isToolEnabled(String toolName) => enabled[toolName] ?? false;
 
+  Map<String, dynamic>? getToolConfig(String toolName) => toolConfigs[toolName];
+
   @override
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = super.toJson();
     data['enabled'] = enabled;
+    data['toolConfigs'] = toolConfigs;
     return data;
   }
 
@@ -30,6 +36,17 @@ class AddRemoveToolsTask extends Task {
         tools[key.toString()] = value == true;
       });
     }
-    return AddRemoveToolsTask(enabled: tools);
+
+    final rawConfigs = json['toolConfigs'];
+    Map<String, Map<String, dynamic>> configs = {};
+    if (rawConfigs is Map) {
+      rawConfigs.forEach((key, value) {
+        if (value is Map) {
+          configs[key.toString()] = Map<String, dynamic>.from(value);
+        }
+      });
+    }
+
+    return AddRemoveToolsTask(enabled: tools, toolConfigs: configs);
   }
 }
