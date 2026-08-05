@@ -21,10 +21,15 @@ jobs:
         with:
           channel: stable
 
-      - name: Install dependencies
+      - name: Install SDK dependencies
+        run: flutter pub get
+
+      - name: Install example dependencies
+        working-directory: example
         run: flutter pub get
 
       - name: Build Flutter Web
+        working-directory: example
         run: |
           flutter build web --release \
             --base-href "/chart_maker/"
@@ -36,7 +41,7 @@ jobs:
           git clone https://x-access-token:${TOKEN}@github.com/Tradeable/chart_maker.git public-repo
 
           rm -rf public-repo/*
-          cp -R build/web/. public-repo/
+          cp -R example/build/web/. public-repo/
 
           cd public-repo
 
