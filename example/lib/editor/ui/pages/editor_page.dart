@@ -9,6 +9,7 @@ import 'package:example/dialog/open_tools_panel_dialog.dart';
 import 'package:example/dialog/show_tools_dialog.dart';
 import 'package:example/dialog/toggle_tool_visibility_dialog.dart';
 import 'package:example/dialog/add_remove_tools_dialog.dart';
+import 'package:example/dialog/side_nav_dialog.dart';
 import 'package:example/dialog/pay_off_graph_dialog.dart';
 import 'package:example/dialog/show_all_added_tabs_dialog.dart';
 import 'package:example/dialog/show_all_option_chains_dialog.dart';
@@ -80,11 +81,6 @@ import 'package:fin_chart/models/tasks/choose_bucket_rows_task.dart';
 import 'package:example/dialog/clear_bucket_rows_dialog.dart';
 import 'package:example/dialog/show_highlight_table_row_dialog.dart';
 import 'package:example/dialog/video_url_dialog.dart';
-import 'package:fin_chart/models/tasks/complete_journey.task.dart';
-import 'package:fin_chart/models/tasks/attach_video_to_journey.task.dart';
-import 'package:fin_chart/models/tasks/hide_video_btn_in_journey.task.dart';
-import 'package:fin_chart/models/tasks/add_course_video.task.dart';
-import 'package:fin_chart/models/tasks/start_journey.task.dart';
 
 class EditorPage extends StatefulWidget {
   final String? recipeStr;
@@ -125,13 +121,13 @@ class _EditorPageState extends State<EditorPage> {
   ScannerResult? _selectedScannerResult;
 
   // Chart tab management
-  List<Map<String, dynamic>> _chartTabs = [];
+  List<Map<String, dynamic>> chartTabs = [];
   int _activeChartTabIndex = -1;
   Map<String, List<ICandle>> _chartCandleData = {};
 
   GlobalKey<ChartState> get _activeChartKey {
-    if (_activeChartTabIndex >= 0 && _activeChartTabIndex < _chartTabs.length) {
-      return _chartTabs[_activeChartTabIndex]['key'] as GlobalKey<ChartState>;
+    if (_activeChartTabIndex >= 0 && _activeChartTabIndex < chartTabs.length) {
+      return chartTabs[_activeChartTabIndex]['key'] as GlobalKey<ChartState>;
     }
     return _chartKey;
   }
@@ -139,24 +135,24 @@ class _EditorPageState extends State<EditorPage> {
   bool get _hasChart => tasks.any((t) => t is AddChartTabTask);
 
   List<ICandle> _activeCandles() {
-    if (_chartTabs.isNotEmpty &&
+    if (chartTabs.isNotEmpty &&
         _activeChartTabIndex >= 0 &&
-        _activeChartTabIndex < _chartTabs.length) {
-      final activeId = _chartTabs[_activeChartTabIndex]['id'] as String;
+        _activeChartTabIndex < chartTabs.length) {
+      final activeId = chartTabs[_activeChartTabIndex]['id'] as String;
       return _chartCandleData[activeId] ?? [];
     }
     return candleData;
   }
 
   List<ICandle> _buildFlattenedCandleDataForSave() {
-    if (_chartTabs.isEmpty) {
+    if (chartTabs.isEmpty) {
       return List<ICandle>.from(candleData);
     }
 
     final flattened = <ICandle>[];
     int cursor = 0;
 
-    for (final tab in _chartTabs) {
+    for (final tab in chartTabs) {
       final tabId = tab['id'] as String;
       final tabData = List<ICandle>.from(_chartCandleData[tabId] ?? const []);
       AddChartTabTask? tabTask;
@@ -184,15 +180,15 @@ class _EditorPageState extends State<EditorPage> {
     if (tabIndex <= 0) return 0;
 
     int offset = 0;
-    for (int i = 0; i < tabIndex && i < _chartTabs.length; i++) {
-      final tabId = _chartTabs[i]['id'] as String;
+    for (int i = 0; i < tabIndex && i < chartTabs.length; i++) {
+      final tabId = chartTabs[i]['id'] as String;
       offset += (_chartCandleData[tabId] ?? const <ICandle>[]).length;
     }
     return offset;
   }
 
   int _getChartBaseOffsetById(String chartId) {
-    final tabIndex = _chartTabs.indexWhere((tab) => tab['id'] == chartId);
+    final tabIndex = chartTabs.indexWhere((tab) => tab['id'] == chartId);
     if (tabIndex == -1) return 0;
     return _getChartBaseOffsetByTabIndex(tabIndex);
   }
@@ -236,7 +232,7 @@ class _EditorPageState extends State<EditorPage> {
     if (chartId == null) {
       return _chartKey;
     }
-    for (final tab in _chartTabs) {
+    for (final tab in chartTabs) {
       if (tab['id'] == chartId) {
         return tab['key'] as GlobalKey<ChartState>;
       }
@@ -245,12 +241,12 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   String? _currentChartId() {
-    if (_chartTabs.isEmpty ||
+    if (chartTabs.isEmpty ||
         _activeChartTabIndex < 0 ||
-        _activeChartTabIndex >= _chartTabs.length) {
+        _activeChartTabIndex >= chartTabs.length) {
       return null;
     }
-    return _chartTabs[_activeChartTabIndex]['id'] as String;
+    return chartTabs[_activeChartTabIndex]['id'] as String;
   }
 
   List<FundamentalEvent> _activeChartFundamentalEvents() {
@@ -267,26 +263,26 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   void _removeChartTabById(String chartId) {
-    final tabIndex = _chartTabs.indexWhere((tab) => tab['id'] == chartId);
+    final tabIndex = chartTabs.indexWhere((tab) => tab['id'] == chartId);
     if (tabIndex == -1) return;
 
-    _chartTabs.removeAt(tabIndex);
+    chartTabs.removeAt(tabIndex);
     _chartCandleData.remove(chartId);
 
-    if (_chartTabs.isEmpty) {
+    if (chartTabs.isEmpty) {
       _activeChartTabIndex = -1;
       return;
     }
 
-    if (_activeChartTabIndex >= _chartTabs.length) {
-      _activeChartTabIndex = _chartTabs.length - 1;
+    if (_activeChartTabIndex >= chartTabs.length) {
+      _activeChartTabIndex = chartTabs.length - 1;
     } else if (_activeChartTabIndex > tabIndex) {
       _activeChartTabIndex -= 1;
     }
   }
 
   void _activateChartTab(int index) {
-    if (index < 0 || index >= _chartTabs.length) return;
+    if (index < 0 || index >= chartTabs.length) return;
     if (_activeChartTabIndex == index) return;
     setState(() {
       _activeChartTabIndex = index;
@@ -498,7 +494,7 @@ class _EditorPageState extends State<EditorPage> {
       for (Task task in tasks) {
         if (task is AddChartTabTask) {
           final chartKey = GlobalKey<ChartState>();
-          _chartTabs.add({
+          chartTabs.add({
             'id': task.id,
             'title': task.tabTitle,
             'key': chartKey,
@@ -506,7 +502,7 @@ class _EditorPageState extends State<EditorPage> {
         }
       }
 
-      if (_chartTabs.isNotEmpty) {
+      if (chartTabs.isNotEmpty) {
         _activeChartTabIndex = 0;
       } else {
         _chartKey.currentState?.addData(candleData);
@@ -514,15 +510,15 @@ class _EditorPageState extends State<EditorPage> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_chartTabs.isEmpty) {
+      if (chartTabs.isEmpty) {
         _chartKey.currentState?.addData(candleData);
       }
 
-      GlobalKey<ChartState>? activeKey = _chartTabs.isNotEmpty
-          ? _chartTabs[0]['key'] as GlobalKey<ChartState>
+      GlobalKey<ChartState>? activeKey = chartTabs.isNotEmpty
+          ? chartTabs[0]['key'] as GlobalKey<ChartState>
           : _chartKey;
       String? activeChartId =
-          _chartTabs.isNotEmpty ? _chartTabs[0]['id'] as String : null;
+          chartTabs.isNotEmpty ? chartTabs[0]['id'] as String : null;
 
       for (Task task in tasks) {
         switch (task.taskType) {
@@ -719,11 +715,11 @@ class _EditorPageState extends State<EditorPage> {
         case LayerType.verticalLine:
           layer = VerticalLine.fromTool(pos: tapDownPoint.dx);
           layer.isLocked = true;
-          final String currentChartId = _chartTabs.isNotEmpty
-              ? _chartTabs[_activeChartTabIndex]['id'] as String
+          final String currentChartId = chartTabs.isNotEmpty
+              ? chartTabs[_activeChartTabIndex]['id'] as String
               : '';
 
-          final int chartBaseOffset = _chartTabs.isNotEmpty
+          final int chartBaseOffset = chartTabs.isNotEmpty
               ? _getChartBaseOffsetByTabIndex(_activeChartTabIndex)
               : 0;
           final int localDx = tapDownPoint.dx.round();
@@ -934,6 +930,9 @@ class _EditorPageState extends State<EditorPage> {
         case TaskType.addCourseVideo:
           _showAddCourseVideoDialog();
           break;
+        case TaskType.showSideNav:
+          showSideNavTask();
+          break;
       }
     });
   }
@@ -1031,6 +1030,9 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case TaskType.addCourseVideo:
         _editAddCourseVideoDialog(task as AddCourseVideoTask);
+        break;
+      case TaskType.showSideNav:
+        editShowSideNavTask(task as ShowSideNavTask);
         break;
     }
   }
@@ -1194,12 +1196,12 @@ class _EditorPageState extends State<EditorPage> {
       final chartKey = GlobalKey<ChartState>();
       setState(() {
         _chartCandleData[chooseTab.id] = [];
-        _chartTabs.add({
+        chartTabs.add({
           'id': chooseTab.id,
           'title': chooseTab.tabTitle,
           'key': chartKey,
         });
-        _activeChartTabIndex = _chartTabs.length - 1;
+        _activeChartTabIndex = chartTabs.length - 1;
       });
       _updateTaskList(chooseTab);
     }
@@ -1220,9 +1222,9 @@ class _EditorPageState extends State<EditorPage> {
       setState(() {
         if (data != null) {
           task.tabTitle = data.tabTitle;
-          final tabIndex = _chartTabs.indexWhere((t) => t['id'] == task.id);
+          final tabIndex = chartTabs.indexWhere((t) => t['id'] == task.id);
           if (tabIndex != -1) {
-            _chartTabs[tabIndex]['title'] = data.tabTitle;
+            chartTabs[tabIndex]['title'] = data.tabTitle;
           }
         }
       });
@@ -2132,6 +2134,28 @@ class _EditorPageState extends State<EditorPage> {
     });
   }
 
+  void showSideNavTask() async {
+    await showSideNavDialog(context: context).then((data) {
+      if (data != null) {
+        _updateTaskList(data);
+      }
+    });
+  }
+
+  void editShowSideNavTask(ShowSideNavTask task) async {
+    await showSideNavDialog(context: context, initialTask: task).then((data) {
+      setState(() {
+        if (data != null) {
+          task.title = data.title;
+          task.primaryDescription = data.primaryDescription;
+          task.secondaryDescription = data.secondaryDescription;
+          task.primaryButtonText = data.primaryButtonText;
+          task.secondaryButtonText = data.secondaryButtonText;
+        }
+      });
+    });
+  }
+
   void showChooseBucketRows() async {
     final bucketRowsTask = await showChooseBucketRowsDialog(
       context: context,
@@ -2271,7 +2295,7 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Widget _buildChartTabBar() {
-    if (_chartTabs.isEmpty) return const SizedBox.shrink();
+    if (chartTabs.isEmpty) return const SizedBox.shrink();
     return Container(
       height: 36,
       decoration: BoxDecoration(
@@ -2282,9 +2306,9 @@ class _EditorPageState extends State<EditorPage> {
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: _chartTabs.length,
+        itemCount: chartTabs.length,
         itemBuilder: (context, index) {
-          final tab = _chartTabs[index];
+          final tab = chartTabs[index];
           final isActive = index == _activeChartTabIndex;
           return GestureDetector(
             onTap: () {
@@ -2320,7 +2344,7 @@ class _EditorPageState extends State<EditorPage> {
   }
 
   Widget _buildChartArea() {
-    if (_chartTabs.isEmpty) {
+    if (chartTabs.isEmpty) {
       // No charts yet, show default chart
       if (widget.recipeStr == null) {
         return Chart(
@@ -2353,7 +2377,7 @@ class _EditorPageState extends State<EditorPage> {
       }
     }
     return Stack(
-      children: _chartTabs.asMap().entries.map((entry) {
+      children: chartTabs.asMap().entries.map((entry) {
         final index = entry.key;
         final tab = entry.value;
         final chartKey = tab['key'] as GlobalKey<ChartState>;
@@ -2466,11 +2490,11 @@ class _EditorPageState extends State<EditorPage> {
         builder: (BuildContext context) {
           return AddDataDialog(onDataUpdate: (data) {
             setState(() {
-              if (_chartTabs.isNotEmpty &&
+              if (chartTabs.isNotEmpty &&
                   _activeChartTabIndex >= 0 &&
-                  _activeChartTabIndex < _chartTabs.length) {
+                  _activeChartTabIndex < chartTabs.length) {
                 final activeId =
-                    _chartTabs[_activeChartTabIndex]['id'] as String;
+                    chartTabs[_activeChartTabIndex]['id'] as String;
                 _chartCandleData[activeId] = [
                   ...(_chartCandleData[activeId] ?? []),
                   ...data,

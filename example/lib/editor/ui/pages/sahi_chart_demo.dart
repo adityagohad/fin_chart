@@ -49,6 +49,7 @@ import 'package:example/editor/ui/pages/sahi_widgets/sahi_top_bar.dart';
 import 'package:example/editor/ui/pages/sahi_widgets/sahi_tools_bar.dart';
 import 'package:example/editor/ui/pages/sahi_widgets/sahi_content_area.dart';
 import 'package:example/editor/ui/pages/sahi_widgets/sahi_user_action_area.dart';
+import 'package:example/editor/ui/widgets/side_nav_panel.dart';
 
 class SahiChartDemo extends StatefulWidget {
   final String recipeDataJson;
@@ -95,6 +96,11 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
   int _activeChartStartOffset = 0;
   int _activeChartEndOffset = -1;
   final Map<String, bool> _hasPlottedFirstChunk = {};
+
+  List<ShowSideNavTask> sideNavTasks = [];
+  bool isSideNavVisible = false;
+  Map<String, String?> sideNavSelectedDesc = {};
+  String? expandedSideNavId;
 
   @override
   void initState() {
@@ -553,6 +559,16 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         setState(() {});
         onTaskFinish();
         break;
+      case TaskType.showSideNav:
+        final task = currentTask as ShowSideNavTask;
+        setState(() {
+          if (!sideNavTasks.any((t) => t.id == task.id)) {
+            sideNavTasks.add(task);
+          }
+          isSideNavVisible = true;
+          expandedSideNavId = task.id;
+        });
+        break;
       case TaskType.showTools:
         final task = currentTask as ShowToolsTask;
         setState(() {
@@ -868,102 +884,164 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
     }
   }
 
+  void closeSideNav({bool moveToNextNode = false}) {
+    if (!isSideNavVisible) return;
+    setState(() {
+      isSideNavVisible = false;
+    });
+    if (moveToNextNode) {
+      onTaskFinish();
+    }
+  }
+
+  Widget _buildSideNavPanel() {
+    return SideNavPanel(
+      tasks: sideNavTasks,
+      expandedId: expandedSideNavId,
+      onExpandedChange: (id) {
+        setState(() {
+          expandedSideNavId = id;
+        });
+      },
+      selectedDescriptions: sideNavSelectedDesc,
+      onDescriptionSelect: (taskId, desc) {
+        setState(() {
+          sideNavSelectedDesc[taskId] = desc;
+        });
+      },
+      onClose: () {
+        closeSideNav(moveToNextNode: true);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).customColors;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            SahiTopBar(
-              tabs: tabs,
-              currentPageIndex: currentPageIndex,
-              onTabTap: navigateToPage,
-              activeJourney: _activeJourneyId != null
-                  ? journeys.firstWhere(
-                      (j) => j.id == _activeJourneyId,
-                      orElse: () => JourneyState(id: ''),
-                    )
-                  : null,
-              courseVideoUrl: _courseVideoUrl,
-              showCourseVideoBtn: _showCourseVideoBtn,
-            ),
-            Divider(height: 1, thickness: 1, color: colors.sahiDivider),
-            if (_currentShowToolsTask != null)
-              SahiToolsBar(
-                tools: _buildToolsList(),
-                onToolTap: _onToolTap,
-                trailing: GestureDetector(
-                  onTap: _onClearTools,
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 12),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: colors.sahiTabBorder,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.delete_outline,
-                            size: 14, color: colors.sahiTextPrimary),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Clear',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: colors.sahiTextPrimary,
+            Column(
+              children: [
+                SahiTopBar(
+                  tabs: tabs,
+                  currentPageIndex: currentPageIndex,
+                  onTabTap: navigateToPage,
+                  activeJourney: _activeJourneyId != null
+                      ? journeys.firstWhere(
+                          (j) => j.id == _activeJourneyId,
+                          orElse: () => JourneyState(id: ''),
+                        )
+                      : null,
+                  courseVideoUrl: _courseVideoUrl,
+                  showCourseVideoBtn: _showCourseVideoBtn,
+                ),
+                Divider(height: 1, thickness: 1, color: colors.sahiDivider),
+                if (_currentShowToolsTask != null)
+                  SahiToolsBar(
+                    tools: _buildToolsList(),
+                    onToolTap: _onToolTap,
+                    trailing: GestureDetector(
+                      onTap: _onClearTools,
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: colors.sahiTabBorder,
+                            width: 1,
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_outline,
+                                size: 14, color: colors.sahiTextPrimary),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Clear',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: colors.sahiTextPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
+                Expanded(
+                  child: SahiContentArea(
+                    promptText: promptText,
+                    hintText: hintText,
+                    isToolPanelOpen: _isToolPanelOpen,
+                    enabledTools: _currentToolPanelTask?.enabledTools ?? {},
+                    onToolPanelClose: () {
+                      setState(() {
+                        _isToolPanelOpen = false;
+                      });
+                    },
+                    currentPageIndex: currentPageIndex,
+                    tabs: tabs,
+                    recipe: recipe,
+                    chartKeys: chartKeys,
+                    previewScreenKey: _previewScreenKey,
+                    previewScreenKeys: previewScreenKeys,
+                    optionChainTasks: optionChainTasks,
+                    payoffGraphTasks: payoffGraphTasks,
+                    tableWidgetKeys: tableWidgetKeys,
+                    userSelectedRows: userSelectedRows,
+                    onTableSelectionChanged: (selection) {
+                      setState(() {
+                        selection.forEach((tableIdx, rowIndices) {
+                          final taskId =
+                              tabs[currentPageIndex]["taskId"] ?? "";
+                          userSelectedRows[taskId] ??= {};
+                          userSelectedRows[taskId]![tableIdx] = rowIndices;
+                        });
+                      });
+                    },
+                    onInteraction: _onInteraction,
+                  ),
+                ),
+                SahiUserActionArea(
+                  currentTask: currentTask,
+                  onTaskFinish: onTaskFinish,
+                ),
+              ],
+            ),
+            if (currentTask.taskType == TaskType.showSideNav &&
+                isSideNavVisible)
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    closeSideNav(moveToNextNode: true);
+                  },
+                  child: Container(color: Colors.black.withValues(alpha: 0.4)),
                 ),
               ),
-            Expanded(
-              child: SahiContentArea(
-                promptText: promptText,
-                hintText: hintText,
-                isToolPanelOpen: _isToolPanelOpen,
-                enabledTools: _currentToolPanelTask?.enabledTools ?? {},
-                onToolPanelClose: () {
-                  setState(() {
-                    _isToolPanelOpen = false;
-                  });
-                },
-                currentPageIndex: currentPageIndex,
-                tabs: tabs,
-                recipe: recipe,
-                chartKeys: chartKeys,
-                previewScreenKey: _previewScreenKey,
-                previewScreenKeys: previewScreenKeys,
-                optionChainTasks: optionChainTasks,
-                payoffGraphTasks: payoffGraphTasks,
-                tableWidgetKeys: tableWidgetKeys,
-                userSelectedRows: userSelectedRows,
-                onTableSelectionChanged: (selection) {
-                  setState(() {
-                    selection.forEach((tableIdx, rowIndices) {
-                      final taskId = tabs[currentPageIndex]["taskId"] ?? "";
-                      userSelectedRows[taskId] ??= {};
-                      userSelectedRows[taskId]![tableIdx] = rowIndices;
-                    });
-                  });
-                },
-                onInteraction: _onInteraction,
+            if (currentTask.taskType == TaskType.showSideNav &&
+                isSideNavVisible)
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 320,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(left: BorderSide(color: colors.sahiDivider)),
+                  ),
+                  child: _buildSideNavPanel(),
+                ),
               ),
-            ),
-            SahiUserActionArea(
-              currentTask: currentTask,
-              onTaskFinish: onTaskFinish,
-            ),
           ],
         ),
       ),

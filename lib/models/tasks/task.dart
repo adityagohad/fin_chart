@@ -15,11 +15,6 @@ import 'package:fin_chart/models/tasks/toggle_tool_visibility.task.dart';
 import 'package:fin_chart/models/tasks/add_remove_tools.task.dart';
 import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:fin_chart/models/tasks/wait.task.dart';
-import 'package:fin_chart/models/tasks/complete_journey.task.dart';
-import 'package:fin_chart/models/tasks/attach_video_to_journey.task.dart';
-import 'package:fin_chart/models/tasks/hide_video_btn_in_journey.task.dart';
-import 'package:fin_chart/models/tasks/add_course_video.task.dart';
-import 'package:fin_chart/models/tasks/start_journey.task.dart';
 import 'package:flutter/material.dart';
 
 import 'highlight_correct_option_chain_value_task.dart';
@@ -106,6 +101,8 @@ abstract class Task {
         return HighlightTableRowTask.fromJson(json);
       case 'showInsightsV2Page':
         return ShowInsightsPageV2Task.fromJson(json);
+      case 'showSideNav':
+        return ShowSideNavTask.fromJson(json);
       case 'showTools':
         return ShowToolsTask.fromJson(json);
       case 'toggleToolVisibility':

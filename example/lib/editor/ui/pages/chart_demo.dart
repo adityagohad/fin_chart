@@ -451,6 +451,9 @@ class _ChartDemoState extends State<ChartDemo> {
         setState(() {});
         onTaskFinish();
         break;
+      case TaskType.showSideNav:
+        setState(() {});
+        break;
       case TaskType.showTools:
         final task = currentTask as ShowToolsTask;
         setState(() {
@@ -1009,6 +1012,7 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.attachVideoToJourney:
       case TaskType.hideVideoBtnInJourney:
       case TaskType.addCourseVideo:
+      case TaskType.showSideNav:
         return Container();
     }
   }

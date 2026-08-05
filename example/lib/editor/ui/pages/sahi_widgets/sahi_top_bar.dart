@@ -1,7 +1,7 @@
 import 'package:fin_chart/utils/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:fin_chart/models/journey_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SahiTopBar extends StatelessWidget {
   final List<Map<String, String>> tabs;
@@ -31,6 +31,13 @@ class SahiTopBar extends StatelessWidget {
     if (lower.contains('table')) return Icons.table_chart_outlined;
     if (lower.contains('insight')) return Icons.insights_outlined;
     return Icons.tab_outlined;
+  }
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -96,7 +103,7 @@ class SahiTopBar extends StatelessWidget {
           const Spacer(),
           if (showCourseVideoBtn && courseVideoUrl != null)
             GestureDetector(
-              onTap: () => launchUrl(Uri.parse(courseVideoUrl!)),
+              onTap: () => _openLink(courseVideoUrl!),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -141,7 +148,7 @@ class SahiTopBar extends StatelessWidget {
               activeJourney!.videoUrl != null &&
               !activeJourney!.hideVideoBtn)
             GestureDetector(
-              onTap: () => launchUrl(Uri.parse(activeJourney!.videoUrl!)),
+              onTap: () => _openLink(activeJourney!.videoUrl!),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(

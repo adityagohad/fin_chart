@@ -10,7 +10,6 @@ import 'package:fin_chart/models/tasks/highlight_table_row_task.dart';
 import 'package:fin_chart/models/tasks/open_tool_panel.task.dart';
 import 'package:fin_chart/models/tasks/show_bottom_sheet.task.dart';
 import 'package:fin_chart/models/tasks/show_insights_page.task.dart';
-import 'package:fin_chart/models/tasks/show_tools.task.dart';
 import 'package:fin_chart/models/tasks/table_task.dart';
 import 'package:fin_chart/models/tasks/task.dart';
 import 'package:example/editor/ui/widget/task_type_dropdown.dart';
@@ -19,11 +18,6 @@ import 'package:flutter/material.dart';
 import 'package:fin_chart/models/enums/action_type.dart';
 import 'package:fin_chart/models/enums/task_type.dart';
 import 'package:fin_chart/models/tasks/add_option_chain.task.dart';
-import 'package:fin_chart/models/tasks/complete_journey.task.dart';
-import 'package:fin_chart/models/tasks/attach_video_to_journey.task.dart';
-import 'package:fin_chart/models/tasks/hide_video_btn_in_journey.task.dart';
-import 'package:fin_chart/models/tasks/add_course_video.task.dart';
-import 'package:fin_chart/models/tasks/start_journey.task.dart';
 
 class TaskListWidget extends StatefulWidget {
   final List<Task> task;
@@ -654,6 +648,23 @@ class _TaskListWidgetState extends State<TaskListWidget> {
           children: [
             Text("Course Video: ${t.title}"),
             const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.showSideNav:
+        return Row(
+          children: [
+            Text("Show Sidenav ${(task as ShowSideNavTask).title}"),
+            const SizedBox(width: 20),
             InkWell(
               onTap: () {
                 widget.onTaskEdit(task);

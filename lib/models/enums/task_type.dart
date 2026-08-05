@@ -22,6 +22,7 @@ enum TaskType {
   tableTask,
   highlightTableRow,
   showInsightsV2Page,
+  showSideNav,
   showTools,
   toggleToolVisibility,
   addRemoveTools,
