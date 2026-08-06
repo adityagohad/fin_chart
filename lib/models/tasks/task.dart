@@ -123,6 +123,10 @@ abstract class Task {
         return HideVideoBtnInJourneyTask.fromJson(json);
       case 'addCourseVideo':
         return AddCourseVideoTask.fromJson(json);
+      case 'addCoreConcept':
+        return AddCoreConceptTask.fromJson(json);
+      case 'removeCoreConcept':
+        return RemoveCoreConceptTask.fromJson(json);
       default:
         throw ArgumentError('Unknown task type: $taskType');
     }

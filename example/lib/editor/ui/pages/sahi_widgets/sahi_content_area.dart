@@ -29,11 +29,13 @@ class SahiContentArea extends StatelessWidget {
   final Map<String, Map<int, Set<int>>> userSelectedRows;
   final Function(Map<int, Set<int>>) onTableSelectionChanged;
   final Function(Offset, Offset)? onInteraction;
+  final List<AddCoreConceptTask> coreConcepts;
 
   const SahiContentArea({
     super.key,
     required this.promptText,
     required this.hintText,
+    required this.coreConcepts,
     required this.isToolPanelOpen,
     required this.enabledTools,
     required this.onToolPanelClose,
@@ -57,24 +59,34 @@ class SahiContentArea extends StatelessWidget {
       children: [
         if (promptText.isNotEmpty) _buildPromptArea(context),
         Expanded(
-          child: Row(
-            children: [
-              if (isToolPanelOpen)
-                SahiToolsPanel(
-                  enabledTools: enabledTools,
-                  onClose: onToolPanelClose,
-                ),
-              Expanded(
-                child: tabs.isEmpty
-                    ? const SizedBox.shrink()
-                    : IndexedStack(
-                        index: currentPageIndex.clamp(0, tabs.length - 1),
-                        children: tabs
-                            .map((tab) => _buildTabContent(context, tab))
-                            .toList(),
-                      ),
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final sideWidth = constraints.maxWidth * 0.3;
+              return Row(
+                children: [
+                  if (coreConcepts.isNotEmpty)
+                    SizedBox(
+                      width: sideWidth,
+                      child: _buildCoreConceptsArea(context),
+                    ),
+                  if (isToolPanelOpen)
+                    SahiToolsPanel(
+                      enabledTools: enabledTools,
+                      onClose: onToolPanelClose,
+                    ),
+                  Expanded(
+                    child: tabs.isEmpty
+                        ? const SizedBox.shrink()
+                        : IndexedStack(
+                            index: currentPageIndex.clamp(0, tabs.length - 1),
+                            children: tabs
+                                .map((tab) => _buildTabContent(context, tab))
+                                .toList(),
+                          ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -102,6 +114,46 @@ class SahiContentArea extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCoreConceptsArea(BuildContext context) {
+    final colors = Theme.of(context).customColors;
+    return Container(
+      width: double.infinity,
+      color: colors.sahiPromptBg,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: coreConcepts.map((concept) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MarkdownWidget(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    data: concept.title,
+                    config: MarkdownConfig(configs: [
+                      H1Config(
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                    ]),
+                  ),
+                  const SizedBox(height: 4),
+                  MarkdownWidget(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    data: concept.description,
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

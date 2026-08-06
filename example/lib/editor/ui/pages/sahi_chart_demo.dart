@@ -93,6 +93,8 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
   List<JourneyState> journeys = [];
   String? _activeJourneyId;
 
+  final List<AddCoreConceptTask> coreConcepts = [];
+
   String? _activeChartId;
   int _activeChartStartOffset = 0;
   int _activeChartEndOffset = -1;
@@ -656,6 +658,21 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
         });
         onTaskFinish();
         break;
+      case TaskType.addCoreConcept:
+        final addConceptTask = currentTask as AddCoreConceptTask;
+        setState(() {
+          coreConcepts.add(addConceptTask);
+        });
+        onTaskFinish();
+        break;
+      case TaskType.removeCoreConcept:
+        setState(() {
+          if (coreConcepts.isNotEmpty) {
+            coreConcepts.removeLast();
+          }
+        });
+        onTaskFinish();
+        break;
     }
   }
 
@@ -1065,6 +1082,7 @@ class _SahiChartDemoState extends State<SahiChartDemo> {
                   child: SahiContentArea(
                     promptText: promptText,
                     hintText: hintText,
+                    coreConcepts: coreConcepts,
                     isToolPanelOpen: _isToolPanelOpen,
                     enabledTools: _currentToolPanelTask?.enabledTools ?? {},
                     onToolPanelClose: () {

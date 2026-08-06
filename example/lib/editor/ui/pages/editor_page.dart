@@ -15,6 +15,7 @@ import 'package:example/dialog/show_all_added_tabs_dialog.dart';
 import 'package:example/dialog/show_all_option_chains_dialog.dart';
 import 'package:example/dialog/show_bottom_sheet_dialog.dart';
 import 'package:example/dialog/show_insights_page_dialog.dart';
+import 'package:example/dialog/add_core_concept_dialog.dart';
 import 'package:example/dialog/show_insights_pagev2_dialog.dart';
 import 'package:example/dialog/show_option_chain_by_id.dart';
 import 'package:example/dialog/show_popup_dialog.dart';
@@ -48,6 +49,8 @@ import 'package:fin_chart/models/tasks/clear_bucket_rows_task.dart';
 import 'package:fin_chart/models/tasks/highlight_table_row_task.dart';
 import 'package:fin_chart/models/tasks/show_bottom_sheet.task.dart';
 import 'package:fin_chart/models/tasks/show_insights_page.task.dart';
+import 'package:fin_chart/models/tasks/add_core_concept.task.dart';
+import 'package:fin_chart/models/tasks/remove_core_concept.task.dart';
 import 'package:fin_chart/models/tasks/table_task.dart';
 import 'package:fin_chart/models/tasks/task.dart';
 import 'package:fin_chart/models/tasks/wait.task.dart';
@@ -548,6 +551,8 @@ class _EditorPageState extends State<EditorPage> {
           case TaskType.attachVideoToJourney:
           case TaskType.hideVideoBtnInJourney:
           case TaskType.addCourseVideo:
+          case TaskType.addCoreConcept:
+          case TaskType.removeCoreConcept:
             break;
           case TaskType.addData:
             final addDataTask = task as AddDataTask;
@@ -933,6 +938,12 @@ class _EditorPageState extends State<EditorPage> {
         case TaskType.showSideNav:
           showSideNavTask();
           break;
+        case TaskType.addCoreConcept:
+          showAddCoreConceptTask();
+          break;
+        case TaskType.removeCoreConcept:
+          _updateTaskList(RemoveCoreConceptTask());
+          break;
       }
     });
   }
@@ -1033,6 +1044,11 @@ class _EditorPageState extends State<EditorPage> {
         break;
       case TaskType.showSideNav:
         editShowSideNavTask(task as ShowSideNavTask);
+        break;
+      case TaskType.addCoreConcept:
+        editAddCoreConceptTask(task as AddCoreConceptTask);
+        break;
+      case TaskType.removeCoreConcept:
         break;
     }
   }
@@ -1910,6 +1926,26 @@ class _EditorPageState extends State<EditorPage> {
 
   void editInsightsPageTask(ShowInsightsPageTask task) async {
     await showInsightsPageDialog(context: context, initialTask: task)
+        .then((data) {
+      setState(() {
+        if (data != null) {
+          task.title = data.title;
+          task.description = data.description;
+        }
+      });
+    });
+  }
+
+  void showAddCoreConceptTask() async {
+    await showAddCoreConceptDialog(context: context).then((data) {
+      if (data != null) {
+        _updateTaskList(data);
+      }
+    });
+  }
+
+  void editAddCoreConceptTask(AddCoreConceptTask task) async {
+    await showAddCoreConceptDialog(context: context, initialTask: task)
         .then((data) {
       setState(() {
         if (data != null) {

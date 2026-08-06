@@ -677,6 +677,25 @@ class _TaskListWidgetState extends State<TaskListWidget> {
             ),
           ],
         );
+      case TaskType.addCoreConcept:
+        return Row(
+          children: [
+            Text("Add Core Concept ${(task as AddCoreConceptTask).title}"),
+            const SizedBox(width: 20),
+            InkWell(
+              onTap: () {
+                widget.onTaskEdit(task);
+              },
+              child: const Icon(
+                Icons.edit,
+                color: Colors.blue,
+                size: 18,
+              ),
+            ),
+          ],
+        );
+      case TaskType.removeCoreConcept:
+        return const Text("Remove Core Concept");
     }
   }
 

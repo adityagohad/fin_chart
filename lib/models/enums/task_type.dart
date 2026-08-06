@@ -33,6 +33,8 @@ enum TaskType {
   attachVideoToJourney,
   hideVideoBtnInJourney,
   addCourseVideo,
+  addCoreConcept,
+  removeCoreConcept,
 }
 
 // extension TaskTypeExtension on TaskType {

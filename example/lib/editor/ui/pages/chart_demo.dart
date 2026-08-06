@@ -88,6 +88,10 @@ class _ChartDemoState extends State<ChartDemo> {
 
   void onTaskRun() {
     switch (currentTask.taskType) {
+      case TaskType.addCoreConcept:
+      case TaskType.removeCoreConcept:
+        onTaskFinish();
+        break;
       case TaskType.addData:
         AddDataTask task = currentTask as AddDataTask;
         _chartKey.currentState
@@ -1012,6 +1016,8 @@ class _ChartDemoState extends State<ChartDemo> {
       case TaskType.attachVideoToJourney:
       case TaskType.hideVideoBtnInJourney:
       case TaskType.addCourseVideo:
+      case TaskType.addCoreConcept:
+      case TaskType.removeCoreConcept:
       case TaskType.showSideNav:
         return Container();
     }

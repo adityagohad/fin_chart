@@ -36,3 +36,5 @@ export 'package:fin_chart/models/tasks/hide_video_btn_in_journey.task.dart';
 export 'package:fin_chart/models/tasks/add_course_video.task.dart';
 export 'package:fin_chart/models/tasks/start_journey.task.dart';
 export 'package:fin_chart/models/journey_state.dart';
+export 'package:fin_chart/models/tasks/add_core_concept.task.dart';
+export 'package:fin_chart/models/tasks/remove_core_concept.task.dart';
